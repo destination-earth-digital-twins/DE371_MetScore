@@ -1,0 +1,46 @@
+@startuml
+
+interface IConfigurable
+
+class Configurable <<abstract>> implements IConfigurable {
+    +required_keys: string[]
+    }
+
+
+class Dataset <<abstract>>
+
+class DateDataset <<abstract>> extends Dataset
+
+class ObsDataset extends DateDataset
+class FakeDataset extends DateDataset
+class RealDataset extends DateDataset
+
+class DataLoader <<abstract>>
+
+class ExperimentSet
+
+class Metric <<abstract>>
+
+class PreprocessCondObs extends Metric
+class PreprocessDist extends Metric
+class PreprocessStandalone extends Metric
+
+class Preprocessor <<abstract>>
+
+class MemoryCache {
+}
+
+Configurable <|-- Dataset
+Configurable <|-- DataLoader
+Configurable <|-- Metric
+Configurable <|-- Preprocessor
+Configurable <|-- ExperimentSet
+
+Dataset "1" *-- "1" Preprocessor
+Dataset "1" *-- "1" MemoryCache
+DataLoader "1" *-- "1" Dataset
+ExperimentSet "1" *-- "1" DataLoader
+ExperimentSet "1" *-- "1" Metric
+
+@enduml
+
