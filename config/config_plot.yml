@@ -1,0 +1,64 @@
+output_plots: /project/scratch/p200177/DE_371/angeliquebonamy/results/scenarios/BONS/all_expe_SWD/plots #" Centre MéditJura_Alpes_Drôme-N" Massif-C Sud  Rien signif
+experiments:  
+  - name: 'Experiment1'
+    short_name: "Arome"
+    N_ens: 16
+  - name: 'Experiment2'
+    short_name: "AMSE "
+    N_ens: 112
+  - name: 'Experiment3'
+    short_name: "mae"
+    N_ens: 112
+  - name: 'Experiment4'
+    short_name: "mse"
+    N_ens: 112
+  # # - name: 'Experiment5'
+  # #   short_name: "mul_pixel_loss_mae"
+  # #   N_ens: 112
+  # # - name: 'Experiment6'
+  # #   short_name: "mul_pixel_loss_mse"
+  # #   N_ens: 112
+  - name: 'Experiment5'
+    short_name: "wamse"
+    N_ens: 112
+  - name: 'Experiment6'
+    short_name: "wmse"
+    N_ens: 112
+  # - name: 'Experiment8'
+  #   short_name: "sc"
+  #   N_ens: 112
+  # - name: 'Experiment9'
+  #   short_name: "sc"
+  #   N_ens: 112
+  # - name: 'Experiment10'
+  #   short_name: "sc"
+  #   N_ens: 112
+  # - name: 'Experiment11'
+  #   short_name: "sc"
+  #   N_ens: 112
+  # - name: 'Experiment12'
+  #   short_name: "sc"
+  #   N_ens: 112
+  # - name: 'Experiment13'
+  #   short_name: "sc"
+  #   N_ens: 112
+
+
+metrics:
+  - name: SWD
+    folder: SWDall
+  - name: spectralCompute
+    folder: spectralCompute
+  # - name: ObjectsAttribution
+  #   folder : ObjectsAttribution
+  # - name : AreaProportion
+  #   folder : AreaProportion 
+  
+expe_folder: /project/scratch/p200177/DE_371/angeliquebonamy/results/scenarios/BONS/all_expe_SWD
+number_dates : 30
+lead_times : 14
+var_number : 4
+size_H : 256
+size_W : 256
+N_bins_max: 121
+N_bins_max_real: 17
