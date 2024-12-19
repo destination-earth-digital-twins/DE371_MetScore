@@ -17,4 +17,5 @@ export APPTAINER_BINDPATH="/project/home/p200177/DE_371/datasets:/project/home/p
 module load Apptainer/1.2.4-GCCcore-12.3.0
 
 
-apptainer exec --nv /project/scratch/p200177/DE_371/resources/apptainer_container/container_for_scoring.sif python3 plotting_autom.py --config '/project/scratch/p200177/DE_371/victorsanchez/results/scores/Score_Eval/exp1/config_plot.yml'
+apptainer exec --nv /project/home/p200177/DE_371/resources/apptainer_container/container_objets.sif  python3 plotting_autom.py --config '/home/users/u101957/DE371_MetScore/config/config_plot.yml'
+#'/project/scratch/p200177/DE_371/victorsanchez/results/scores/Score_Eval/exp1/config_plot.yml'

@@ -53,6 +53,7 @@ def setup_logger(debug=False):
     logger.addHandler(console_handler)
     return logger
 
+# def main(scenarios):
 def main():
     """
     Main function to parse command line arguments, load configuration, and run experiments.
@@ -70,6 +71,11 @@ def main():
 
     # Load the configuration
     config = load_yaml(args.config)
+   # print(config['output_folder'],scenarios)
+   # config['output_folder'] = os.path.join(config['output_folder'],scenarios)
+   # config['experiments'][0]['dataloaders']['fake_dataset_config']['data_folder'] = os.path.join(config['experiments'][0]['dataloaders']['fake_dataset_config']['data_folder'],scenarios)
+    #config['experiments'][1]['dataloaders']['fake_dataset_config']['data_folder'] = os.path.join(config['experiments'][1]['dataloaders']['fake_dataset_config']['data_folder'],scenarios)
+
     assert 'output_folder' in config, f"output_path must be specified in {args.config}"
     os.makedirs(config['output_folder'], exist_ok=True)
     successful_experiments = []
@@ -117,6 +123,7 @@ def run_experiment(experiment_config, output_folder, index):
     """
     try:
         experiment_set = ExperimentSet.fromConfig(experiment_config, output_folder=output_folder)
+        print('JE SUIS INDEX',index)
         experiment_set.run(index)
         return (experiment_config, True, None)  # Indicate que l'expérience a réussi, sans exception
     except Exception as e:
@@ -124,4 +131,7 @@ def run_experiment(experiment_config, output_folder, index):
         return experiment_config, False, (e, tb)  # Indicate que l'expérience a échoué
 
 if __name__ == "__main__":
-    main()
+    # scenarios = ['Alpes-Mar_Golfe-G','Cevennes_Gard_Hérault-N','Corse O','Rien signif','Espagne','Espagne_Roussillon','Centre Médit','Jura_Alpes_Drôme-N','Massif-C Sud','Massif-C Centre','Pyrénées','Var_PACA Ouest_Drôme-S']
+    # for _,scenario in enumerate(scenarios):
+    #     main(scenario)
+   main()

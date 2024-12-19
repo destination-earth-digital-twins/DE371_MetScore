@@ -16,5 +16,5 @@ export CC=gcc  #the compiler to access the good cpp standard
 export APPTAINER_BINDPATH="/project/home/p200177/DE_371/datasets:/project/home/p200177/DE_371/datasets/,/project/scratch/p200177/DE_371:/project/scratch/p200177/DE_371/"
 module load Apptainer/1.2.4-GCCcore-12.3.0
 
-apptainer exec --nv /project/home/p200177/DE_371/resources/apptainer_container/container_for_scoring.sif python3 main.py --config '/home/users/u101957/DE371_MetScore/config/config_cond2.yml' --debug
-#apptainer exec --nv /project/scratch/p200177/DE_371/resources/apptainer_container/container_objets.sif python3 plot_object.py #--config '/home/users/u101957/DE371_MetScore/config/config_test.yml'
+
+apptainer exec --nv /project/home/p200177/DE_371/resources/apptainer_container/container_objets.sif python3 new_csv.py #--config '/home/users/u101957/DE371_MetScore/config/config_test.yml'

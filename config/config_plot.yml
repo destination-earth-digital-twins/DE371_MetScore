@@ -1,37 +1,61 @@
-output_plots: /project/scratch/p200177/DE_371/angeliquebonamy/results/scenarios/BONS/all_expe_SWD/plots #" Centre MéditJura_Alpes_Drôme-N" Massif-C Sud  Rien signif
+output_plots: /project/scratch/p200177/DE_371/angeliquebonamy/results/dates/GOOD_DATA/scores/test/isonreal7/plots_pert #" Centre MéditJura_Alpes_Drôme-N" Massif-C Sud  Rien signif
 experiments:  
+  # - name: 'AROME'
+  #   short_name: "Arome"
+  #   N_ens: 16
   - name: 'Experiment1'
-    short_name: "Arome"
-    N_ens: 16
-  - name: 'Experiment2'
-    short_name: "AMSE "
+    short_name: "AROME"
     N_ens: 112
-  - name: 'Experiment3'
-    short_name: "mae"
-    N_ens: 112
-  - name: 'Experiment4'
-    short_name: "mse"
-    N_ens: 112
+  # - name: 'Experiment2'
+  #   short_name: "inv AMSE  "
+  #   N_ens: 112
+  # # - name: 'Arome_vgg'
+  # #   short_name: "AROME"
+  # #   N_ens: 112
+  # - name: 'Experiment_vgg'
+  #   short_name: "inv Perceptual loss"
+  #   N_ens: 112
+  # # # # - name: 'Inversion_testing_set'
+  # # # #   short_name: "vgg"
+  # # # #   N_ens: 112
+  # - name: 'Perturbation_vgg_16' 
+  #   short_name: "Pertub Perceptual loss"
+  #   N_ens: 112
+  # - name: 'Perturbation_amse_16' 
+  #   short_name: "Pertub AMSE"
+  #   N_ens: 112
+  # - name: 'Experiment3'
+  #   short_name: "Perceptual loss"
+  #   N_ens: 112
+  # - name: 'Experiment_sol2_noise_rdm_seule_vgg_amse'
+  #   short_name: "amse + sol2 noise rdm"
+  #   N_ens: 112
+  # - name: 'Experiment_sol2_rdm'
+  #   short_name: "WAMSE sol2 - rdm "
+  #   N_ens: 112
+  # - name: 'Experiment_sol5_rdm'
+  #   short_name: "WAMSE sol5 - rdm "
+  #   N_ens: 112
   # # - name: 'Experiment5'
   # #   short_name: "mul_pixel_loss_mae"
   # #   N_ens: 112
   # # - name: 'Experiment6'
   # #   short_name: "mul_pixel_loss_mse"
   # #   N_ens: 112
-  - name: 'Experiment5'
-    short_name: "wamse"
-    N_ens: 112
-  - name: 'Experiment6'
-    short_name: "wmse"
-    N_ens: 112
+  # - name: 'Experiment_sol5_noise_rdm'
+  #   short_name: "WAMSE sol5noise - rdm  "
+  #   N_ens: 112
+  # - name: 'Experiment_sol5_noise_tr'
+  #   short_name: "WAMSE sol5noise tr"
+  #   N_ens: 112
+  # - name: 'Experiment_sol5_tr'
+  #   short_name: "WAMSE sol5 tr"
+  #   N_ens: 112
   # - name: 'Experiment8'
-  #   short_name: "sc"
+  #   short_name: "mse sol5 rdm"
   #   N_ens: 112
   # - name: 'Experiment9'
-  #   short_name: "sc"
-  #   N_ens: 112
-  # - name: 'Experiment10'
-  #   short_name: "sc"
+  #   short_name: "wmse sol5 rdm "
   #   N_ens: 112
   # - name: 'Experiment11'
   #   short_name: "sc"
@@ -45,20 +69,34 @@ experiments:
 
 
 metrics:
-  - name: SWD
-    folder: SWDall
-  - name: spectralCompute
-    folder: spectralCompute
+  # - name: spectralCompute
+  #   folder: spectralCompute
+  # # - name: MultivarCorr
+  # #   folder: MultivarCorr
+  # # # - name: Quantiles
+  # # #   folder: Quantiles
+  # # #   qlist: [0.05,0.5,0.8,0.9]
+  # # # - name: QuantilesScore
+  # # #   folder: QuantilesScore
+  # # #   qlist: [0.01,0.1,0.9,0.99]
+  # - name: SWD
+  #   folder: SWDall
   # - name: ObjectsAttribution
   #   folder : ObjectsAttribution
   # - name : AreaProportion
   #   folder : AreaProportion 
-  
-expe_folder: /project/scratch/p200177/DE_371/angeliquebonamy/results/scenarios/BONS/all_expe_SWD
-number_dates : 30
-lead_times : 14
-var_number : 4
+  - name: biasEnsemble
+    folder: biasEnsemble
+  - name: ensembleCRPS
+    folder: ensembleCRPS
+  - name: skillSpread
+    folder: skillSpread
+expe_folder: /project/scratch/p200177/DE_371/angeliquebonamy/results/dates/GOOD_DATA/scores/test/isonreal7
+number_dates : 2
+lead_times : 15
+var_number : 3
 size_H : 256
 size_W : 256
 N_bins_max: 121
 N_bins_max_real: 17
+    

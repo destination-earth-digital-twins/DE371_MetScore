@@ -192,20 +192,34 @@ class DateDataloader(DataLoader):
         self._data_length = min(len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset))
         logging.debug(f"Dataset length is {self._data_length}")
 
+    # def __next__(self):
+    #     if self.current_index < self._data_length:
+    #         try:
+    #             fake_samples = np.array([self.fake_dataset[ self.current_index + i] for i in range(self.batch_size)])
+    #             obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
+    #             real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.batch_size)])
+    #             self.current_index += min(self.batch_size, self._data_length - self.current_index)
+    #             return fake_samples[0], real_samples[0], obs_samples
+    #         except FileNotFoundError as e:
+    #             logging.warning(f"{self.name} :  File not found, {e}")
+    #             self.current_index += min(self.batch_size, self._data_length - self.current_index)
+    #             return None,None,None
+    #     else:
+    #         raise StopIteration
     def __next__(self):
-        if self.current_index < self._data_length:
+        while self.current_index < self._data_length:
             try:
-                fake_samples = np.array([self.fake_dataset[ self.current_index + i] for i in range(self.batch_size)])
+                print('CURRENT',self.current_index)
+                fake_samples = np.array([self.fake_dataset[self.current_index + i] for i in range(self.batch_size)])
                 obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
                 real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.batch_size)])
                 self.current_index += min(self.batch_size, self._data_length - self.current_index)
                 return fake_samples[0], real_samples[0], obs_samples
-            except FileNotFoundError as e:
-                logging.warning(f"{self.name} :  File not found, {e}")
-                self.current_index += min(self.batch_size, self._data_length - self.current_index)
-                return None,None,None
-        else:
-            raise StopIteration
+            except (FileNotFoundError, KeyError) as e:
+                logging.warning(f"{self.name}: Skipping missing data at index {self.current_index} due to {e}")
+                self.current_index += 1  # Skip the problematic index and continue
+        raise StopIteration
+
 
     def get_all_data(self):
         real = self._real_dataset.get_all_data()

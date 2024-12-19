@@ -1,0 +1,75 @@
+output_folder: /project/scratch/p200177/DE_371/angeliquebonamy/results/dates/GOOD_DATA/scores/test/isonreal7/ # name of the parent folder where all experiments will be stored
+experiments: #list of experiments
+  - name: AROME_conditioned_3h # the name is a unique identifier to each experiment
+    dataloaders:
+      type: DateDataloader
+      batch_size: 1
+      maxNsamples: 163
+      path_to_csv: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done
+      csv_file: Large_lt_test_labels.csv
+      date_start: '2020-06-10'
+      date_end: '2022-11-13'
+      number_of_dates : 15
+      Lead_Times : 15
+      start_time : 21 # 21:00. Arome simulations in the dataset start at 21:00 
+      dh : 3
+      N_ens : 1
+      inv_step : 1000
+      cond_members : 16 
+      real_dataset_config:
+        data_folder: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done
+        variables: ['u','v','t2m']
+        sizeH: 256
+        sizeW: 256
+        filename_format: _sample{formatted_index}
+        file_size: 1
+        var_indices: [1,2,3] #where to find the variables in dataset samples
+        crop_indices: [0,256,0,256]
+        preprocessor_config:
+          type: Preprocessor
+      fake_dataset_config:
+        type: RealDataset
+        data_folder: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/
+        variables: ['u','v','t2m']
+        sizeH: 256
+        sizeW: 256
+        filename_format: _sample{formatted_index}
+        file_size: 1 # filesize in fake dataset
+        var_indices: [1,2,3] #where to find the variables in dataset samples
+        crop_indices: [0,256,0,256]
+        preprocessor_config:
+          type: Preprocessor
+      obs_dataset_config:
+        type: ObsDataset
+        data_folder: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/obs_databases/
+        crop_indices: [180, 436, 500, 756]
+        variables: ['ff','dd','t2m']
+        var_indices: [0,1,2]
+        preprocessor_config:
+            type: Preprocessor
+    metrics:
+      args:
+        debiasing: False
+        debiasing_mode: ENSAVG
+        conditioning_members: 16
+        threshold: [[ 1.39, 2.78, 4.17, 5.56, 8.33, 11.11 ], [ 278.15, 283.15, 288.15, 293.15, 297.15, 303.15 ]] ## [ff], [t2m] 
+        var_channel: 1
+        obs_var_channel: 1
+        isOnReal: True
+      metrics_list:
+        - name: SWD
+          type: SWDall
+        - name: MultivarCorr
+          type: MultivarCorr
+        - name: spectralCompute
+          type: spectralCompute
+        - name: ensembleCRPS
+          type: ensembleCRPS
+          fair: True # this is an additional argument, specific to the ensembleCRPS metric. It should be specified here, but it can also be specified in the args section.
+        - name: brierScore
+          type: brierScore
+        - name: skillSpread
+          type: skillSpread
+        - name: biasEnsemble
+          type: biasEnsemble
+

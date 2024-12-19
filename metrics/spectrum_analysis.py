@@ -34,6 +34,7 @@ def dct2D(x):
     or for each sample b of BxNxN numpy array
 
     """
+    print('JE SUIS DIM DE X', x.ndim)
     assert x.ndim in [2, 3]
     if x.ndim == 3:
         res = dct(

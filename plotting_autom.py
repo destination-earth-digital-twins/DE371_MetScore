@@ -39,6 +39,7 @@ def setup_logger(debug=False):
     return logger
 
 
+# def main(scenario):
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Plot experiments.")
@@ -57,7 +58,9 @@ def main():
 
         # Load the configuration
         config = load_yaml(args.config)
-
+    #    si par scénarios: 
+        # config['output_plots'] = os.path.join(config['output_plots'],scenario,'plots_swdspd')
+        # config['expe_folder'] = os.path.join(config['expe_folder'],scenario)
         experiments = config['experiments']
         metrics = config['metrics']
 
@@ -68,6 +71,7 @@ def main():
         logger.debug(config['number_dates'])
         assert 'output_plots' in config, f"output_plots path must be specified in {args.config}"
         if not os.path.exists(config['output_plots']):
+            print('JE PASSE PAR LA')
             os.mkdir(config['output_plots'])
         
         for metr_idx, metric in enumerate(metrics):
@@ -86,4 +90,9 @@ def main():
         logger.exception(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
+#Si par scénarios : 
+    # scenarios = ['Alpes-Mar_Golfe-G','Cevennes_Gard_Hérault-N','Corse O','Rien signif','Espagne','Espagne_Roussillon','Centre Médit','Jura_Alpes_Drôme-N'] #"",'Massif-C Sud','Massif-C Centre','Pyrénées','Var_PACA Ouest_Drôme-S'
+    # for _,scenario in enumerate(scenarios):
+    #     main(scenario)
+#sinon: 
     main()

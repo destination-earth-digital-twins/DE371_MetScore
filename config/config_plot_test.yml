@@ -1,4 +1,4 @@
-output_plots: /project/scratch/p200177/DE_371/victorsanchez/results/scores/Score_Eval/exp1/experiment_plots/
+output_plots: /home/users/u101957/DE371_MetScore/experiments15/experiment_plots
 experiments:  
   - name: 'Experiment1'
     short_name: "AROME"
@@ -11,8 +11,7 @@ experiments:
     N_ens: 112
 
 metrics:
-  - name: ensembleCRPS
-    folder: ensembleCRPS
+
   - name: skillSpread
     folder: skillSpread
   - name: biasEnsemble
@@ -34,7 +33,7 @@ metrics:
     folder: QuantilesScore
     qlist: [0.01,0.1,0.9,0.99]
   
-expe_folder: /project/scratch/p200177/DE_371/victorsanchez/results/scores/Score_Eval/exp1/experiments
+expe_folder: /home/users/u101957/DE371_MetScore/experiments15
 number_dates : 30
 lead_times : 14
 var_number : 3

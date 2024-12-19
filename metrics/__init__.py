@@ -147,7 +147,8 @@ class ObjectsAttribution(PreprocessStandalone):
         self.zone = obj.Zone(X_min=args[0]['lon_min'],Y_min=args[0]['lat_min'],nb_lon=args[0]['sizeW'],nb_lat=args[0]['sizeH'])
 
     def _calculateCore(self, processed_data):
-        return obj.batchAttributes(processed_data,self.zone,self.rr_idx)
+        print(self,'JE SUIS SELF')
+        return obj.batchAttributes(processed_data,self.zone,0)#self.rr_idx)
 
 
 ###################################################################

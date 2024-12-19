@@ -24,8 +24,8 @@ def computeStats(experiments, scores_LT, config):
         results_var = []
         ### reference experiment is experiment 0
         for exp_idx, exp in enumerate(experiments[1:]):
-            print(exp['short_name'], var_idx)
-            diff = scores_LT[exp_idx + 1,:,:,var_idx] - scores_LT[0,:,:,var_idx]
+            print('LAAAA', scores_LT.shape,exp['short_name'], var_idx)
+            diff = scores_LT[exp_idx + 1,:,var_idx] - scores_LT[0,:,var_idx]
             res_diff = wilcoxon(diff,axis=0,zero_method='zsplit')
             print("res_diff shape", res_diff.statistic)
             results_var.append(res_diff.statistic[np.newaxis,:])
@@ -95,6 +95,7 @@ def significance(experiments, metric, config):
     scores_list = load_and_format_scores(experiments, metric, config)
     print(len(scores_list))
     for score_idx, scores_LT in enumerate(scores_list):
+        print("JE SUIS LES SCORES", type(score_idx) ,scores_LT)
         decisions, results = computeStats(experiments, scores_LT.squeeze(), config)
         print(decisions.shape, results.shape)
         
