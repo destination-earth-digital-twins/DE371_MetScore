@@ -292,8 +292,8 @@ class ModDataloader(DateDataloader):
     def __next__(self):
         if self.current_index < self._data_length:
             try:
-                fake_samples = np.array([self.fake_dataset[ self.current_index + i]['fake'] for i in range(self.fake_dataset.batch_size)])
-                mod_samples = np.array([self.fake_dataset[ self.current_index + i]['mod'] for i in range(self.fake_dataset.batch_size)])
+                fake_samples = np.array([self.fake_dataset[ self.current_index + i]["fake"] for i in range(self.fake_dataset.batch_size)])
+                mod_samples = np.array([self.fake_dataset[ self.current_index + i]["mod"] for i in range(self.fake_dataset.batch_size)])
                 real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.real_dataset.batch_size)])
                 obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
 
