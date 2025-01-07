@@ -20,8 +20,6 @@ experiments: #list of experiments
         sizeW: 256  #size in latitude ("height")
         var_indices: [1,2,3] #indices to find the variables in dataset samples (usually, in a channel-first view). each element of "variables" is mapped to one element of var_indices, here 'u':1, 'v':2, 't2m':3
         crop_indices: [0,256,0,256] # to perform any crop (latitude indices first)
-        preprocessor_config:
-          type: Preprocessor # base preprocessor class by default ("real" samples are not preprocessed)
 
       fake_dataset_config: # defining the Dataset for "fake" (data-driven emulator)
         type: FakeDataset #to be chosen in a few predefined types. Main types are FakeDataset (default, loading files by dates and leadtimes) and RandomDataset (mixing all timestamps),
@@ -35,29 +33,13 @@ experiments: #list of experiments
         filename_format: "Rsemble_{date}_{formatted_index}"  #format of the typical file name used for the dataset. The {...} expression is used to provide parameters that describ each file individually. F-string evaluation is performed to load each file.
         var_indices: [0,1,2] #indices to find the variables in dataset samples (usually, in a channel-first view). NB : these can be different from the real dataset config.
         crop_indices: [0,256,0,256] # to perform any crop (latitude indices first)
-        preprocessor_config:
-            type: ReverserrPreprocessor # class of preprocessors used to treat precipitation outputs. Refer to the doc / comments in the ./MetScore/preprocess/ folder.
-            real_var_indices: [1,2,3] #where to find the variables in stat files (used for normalisation) --> usually the same as the Real datasets
-            real_data_dir: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/
-            stat_folder: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/stat_files_Massif_Central/
-            # For the next, refer to the doc / comments in the ./MetScore/preprocess/ folder.
-            stat_version: "rr" # the name of the stat file is for ex: 'mean_[stat_version]_log_ppx.npy'
-            rr_transform:
-              log_transform_iteration: 1
-              symetrization: False
-              gaussian_std: 0
-            normalization:
-              type: "mean"
-              per_pixel: False
-              for_rr:
-                blur_iteration: 1
+
       obs_dataset_config: # defining the Dataset for "observations" (ground truth). The
         data_folder: /project/home/p200177/DE_371/datasets/dataset_Meteo_France/obs_databases/
         crop_indices: [180, 436, 500, 756]
         variables: ['ff','dd','t2m'] 
         var_indices: [0,1,2]
-        preprocessor_config:
-            type: Preprocessor
+        
     metrics:
       args: # common arguments to use in metrics. These arguments may be required by one or more metrics. If they may abe applied to several metrics, it is better to save them here; 
         debiasing: False
