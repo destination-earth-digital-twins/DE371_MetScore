@@ -384,7 +384,7 @@ class ObsDataset(DateDataset):
         )
 
     def _load_file(self, file_path):
-        return obs_clean(np.load(file_path), self.crop_indices)
+        return obs_clean(np.load(file_path).astype(np.float32), self.crop_indices)
 
     def get_all_data(self):
         all_data = []
@@ -435,7 +435,7 @@ class FakeDataset(DateDataset):
         )
 
     def _load_file(self, file_path):
-        return np.load(file_path)
+        return np.load(file_path).astype(np.float32)
 
 
 class RealDataset(DateDataset):
@@ -449,7 +449,7 @@ class RealDataset(DateDataset):
         return file_names
 
     def _load_file(self, file_path):
-        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        arrays = [np.expand_dims(np.load(file_name).astype(np.float32), axis=0) for file_name in file_path]
         return np.concatenate(arrays, axis=0)
 
 
@@ -476,7 +476,7 @@ class RandomDataset(Dataset):
         return self.filelist[index]
 
     def _load_file(self, file_path):
-        return np.load(file_path)
+        return np.load(file_path).astype(np.float32)
 
     def __len__(self):
         return len(self.filelist)
@@ -566,11 +566,11 @@ class MixDataset(DateDataset):
         }
 
     def _load_real_file(self, file_path):
-        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        arrays = [np.expand_dims(np.load(file_name).astype(np.float32), axis=0) for file_name in file_path]
         return np.concatenate(arrays, axis=0)
 
     def _load_fake_file(self, file_path):
-        return np.load(file_path)
+        return np.load(file_path).astype(np.float32)
 
     def _preprocess_real_batch(self, batch):
         return self.real_preprocessor.process_batch(batch)
@@ -670,7 +670,7 @@ class ModDataset(DateDataset):
         return preprocessed_data
         
     def _load_file(self, file_path):
-        return {"fake" : np.load(file_path["fake_path"]), "mod" : np.load(file_path["mod_path"]) }
+        return {"fake" : np.load(file_path["fake_path"]).astype(np.float32), "mod" : np.load(file_path["mod_path"]).astype(np.float32) }
 
     def get_all_data(self):
         all_data_fake = []

@@ -46,6 +46,11 @@ class Metric(ABC, Configurable):
         """
         processed_data = self._preprocess(real_data, fake_data, obs_data)
         result = self._calculateCore(processed_data)
+        if type(result)==dict:
+            for k in result.keys():
+                result[k] = result[k].astype(np.float32)
+        else:
+            result = result.astype(np.float32)
         return result
 
     @abstractmethod
