@@ -1,6 +1,6 @@
 scikit-image>=0.19.3
 PyYaml==6.0.1
-torch==2.2.0+cu121
+torch==2.2.0
 numpy==1.26.4
 tqdm==4.66.1
 pandas==2.2.0
