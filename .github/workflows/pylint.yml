@@ -21,7 +21,7 @@ jobs:
 
     - name: get python version
       id: python_version
-      run: echo PYTHON_VERS=$(cat metenv.yaml | grep python= | sed 's/.*python=\([0-9]\.[0-9]*\.[0-9]*\).*/\1/') >> $GITHUB_OUTPUT
+      run: echo PYTHON_VERS=$(cat metenv.yml | grep python= | sed 's/.*python=\([0-9]\.[0-9]*\.[0-9]*\).*/\1/') >> $GITHUB_OUTPUT
 
     - name: Set up Python ${{ steps.python_version.outputs.PYTHON_VERS }}
       uses: actions/setup-python@v3
@@ -34,6 +34,7 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements_lint.txt
         pip install --edtiable .
+
     - name: Lint
       run: |
         ./lint.sh .
