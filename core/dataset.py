@@ -694,3 +694,100 @@ class ModDataset(DateDataset):
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
         return np.concatenate(all_data_fake,axis=0), np.concatenate(all_data_mod,axis=0)
+
+class DiffDateDataset(Dataset):
+    required_keys = ['data_folder', 'preprocessor_config', 'crop_indices']
+
+    def __init__(self, config_data, use_cache=True, **kwargs):
+        super().__init__(config_data, use_cache)
+        self.df0 = pd.read_csv(os.path.join(config_data['path_to_csv'], config_data['csv_file']))
+        df_extract = self.df0[
+            (self.df0['Date'] >= config_data['date_start']) & (self.df0['Date'] < config_data['date_end'])]
+        self.df0 = self.df0
+        self.liste_dates = df_extract['Date'].unique().tolist()
+        self.liste_dates = self.liste_dates[0:config_data['number_of_dates']]
+        self.liste_dates_repl = [date_string.replace('T21:00:00Z', '') for date_string in self.liste_dates]
+        self.liste_dates_rep = [item for item in self.liste_dates_repl for _ in range(config_data['Lead_Times'])]
+
+    def is_dataset_cached(self):
+        """
+        Check if the entire dataset is cached.
+
+        Returns:
+            bool: True if the entire dataset is cached, False otherwise.
+        """
+        for idx in range(len(self)):
+            file_path_t, file_path_t_next = self._get_filename(idx)
+            if not self.cache.is_cached(file_path_t):
+                return False
+            if not self.cache.is_cached(file_path_t_next):
+                return False
+        return True
+    
+    def __getitem__(self, items):
+        """
+        Get the preprocessed data for the specified index or indices.
+
+        Args:
+            items: The index or indices of the data to retrieve.
+
+        Returns:
+            Any: The preprocessed data.
+        """
+        file_path_t, file_path_t_next = self._get_filename(items)
+        data_t = self._load_and_preprocess(file_path_t)
+        data_t_next = self._load_and_preprocess(file_path_t_next)
+        return np.abs(data_t_next-data_t)
+    
+    def __len__(self):
+        return len(self.liste_dates_rep)
+    
+    def _get_filename(self, index):
+        date = self.liste_dates_rep[index]
+        names_t = self.df0[
+            (self.df0['Date'] == f"{date}T21:00:00Z") & (
+                    self.df0['LeadTime'] == (index % self.Lead_Times + 1) * self.dh - 1)][
+            'Name'].to_list()
+
+        names_t_next = self.df0[
+            (self.df0['Date'] == f"{date}T21:00:00Z") & (
+                    self.df0['LeadTime'] == (index % self.Lead_Times + 2) * self.dh - 1)][
+            'Name'].to_list()
+        file_names_t = [self._get_full_path(name) for name in names_t]
+        file_names_t_next = [self._get_full_path(name) for name in names_t_next]
+        return file_names_t, file_names_t_next
+
+    def _load_file(self, file_path):
+        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        return np.concatenate(arrays, axis=0)
+    
+    def get_all_data(self):
+        """
+        Get all data from the dataset.
+
+        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is cached, it will be retrieved from the cache.
+
+        Returns:
+            np.ndarray: The concatenated preprocessed data from the entire dataset.
+        """
+        all_data = []
+        if not self.is_dataset_cached():
+            for idx in tqdm(range(len(self)), desc=f"{self.name} : Collecting uncached data"):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self._load_and_preprocess(file_path_t)
+                    data_t_next = self._load_and_preprocess(file_path_t_next)
+                    all_data.append(np.abs(data_t_next-data_t))
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        else:
+            for idx in tqdm(range(len(self)), desc=f"{self.name} : Getting data from cache"):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self.cache.get_from_cache(file_path_t)
+                    data_t_next = self.cache.get_from_cache(file_path_t_next)
+                    all_data.append(np.abs(data_t_next-data_t))
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        return np.concatenate(all_data, axis=0)

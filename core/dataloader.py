@@ -333,3 +333,65 @@ class ModDataloader(DateDataloader):
             logging.warning(f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
         return data1shuf[:cut], data2shuf[:cut]
 
+
+
+class DiffDateDataloader(DataLoader):
+    """
+       A data loader for random datasets.
+
+       This class extends the DataLoader base class and loads random real and fake datasets based on the provided configuration.
+       It iterates over the datasets and returns samples for each iteration.
+
+       Attributes:
+           real_dataset (Type[Dataset]): The real dataset.
+           fake_dataset (Type[Dataset]): The fake dataset.
+           _data_length (int): The length of the data.
+           _current_index (int): The current index in the data.
+    """
+
+    required_keys = ['real_dataset_config', 'fake_dataset_config']
+
+    def __init__(self, config_data, use_cache=False, **kwargs):
+        # Appel du __init__ de la classe mère
+        super().__init__()
+        del config_data['type']  # ensuring 'type' of dataloader does not leak on 'type' of datasets
+        config_data['real_dataset_config'].update(config_data)
+        config_data['fake_dataset_config'].update(config_data)
+        config_data['obs_dataset_config'].update(config_data)
+
+        self.real_dataset = Dataset.from_typed_config(config_data['real_dataset_config'], use_cache=use_cache)
+        self.fake_dataset = Dataset.from_typed_config(config_data['fake_dataset_config'], use_cache=use_cache)
+        self.obs_dataset = ObsDataset.fromConfig(config_data['obs_dataset_config'], use_cache=use_cache)
+        self._data_length = min(len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset))
+        logging.debug(f"Dataset length is {self._data_length}")
+
+    def __next__(self):
+        if self.current_index < self._data_length:
+            try:
+                fake_samples = np.array([self.fake_dataset[ self.current_index + i] for i in range(self.batch_size)])
+                obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
+                real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.batch_size)])
+                self.current_index += min(self.batch_size, self._data_length - self.current_index)
+                return fake_samples[0], real_samples[0], obs_samples
+            except FileNotFoundError as e:
+                logging.warning(f"{self.name} :  File not found, {e}")
+                self.current_index += min(self.batch_size, self._data_length - self.current_index)
+                return None,None,None
+        else:
+            raise StopIteration
+
+    def get_all_data(self):
+        real = self._real_dataset.get_all_data()
+        fake = self._fake_dataset.get_all_data()
+        obs = self._obs_dataset.get_all_data()
+        real, fake = self.randomize_and_cut(real, fake)
+        return real, fake, obs
+
+    def randomize_and_cut(self, data1, data2):
+        data1shuf = np.random.permutation(data1)
+        data2shuf = np.random.permutation(data2)
+        cut = min([self.maxNsamples, data1shuf.shape[0], data2shuf.shape[0]])
+        if cut < self.maxNsamples:
+            logging.warning(
+                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
+        return data1shuf[:cut], data2shuf[:cut]
