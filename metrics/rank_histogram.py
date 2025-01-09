@@ -66,6 +66,8 @@ def unreliability(rankHisto, N_obs):
     delta = np.zeros((C,))
 
     for var_idx in range(C):
-        delta[var_idx] = (1.0/(N_bins-1)) * ((rankHisto[var_idx,:] - (N_obs /N_bins)) ** 2).sum()
+        delta[var_idx] = (1.0 / (N_bins - 1)) * (
+            (rankHisto[var_idx, :] - (N_obs / N_bins)) ** 2
+        ).sum()
 
     return delta, delta0, delta / delta0

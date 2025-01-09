@@ -1,13 +1,17 @@
-from astropy.convolution import convolve_fft, Gaussian2DKernel
+import datetime
+import os
+import pickle
+from collections import namedtuple
+
 import numpy as np
-import os, pickle, datetime
-import metrics.help_functions_objects as hlp
-from mpl_toolkits.axes_grid1 import AxesGrid
 
 # from cartopy.mpl.geoaxes import GeoAxes
 import skimage.measure as skimage
+from astropy.convolution import Gaussian2DKernel, convolve_fft
+from mpl_toolkits.axes_grid1 import AxesGrid
 from scipy import ndimage
-from collections import namedtuple
+
+import metrics.help_functions_objects as hlp
 
 # standard deviation (~ width in grid points) of the smoothing kernels for each type of rain objects
 R_tot = 15

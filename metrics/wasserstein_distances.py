@@ -14,7 +14,6 @@ import numpy as np
 import scipy.stats as sc
 import torch
 
-
 ###############################################################################
 ################### Wasserstein distances ############################
 ###############################################################################
@@ -23,21 +22,21 @@ import torch
 def wasserstein_wrap(data: tuple):
     r"""Compute the first Wasserstein distance between two 1D distributions.
 
-        Parameters
-        ----------
-        data : tuple
-            u_values, v_values, u_weights, v_weights = data
+    Parameters
+    ----------
+    data : tuple
+        u_values, v_values, u_weights, v_weights = data
 
-            Where :
+        Where :
 
-            u_values = real_data | v_values = fake_data
+        u_values = real_data | v_values = fake_data
 
-            u_weights = real_weights | v_weights = fake_weights
+        u_weights = real_weights | v_weights = fake_weights
 
-        Returns
-        -------
-        distance : float
-        The computed distance between the distributions.
+    Returns
+    -------
+    distance : float
+    The computed distance between the distributions.
 
     """
     real_data, fake_data, real_weights, fake_weights = data
@@ -48,27 +47,27 @@ def W1_on_image_samples(
     real_data, fake_data, num_proc=4, Crop_Size=64, real_weights=None, fake_weights=None
 ):
     r"""Compute the Wasserstein distance between real_data and fake_data
-        using real_weights and fake weights as importance weights
+    using real_weights and fake weights as importance weights
 
-        Parameters
-        ----------
-        data : tuple
-            real_data, fake_data, num_proc=4, Crop_Size=64, real_weights=None, fake_weights=None
+    Parameters
+    ----------
+    data : tuple
+        real_data, fake_data, num_proc=4, Crop_Size=64, real_weights=None, fake_weights=None
 
-            Where :
+        Where :
 
-            u_values = real_data | v_values = fake_data
+        u_values = real_data | v_values = fake_data
 
-            u_weights = real_weights | v_weights = fake_weights
+        u_weights = real_weights | v_weights = fake_weights
 
-        Returns
-        -------
-        distance : [float]
-        The computed distance between the distributions.
+    Returns
+    -------
+    distance : [float]
+    The computed distance between the distributions.
 
-        Notes
-        -----
-        data is cropped at the center so as to reduce comput. overhead
+    Notes
+    -----
+    data is cropped at the center so as to reduce comput. overhead
     """
 
     Side_Size = fake_data.shape[2]
@@ -100,22 +99,22 @@ def W1_center(real_data, fake_data, Crop_Size=64):
     # TODO : Maybe merge that function with W1_center_numpy and add an input parameter
     # that set the input type of the desired Wasserstein Distance
     r"""Compute the Wasserstein distance between real_data and fake_data
-        using real_weights and fake weights as importance weights
+    using real_weights and fake weights as importance weights
 
-        Parameters
-        ----------
-        real_data : np.array
-        fake_data : np.array
-        Crop_size : int (default : 64)
+    Parameters
+    ----------
+    real_data : np.array
+    fake_data : np.array
+    Crop_size : int (default : 64)
 
-        Returns
-        -------
-        distance : torch.tensor
-        The computed distance between the distributions.
+    Returns
+    -------
+    distance : torch.tensor
+    The computed distance between the distributions.
 
-        Notes
-        -----
-        data is cropped at the center so as to reduce comput. overhead
+    Notes
+    -----
+    data is cropped at the center so as to reduce comput. overhead
     """
     Side_Size = fake_data.shape[2]
     HALF = Side_Size // 2 - 1
@@ -136,24 +135,24 @@ def W1_center(real_data, fake_data, Crop_Size=64):
 
 def W1_random(real_data, fake_data, pixel_num=4096):
     r"""Compute the Wasserstein distance between real_data and fake_data
-        using real_weights and fake weights as importance weights
-        
-        PYTORCH VERSION
+    using real_weights and fake weights as importance weights
 
-        Parameters
-        ----------
-        real_data : np.array
-        fake_data : np.array
-        pixel_num : int (default : 4096)
+    PYTORCH VERSION
 
-        Returns
-        -------
-        distance : torch.tensor
-        The computed distance between the distributions.
+    Parameters
+    ----------
+    real_data : np.array
+    fake_data : np.array
+    pixel_num : int (default : 4096)
 
-        Notes
-        -----
-        random pixels of data are selected so as to reduce comput. overhead
+    Returns
+    -------
+    distance : torch.tensor
+    The computed distance between the distributions.
+
+    Notes
+    -----
+    random pixels of data are selected so as to reduce comput. overhead
 
     """
 
@@ -180,22 +179,22 @@ def W1_random_NUMPY(real_data, fake_data, pixel_num=4096):
     # TODO : Maybe merge that function with the former one and add an input parameter
     # that set the input type of the desired Wasserstein Distance
     r"""Compute the Wasserstein distance between real_data and fake_data
-        using real_weights and fake weights as importance weights
+    using real_weights and fake weights as importance weights
 
-        Parameters
-        ----------
-        real_data : np.array
-        fake_data : np.array
-        pixel_num : int (default : 4096)
+    Parameters
+    ----------
+    real_data : np.array
+    fake_data : np.array
+    pixel_num : int (default : 4096)
 
-        Returns
-        -------
-        distance : torch.tensor
-        The computed distance between the distributions.
+    Returns
+    -------
+    distance : torch.tensor
+    The computed distance between the distributions.
 
-        Notes
-        -----
-        random pixels of data are selected so as to reduce comput. overhead
+    Notes
+    -----
+    random pixels of data are selected so as to reduce comput. overhead
 
     """
 
@@ -220,7 +219,7 @@ def W1_random_NUMPY(real_data, fake_data, pixel_num=4096):
 
 class pixel_W1:
     """
-        Wrapper class to compute W1 distance on 1 pixel of bounded maps
+    Wrapper class to compute W1 distance on 1 pixel of bounded maps
     """
 
     def __init__(self, real, fake):
@@ -238,22 +237,22 @@ class pixel_W1:
 
 def pointwise_W1(real_data, fake_data):
     r"""Compute pixel-wise and channel-wise Wasserstein distance
-        between real_data and fake_data using real_weights and
-        fake weights as importance weights
+    between real_data and fake_data using real_weights and
+    fake weights as importance weights
 
-        Parameters
-        ----------
-        real_data : np.array
-        fake_data : np.array
+    Parameters
+    ----------
+    real_data : np.array
+    fake_data : np.array
 
-        Returns
-        -------
-        distance : np.array
-        The computed distance between the distributions.
+    Returns
+    -------
+    distance : np.array
+    The computed distance between the distributions.
 
-        Notes
-        -----
-        random pixels of data are selected so as to reduce comput. overhead
+    Notes
+    -----
+    random pixels of data are selected so as to reduce comput. overhead
 
     """
     assert real_data.shape == fake_data.shape
@@ -289,24 +288,24 @@ def pointwise_W1(real_data, fake_data):
 
 def W1_center_numpy(real_data, fake_data, Crop_Size=64):
     r"""Compute the Wasserstein distance between real_data and fake_data
-        using real_weights and fake weights as importance weights
-        
-        NUMPY VERSION
+    using real_weights and fake weights as importance weights
 
-        Parameters
-        ----------
-        real_data : np.array
-        fake_data : np.array
-        Crop_Size : int (default : 64)
+    NUMPY VERSION
 
-        Returns
-        -------
-        distance : np.array
-        The computed distance between the distributions.
+    Parameters
+    ----------
+    real_data : np.array
+    fake_data : np.array
+    Crop_Size : int (default : 64)
 
-        Notes
-        -----
-        data is cropped at the center so as to reduce comput. overhead
+    Returns
+    -------
+    distance : np.array
+    The computed distance between the distributions.
+
+    Notes
+    -----
+    data is cropped at the center so as to reduce comput. overhead
 
     """
     Side_Size = fake_data.shape[2]
@@ -334,17 +333,17 @@ class W1_center_class:
 
     def compute_W1(self, real_data, fake_data):
         r"""Compute the Wasserstein distance between real_data and fake_data
-            using real_weights and fake weights as importance weights - PYTORCH VERSION
+        using real_weights and fake weights as importance weights - PYTORCH VERSION
 
-            Parameters
-            ----------
-            real_data : np.array
-            fake_data : np.array
+        Parameters
+        ----------
+        real_data : np.array
+        fake_data : np.array
 
-            Returns
-            -------
-            distance : torch.Tensor
-            The computed distance between the distributions.
+        Returns
+        -------
+        distance : torch.Tensor
+        The computed distance between the distributions.
 
         """
         Side_Size = fake_data.shape[2]

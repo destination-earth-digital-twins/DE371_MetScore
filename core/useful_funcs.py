@@ -1,6 +1,5 @@
 import numpy as np
 
-import numpy as np
 
 def obs_clean(obs, crop_indices):
     """
@@ -35,10 +34,18 @@ def obs_clean(obs, crop_indices):
 
     size = crop_indices[1] - crop_indices[0]
 
-    Lat_min = Lat_min_AROME + crop_indices[0] * (Lat_max_AROME - Lat_min_AROME) / n_lat_AROME
-    Lat_max = Lat_min_AROME + crop_indices[1] * (Lat_max_AROME - Lat_min_AROME) / n_lat_AROME
-    Lon_min = Lon_min_AROME + crop_indices[2] * (Lon_max_AROME - Lon_min_AROME) / n_lon_AROME
-    Lon_max = Lon_min_AROME + crop_indices[3] * (Lon_max_AROME - Lon_min_AROME) / n_lon_AROME
+    Lat_min = (
+        Lat_min_AROME + crop_indices[0] * (Lat_max_AROME - Lat_min_AROME) / n_lat_AROME
+    )
+    Lat_max = (
+        Lat_min_AROME + crop_indices[1] * (Lat_max_AROME - Lat_min_AROME) / n_lat_AROME
+    )
+    Lon_min = (
+        Lon_min_AROME + crop_indices[2] * (Lon_max_AROME - Lon_min_AROME) / n_lon_AROME
+    )
+    Lon_max = (
+        Lon_min_AROME + crop_indices[3] * (Lon_max_AROME - Lon_min_AROME) / n_lon_AROME
+    )
 
     dlat = (Lat_max - Lat_min) / size
     dlon = (Lon_max - Lon_min) / size
@@ -47,14 +54,16 @@ def obs_clean(obs, crop_indices):
     indices_obs = []
 
     for i in range(N_obs):
-        if (obs[i, 0] > Lon_min and obs[i, 0] < Lon_max) and (obs[i, 1] > Lat_min and obs[i, 1] < Lat_max):
+        if (obs[i, 0] > Lon_min and obs[i, 0] < Lon_max) and (
+            obs[i, 1] > Lat_min and obs[i, 1] < Lat_max
+        ):
             indice_lon = np.floor((obs[i, 0] - Lon_min) / dlon)
             indice_lat = np.floor((obs[i, 1] - Lat_min) / dlat)
             indices_obs.append([indice_lat, indice_lon])
             obs_reduced.append(obs[i])
 
-    indices_obs = np.array(indices_obs, dtype='int')
-    obs_reduced = np.array(obs_reduced, dtype='float32')
+    indices_obs = np.array(indices_obs, dtype="int")
+    obs_reduced = np.array(obs_reduced, dtype="float32")
 
     len_obs_reduced = obs_reduced.shape[0]
 
@@ -63,12 +72,14 @@ def obs_clean(obs, crop_indices):
     j = 0
     sum_measurements = np.zeros((3))
     for i in range(len_obs_reduced):
-        if (i == j):
+        if i == j:
             sum_measurements = sum_measurements + obs_reduced[i, 2::]
             j = i + 1
             if i != len_obs_reduced - 1:
                 while (j < len_obs_reduced) and (
-                        indices_obs[i, 0] == indices_obs[j, 0] and indices_obs[i, 1] == indices_obs[j, 1]):
+                    indices_obs[i, 0] == indices_obs[j, 0]
+                    and indices_obs[i, 1] == indices_obs[j, 1]
+                ):
                     sum_measurements = sum_measurements + obs_reduced[j, 2::]
                     j = j + 1
 
@@ -77,8 +88,8 @@ def obs_clean(obs, crop_indices):
                 obs_r_clean.append(observation)
                 indices_o_clean.append(indices_obs[i])
 
-    indices_o_clean = np.array(indices_o_clean, dtype='int')
-    obs_r_clean = np.array(obs_r_clean, dtype='float32')
+    indices_o_clean = np.array(indices_o_clean, dtype="int")
+    obs_r_clean = np.array(obs_r_clean, dtype="float32")
 
     Ens_observation = np.empty((3, size, size))
     Ens_observation[:] = np.nan
@@ -87,12 +98,12 @@ def obs_clean(obs, crop_indices):
     Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]
     Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
 
-    Ens_observation[Ens_observation > 1000.] = np.nan
-    Ens_observation[1][Ens_observation[0] < 2.] = np.nan
+    Ens_observation[Ens_observation > 1000.0] = np.nan
+    Ens_observation[1][Ens_observation[0] < 2.0] = np.nan
 
     return Ens_observation
 
 
 def denorm(mat, Maxs, Means):
-    res = mat * (1. / 0.95) * Maxs.astype('float32') + Means.astype('float32')
+    res = mat * (1.0 / 0.95) * Maxs.astype("float32") + Means.astype("float32")
     return res

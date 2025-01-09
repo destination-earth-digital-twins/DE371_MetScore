@@ -20,10 +20,9 @@ from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.fftpack import dct, idct, fft
+from scipy.fftpack import dct, fft, idct
 
 import metrics.wind_comp as wc
-
 
 ################## DCT ########################################################
 

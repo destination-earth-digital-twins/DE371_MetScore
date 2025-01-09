@@ -1,4 +1,5 @@
 import os
+
 import geopy.distance
 import numpy as np
 
