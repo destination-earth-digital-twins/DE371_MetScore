@@ -394,7 +394,7 @@ class ModDataloader(DateDataloader):
                     f"real {real_samples.shape} fake {fake_samples.shape} mod {mod_samples.shape}"
                 )
                 logging.debug(
-                    f"real indices {self.real_dataset.var_indices} -> shape {real_samples[0][:, self.real_dataset.var_indices, :, :].shape}"
+                    f"indices {self.real_dataset.var_indices}, shape {real_samples[0].shape}"
                 )
                 mod_bias = (
                     mod_samples[0].mean(axis=(0, -2, -1))
