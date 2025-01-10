@@ -13,20 +13,20 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-random.seed(42)
-
 from core.configurable import Configurable
 from core.useful_funcs import obs_clean
 from preprocess.preprocessor import Preprocessor
+
+random.seed(42)
 
 
 # region helpers
 def convert_key(func):
     def wrapper(self, key, *args, **kwargs):
-        if type(key) == list:
+        if isinstance(key, list):
             fusion_key = key[0]
             for k in key[1:]:
-                assert type(k) == str
+                assert isinstance(k, str)
                 fusion_key += k
             key = fusion_key
         return func(self, key, *args, **kwargs)
@@ -37,7 +37,8 @@ def convert_key(func):
 class MemoryCache:
     """
     A simple in-memory cache for storing and retrieving data.
-    This class provides methods to add, retrieve, and check the existence of data in the cache, as well as to clear the cache.
+    This class provides methods to add, retrieve, and check the existence of data in the cache,
+    as well as to clear the cache.
 
     Attributes:
         cache (dict): A dictionary to store the cached data.
@@ -62,7 +63,8 @@ class MemoryCache:
         If caching is enabled, the provided data will be stored in the cache using the given key.
 
         Args:
-            key: The key to store the data under. It can be a string or a list of strings that will be fused into a single string.
+            key: The key to store the data under. It can be a string or a list of strings
+            that will be fused into a single string.
             data: The data to store in the cache.
         """
         if self.use_cache:
@@ -73,11 +75,13 @@ class MemoryCache:
         """
         Check if data is present in the cache.
 
-        If caching is enabled, this method will return True if the given key is present in the cache, False otherwise.
+        If caching is enabled, this method will
+        return True if the given key is present in the cache, False otherwise.
         If caching is disabled, it will always return False.
 
         Args:
-            key: The key to check in the cache. It can be a string or a list of strings that will be fused into a single string.
+            key: The key to check in the cache.
+            It can be a string or a list of strings that will be fused into a single string.
 
         Returns:
             bool: True if the key is present in the cache, False otherwise.
@@ -91,14 +95,17 @@ class MemoryCache:
         """
         Retrieve data from the cache.
 
-        If caching is enabled, this method will return the data associated with the given key from the cache.
+        If caching is enabled, this method will return the data associated
+        with the given key from the cache.
         If caching is disabled or the key is not present in the cache, it will return None.
 
         Args:
-            key: The key to retrieve data from the cache. It can be a string or a list of strings that will be fused into a single string.
+            key: The key to retrieve data from the cache.
+            It can be a string or a list of strings that will be fused into a single string.
 
         Returns:
-            Any: The cached data associated with the given key, or None if the key is not present in the cache or caching is disabled.
+            Any: The cached data associated with the given key,
+            or None if the key is not present in the cache or caching is disabled.
         """
         if not self.use_cache:
             return None
@@ -122,13 +129,15 @@ class Dataset(Configurable):
     """
     Base class for datasets.
 
-    This class provides methods to load, preprocess, and cache data from a specified folder using a given preprocessor.
+    This class provides methods to load, preprocess,
+    and cache data from a specified folder using a given preprocessor.
     Subclasses should define `_get_filename`, `_load_file`, and `__len__` methods.
 
     To create a custom dataset, follow these steps:
 
     1. Create a new class that inherits from the `Dataset` class.
-    2. Define the `required_keys` class attribute, which is a list of required configuration keys for the custom dataset.
+    2. Define the `required_keys` class attribute, which is a list of required configuration keys
+    for the custom dataset.
     3. Implement the `_get_filename`, `_load_file`, and `__len__` methods in the custom dataset class.
     4. Optionally, you can override other methods like `_preprocess_batch` or `get_all_data` if needed.
 
@@ -155,8 +164,10 @@ class Dataset(Configurable):
             return 1000
     ```
 
-    In this example, `CustomDataset` has a custom attribute `custom_attribute` and requires a configuration key called `custom_key`.
-    The `_get_filename`, `_load_file`, and `__len__` methods are implemented to define the behavior for loading and accessing the data.
+    In this example, `CustomDataset` has a custom attribute `custom_attribute`
+    and requires a configuration key called `custom_key`.
+    The `_get_filename`, `_load_file`, and `__len__` methods are implemented
+    to define the behavior for loading and accessing the data.
     """
 
     required_keys = ["data_folder", "preprocessor_config"]
@@ -183,7 +194,8 @@ class Dataset(Configurable):
         """
         Get the filename for the specified index.
 
-        This method should be implemented by subclasses to provide the logic for obtaining the filename based on the index.
+        This method should be implemented by subclasses to provide the logic
+        for obtaining the filename based on the index.
 
         Args:
             index (int): The index of the file.
@@ -213,7 +225,8 @@ class Dataset(Configurable):
         """
         Get the length of the dataset.
 
-        This method should be implemented by subclasses to provide the logic for determining the length of the dataset.
+        This method should be implemented by subclasses
+        to provide the logic for determining the length of the dataset.
 
         Returns:
             int: The length of the dataset.
@@ -570,7 +583,7 @@ class MixDataset(DateDataset):
             self.N_real_mb > 16
         ):  # hard constraint here since AROME data only have 16 members at most
             raise Warning(
-                f"You stated a proportion of real members of {config_data['real_proportion']} and total {config_data['N_ens']} members,\
+                f"input proportion of real mbs : {config_data['real_proportion']} total {config_data['N_ens']} mbs,\
             but AROME ensemble only have 16 members. Capping real members number to 16."
             )
             self.N_real_mb = 16

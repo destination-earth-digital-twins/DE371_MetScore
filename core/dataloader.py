@@ -146,7 +146,8 @@ class DataLoader(ABC, Configurable):
         """
         Abstract method for implementing the iterator protocol.
 
-        This method should be implemented in subclasses to provide the specific behavior for returning the next sample from the datasets.
+        This method should be implemented in subclasses to provide
+        the specific behavior for returning the next sample from the datasets.
 
         Raises:
             StopIteration: When there are no more samples to iterate over.
@@ -172,7 +173,8 @@ class DateDataloader(DataLoader):
     """
     A data loader for date-based datasets.
 
-    This class extends the DataLoader base class and loads real, fake, and observed datasets based on the provided configuration.
+    This class extends the DataLoader base class and loads
+    real, fake, and observed datasets based on the provided configuration.
     It iterates over the datasets and returns samples for each iteration.
 
     Attributes:
@@ -263,7 +265,8 @@ class RandomDataloader(DataLoader):
     """
     A data loader for random datasets.
 
-    This class extends the DataLoader base class and loads random real and fake datasets based on the provided configuration.
+    This class extends the DataLoader base class and loads
+    random real and fake datasets based on the provided configuration.
     It iterates over the datasets and returns samples for each iteration.
 
     Attributes:
@@ -388,10 +391,10 @@ class ModDataloader(DateDataloader):
                     f"mod'ing with option constant_debias set to {self.constant_debias}"
                 )
                 logging.debug(
-                    f"real shape {real_samples.shape} fake shape {fake_samples.shape} mod shape {mod_samples.shape}"
+                    f"real {real_samples.shape} fake {fake_samples.shape} mod {mod_samples.shape}"
                 )
                 logging.debug(
-                    f"real dataset indices {self.real_dataset.var_indices} resulting shape {real_samples[0][:,self.real_dataset.var_indices,:,:].shape}"
+                    f"real indices {self.real_dataset.var_indices} -> shape {real_samples[0][:, self.real_dataset.var_indices, :, :].shape}"
                 )
                 mod_bias = (
                     mod_samples[0].mean(axis=(0, -2, -1))
@@ -423,8 +426,10 @@ class ModDataloader(DateDataloader):
             raise StopIteration
 
     def get_all_data(self):
-        # TODO (?) --> find a way to modify on the fly to compute scores on mod'ed data
-        # otherwise this feature is quite useless (either FakeDataset makes the trick or you just cannot compute non-batched on mod'ed data)
+        """
+        TODO  find a way to modify on the fly to compute scores on mod'ed data
+        otherwise this feature is useless (either FakeDataset is ok or one cannot use non-batched on mod'ed data)
+        """
         real = self._real_dataset.get_all_data()
         logging.debug("Not mod'ing on data gathering")
         fake, _ = self._fake_dataset.get_all_data()

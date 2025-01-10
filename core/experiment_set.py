@@ -119,7 +119,7 @@ class ExperimentSet(Configurable):
                 intersect = existing_names.intersection(new_names)
                 if len(intersect) > 0:
                     raise ValueError(
-                        f"Folder {self.current_path} already exists, metrics coincide (common metric names : {intersect}) and config are the same."
+                        f"{self.current_path} already exists, common metrics (names : {intersect}), same config."
                     )
                 else:
                     current_metrics = []
@@ -184,7 +184,7 @@ class ExperimentSet(Configurable):
                 logging.debug(f"Running Metric {type(metric)}")
                 results = metric.calculate(real_data, fake_data, obs_data)
 
-                if type(results) == dict:
+                if isinstance(results, dict):
                     with open(
                         os.path.join(self.current_path, metric.name) + ".p", "wb"
                     ) as f:

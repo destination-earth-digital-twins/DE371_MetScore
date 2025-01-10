@@ -10,8 +10,6 @@ import logging
 import os
 import sys
 import traceback
-from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 
 import yaml
 
