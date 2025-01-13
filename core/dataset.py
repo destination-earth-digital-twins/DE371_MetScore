@@ -696,7 +696,11 @@ class ModDataset(DateDataset):
         return np.concatenate(all_data_fake,axis=0), np.concatenate(all_data_mod,axis=0)
 
 class DiffDateDataset(Dataset):
-    required_keys = ['data_folder', 'preprocessor_config', 'crop_indices']
+    r"""
+    Dataset where data are temporal difference (absolute or not) of meteorological fields.
+    Delta_X(t,dh) = X(t + dh) - X(t) ; Where X(t) is a meteorological field at time step t.
+    """
+    required_keys = ['data_folder', 'preprocessor_config', 'crop_indices', 'temporal_difference_type']
 
     def __init__(self, config_data, use_cache=True, **kwargs):
         super().__init__(config_data, use_cache)
@@ -737,8 +741,13 @@ class DiffDateDataset(Dataset):
         file_path_t, file_path_t_next = self._get_filename(items)
         data_t = self._load_and_preprocess(file_path_t)
         data_t_next = self._load_and_preprocess(file_path_t_next)
-        return np.abs(data_t_next-data_t)
-    
+        if self.temporal_difference_type == 'absolute':
+            return np.abs(data_t_next-data_t)
+        elif self.temporal_difference_type == 'simple':
+            return np.array(data_t_next-data_t)
+        else :
+            raise NotImplementedError
+        
     def __len__(self):
         return len(self.liste_dates_rep)
     
@@ -778,7 +787,12 @@ class DiffDateDataset(Dataset):
                     file_path_t, file_path_t_next = self._get_filename(idx)
                     data_t = self._load_and_preprocess(file_path_t)
                     data_t_next = self._load_and_preprocess(file_path_t_next)
-                    all_data.append(np.abs(data_t_next-data_t))
+                    if self.temporal_difference_type == 'absolute':
+                        all_data.append(np.abs(data_t_next-data_t))
+                    elif self.temporal_difference_type == 'simple':
+                        all_data.append(np.array(data_t_next-data_t))
+                    else :
+                        raise NotImplementedError
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
         else:
@@ -787,7 +801,12 @@ class DiffDateDataset(Dataset):
                     file_path_t, file_path_t_next = self._get_filename(idx)
                     data_t = self.cache.get_from_cache(file_path_t)
                     data_t_next = self.cache.get_from_cache(file_path_t_next)
-                    all_data.append(np.abs(data_t_next-data_t))
+                    if self.temporal_difference_type == 'absolute':
+                        all_data.append(np.abs(data_t_next-data_t))
+                    elif self.temporal_difference_type == 'simple':
+                        all_data.append(np.array(data_t_next-data_t))
+                    else :
+                        raise NotImplementedError
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
         return np.concatenate(all_data, axis=0)

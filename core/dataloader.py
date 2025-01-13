@@ -337,11 +337,12 @@ class ModDataloader(DateDataloader):
 
 class DiffDateDataloader(DataLoader):
     """
-       A data loader for random datasets.
+       A data loader for difference date datasets.
 
-       This class extends the DataLoader base class and loads random real and fake datasets based on the provided configuration.
+       This class extends the DataLoader base class and loads difference date real and fake datasets based on the provided configuration.
        It iterates over the datasets and returns samples for each iteration.
-
+       See DiffDateDataset class to see explanation about Difference Date.
+    
        Attributes:
            real_dataset (Type[Dataset]): The real dataset.
            fake_dataset (Type[Dataset]): The fake dataset.
