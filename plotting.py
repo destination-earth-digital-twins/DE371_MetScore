@@ -190,24 +190,33 @@ def main():
             "",
             "+45H",
             "",
-            "+48H",  # IMPORTANT CONSTANT FOR RANK DIAGRAM (with 112 members)
+            "+48H",
+            "",
+            "",
         ]
+
+        mean_bias = np.zeros(
+            (len_tests, number_dates * lead_times, var_number, size_H, size_W),
+            dtype=("float32"),
+        )
+
         mean_bias_LT = np.zeros(
             (len_tests, number_dates, lead_times, var_number, size_H, size_W),
             dtype=("float32"),
         )
 
-        for i in range(len_tests):
+        D_i = 0
+        LT_i = 0
+        for i in range(number_dates * lead_times):
 
-            mean_bias[i] = np.load(
-                output_folder + "/" + experiment_list[i] + "/" + names_o_met[0] + ".npy"
-            )  # IMPORTANT CONSTANT FOR RANK DIAGRAM (with 112 members)
+            mean_bias_LT[:, D_i, LT_i] = mean_bias[:, i]
+            LT_i = LT_i + 1
+
             if LT_i == lead_times:
 
                 D_i = D_i + 1
                 LT_i = 0
 
-        # MEAN BIAS
         for i in range(var_number):
 
             fig, axs = plt.subplots(figsize=(9, 7))
