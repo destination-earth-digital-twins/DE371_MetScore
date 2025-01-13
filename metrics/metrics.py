@@ -142,7 +142,7 @@ class PreprocessCondObs(Metric):
             real_data_pp[:, 0], real_data_pp[:, 1]
         )
 
-        if self.debiasing == True:
+        if self.debiasing:
             fake_data_pp = wc.debiasing(
                 fake_data_pp,
                 real_data_pp,
@@ -189,7 +189,8 @@ class PreprocessDist(Metric):
         """
         Preprocess data for distance metrics.
 
-        This method performs data preprocessing specific to distance metrics, such as selecting the right indicesfor variables.
+        This method performs data preprocessing specific to distance metrics,
+        such as selecting the right indicesfor variables.
 
         Args:
             real_data: The real data.

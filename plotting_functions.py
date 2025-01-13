@@ -1,15 +1,12 @@
 import copy
 import gc
-import os
 import pickle
 
 import matplotlib as mpl
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from torchvision import transforms
 
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
@@ -242,7 +239,7 @@ def plot_biasEnsemble(experiments, metric, config):
     gc.collect()
 
 
-######################## ENSEMBLE CRPS
+# ENSEMBLE CRPS
 def plot_ensembleCRPS(experiments, metric, config):
     crps_scores = np.zeros(
         (
@@ -360,7 +357,7 @@ def plot_ensembleCRPS(experiments, metric, config):
     gc.collect()
 
 
-######################## ENSEMBLE CRPS
+# ENSEMBLE CRPS, UNFAIR SCORE
 def plot_ensembleCRPSunfair(experiments, metric, config):
     crps_scores = np.zeros(
         (
@@ -479,7 +476,7 @@ def plot_ensembleCRPSunfair(experiments, metric, config):
     gc.collect()
 
 
-###########################" SKILLSPREAD
+# SKILLSPREAD
 def plot_skillSpread(experiments, metric, config):
     s_p_scores = np.zeros(
         (
@@ -673,8 +670,10 @@ def plot_brierScore(experiments, metric, config):
         Brier_scores[exp_idx] = data
 
     Brier_scores_LT = group_by_leadtime(Brier_scores, Brier_scores_LT, config)
+
+    # check whether significance has been computed and compute if needed
     try:
-        signs = [
+        _ = [
             np.load(
                 f"{config['output_plots']}/{metric['folder']}/{metric['name']}_decisions_{thr}.npy"
             ).squeeze()
@@ -683,12 +682,6 @@ def plot_brierScore(experiments, metric, config):
     except FileNotFoundError:
         print("computing significance")
         wct.significance(experiments, metric, config)
-        signs = [
-            np.load(
-                f"{config['output_plots']}/{metric['folder']}/{metric['name']}_decisions_{thr}.npy"
-            ).squeeze()
-            for thr in range(6)
-        ]
 
     for var_idx in range(config["var_number"]):
         fig, axs = plt.subplots(figsize=(9, 7))
@@ -707,9 +700,9 @@ def plot_brierScore(experiments, metric, config):
                 ) / np.nanmean(
                     Brier_scores_LT[0, :, :, threshold, var_idx], axis=(0, -2, -1)
                 )
-                # print(bss_lt.shape)
+
                 condition = wct.decision_leadtimes(bss_lt)
-                # print(condition)
+
                 if exp_idx > 0 and condition:
                     markers.append(threshold)
                 brier_diff[threshold] = (
@@ -750,46 +743,10 @@ def plot_brierScore(experiments, metric, config):
     gc.collect()
 
 
-#### RANK HISTOGRAM
-
-
+# RANK HISTOGRAM
 def plot_rankHistogram(experiments, metric, config):
 
-    # rank_histo = np.zeros((len(experiments), config['number_dates'] * config['lead_times'], config['var_number'], config['N_bins_max']))
-
-    N_bins = [exp["N_ens"] + 1 for exp in experiments]
-
-    """for var_idx in range(config['var_number']):
-        fig,axs = plt.subplots(figsize = (9,7))
-        for exp_idx, exp in enumerate(experiments):
-            ind = np.arange(N_bins[exp_idx])
-            rank_histo = np.load(config['expe_folder'] + '/' + exp['name'] + '/' + metric['name'] + '.npy')
-            print('rankhisto shape', rank_histo.shape)
-            bins_local = rank_histo.shape[-1]
-            rank_histo_plot = rank_histo[:,var_idx].mean(axis=0)
-            if bins_local>17:
-                print(rank_histo_plot.shape)
-                print(bins_local//17)
-                split = np.split(rank_histo_plot,[7,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112])
-                print(len(split), split[0].shape)
-                rank_histo_plot = np.array([s.sum() for s in split])
-                print(rank_histo_plot.shape)
-            plt.bar(ind, rank_histo_plot, label=exp['short_name'], alpha=0.5, color=color_p[exp_idx])
-        plt.title(var_names_m[var_idx],fontdict=font)
-        #plt.xticks( fontsize ='18')
-        plt.tick_params(bottom = False, labelbottom = False)
-        plt.xlabel('Rank', fontsize= '16')
-        plt.ylabel('Number of Observations', fontsize= '16')
-        axs.tick_params(length=12, width=1)
-        plt.yticks(fontsize ='16')
-        plt.legend()
-        comp_name = '_'.join([exp['short_name'] for exp in experiments])
-        plt.savefig(config['output_plots'] + '/' + metric['folder'] + '/' + metric['name'] + '_' + case_name_thresholds[var_idx] + f'_compar_{comp_name}.pdf')
-
-    rank_histo=0
-    gc.collect()"""
-
-    for exp_idx, exp in enumerate(experiments):
+    for exp in experiments:
         for var_idx in range(config["var_number"]):
             fig, axs = plt.subplots(figsize=(9, 7))
 
@@ -833,7 +790,7 @@ def plot_rankHistogram(experiments, metric, config):
 
             gc.collect()
 
-    for exp_idx, exp in enumerate(experiments):
+    for exp in experiments:
         for var_idx in range(config["var_number"]):
             fig, axs = plt.subplots(figsize=(9, 7))
 
@@ -873,7 +830,7 @@ def plot_rankHistogram(experiments, metric, config):
 
             gc.collect()
 
-    for exp_idx, exp in enumerate(experiments):
+    for exp in experiments:
         for var_idx in range(config["var_number"]):
             fig, axs = plt.subplots(figsize=(9, 7))
             rank_histo = np.load(
@@ -886,11 +843,8 @@ def plot_rankHistogram(experiments, metric, config):
             )[: config["number_dates"] * config["lead_times"]]
             ind = np.arange(rank_histo.shape[-1])
             print("rankhisto shape", rank_histo.shape)
-            freq = rank_histo[:, var_idx].mean(axis=0)
-            ref_freq = 1.0 / rank_histo.shape[-1]
             plt.bar(ind, rank_histo[:, var_idx].mean(axis=0))
             plt.title(f"{exp['short_name']} {var_names_m[var_idx]}", fontdict=font)
-            # plt.xticks( fontsize ='18')
             plt.tick_params(bottom=False, labelbottom=False)
             plt.xlabel("Rank", fontsize="18")
             plt.ylabel("Number of Observations", fontsize="18")
@@ -912,9 +866,7 @@ def plot_rankHistogram(experiments, metric, config):
             gc.collect()
 
 
-##################################################### REL DIAGRAM
-
-
+# REL DIAGRAM
 def plot_relDiagram(experiments, metric, config):
 
     bins = np.linspace(0, 1, num=11)
@@ -995,7 +947,7 @@ def plot_relDiagram(experiments, metric, config):
     gc.collect()
 
 
-###################################### ROC
+# ROC
 
 
 def plot_ROC(experiments, metric, config):
@@ -1021,9 +973,8 @@ def plot_ROC(experiments, metric, config):
     for exp_idx, exp in enumerate(experiments):
         rel_diag_scores[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + "relDiagram.npy"
-        )[
-            : config["number_dates"] * config["lead_times"]
-        ]  ### ATENTION ROC USES SCORES FROM REL_DIAG_SCORES
+        )[: config["number_dates"] * config["lead_times"]]
+    # ATTENTION ROC USES SCORES FROM REL_DIAG_SCORES
 
     bins_roc = np.array(
         [
@@ -1122,7 +1073,7 @@ def plot_ROC(experiments, metric, config):
         for exp_idx, exp in enumerate(experiments)[1:]:
             plt.bar(
                 [thr for thr in range(6)],
-                A_ROC_skill[exp_idx, var_idx, thr],
+                [A_ROC_skill[exp_idx, var_idx, thr] for thr in range(6)],
                 color=color_p[exp_idx],
                 label=exp["short_name"],
             )
@@ -1172,7 +1123,7 @@ def plot_ROCfast(experiments, metric, config):
             mmap_mode="r+",
         )[
             : config["number_dates"] * config["lead_times"]
-        ]  ### ATENTION ROC USES SCORES FROM REL_DIAG_SCORES
+        ]  # ROC USES SCORES FROM REL_DIAG_SCORES
 
     bins_roc = np.array(
         [

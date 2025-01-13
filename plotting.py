@@ -3,19 +3,13 @@ import copy
 import gc
 import logging
 import os
-import pickle
 import sys
-from concurrent.futures import ThreadPoolExecutor
 
 import matplotlib as mpl
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from torchvision import transforms
-
-from core.experiment_set import ExperimentSet
 
 mpl.rcParams["axes.linewidth"] = 2
 
@@ -91,7 +85,7 @@ def main():
         if not os.path.exists(config["output_plots"]):
             os.mkdir(config["output_plots"])
 
-        ################################# GRAPHS SETUP
+        # GRAPHS SETUP
         font = {
             "family": "serif",
             "color": "black",
@@ -100,15 +94,16 @@ def main():
         }
         len_tests = len(experiment_list)  # HOW MANY EXPERIMENTS
 
-        N_bins_max = 121  ## IMPORTANT CONSTANT FOR RANK DIAGRAM
+        # IMPORTANT CONSTANT FOR RANK DIAGRAM (with 112 members)
+        N_bins_max = 121
 
-        ##### SOME VARIABLES FOR REL DIAGRAM #####
+        # SOME VARIABLES FOR REL DIAGRAM
         bins = np.linspace(0, 1, num=11)
         freq_obs = np.zeros((10))
         Hit_rate = np.zeros((17))
         false_alarm = np.zeros((17))
 
-        ##### SOME VARIABLES FOR ROC
+        # SOME VARIABLES FOR ROC
         A_ROC = np.zeros((len_tests))
         A_ROC_skill = np.zeros((len_tests))
 
@@ -117,7 +112,7 @@ def main():
         false_alarm[0] = 0
         false_alarm[16] = 1
 
-        ##### ESTHETICS AND TITLE NAMES
+        # ESTHETICS AND TITLE NAMES
         color_p = [
             "black",
             "royalblue",
@@ -196,22 +191,8 @@ def main():
             "",
             "+45H",
             "",
-            "+48H",
-            "",
-            "",
+            "+48H",  # IMPORTANT CONSTANT FOR RANK DIAGRAM (with 112 members)
         ]
-
-        for score_idx in range(len(names_o_p_folders)):
-            if not os.path.exists(
-                paths_output_plots + "/" + names_o_p_folders[score_idx]
-            ):
-                os.mkdir(paths_output_plots + "/" + names_o_p_folders[score_idx])
-
-        ##################################### PLOTTING MEAN BIAS RESULTS ################################
-        mean_bias = np.zeros(
-            (len_tests, number_dates * lead_times, var_number, size_H, size_W),
-            dtype=("float32"),
-        )
         mean_bias_LT = np.zeros(
             (len_tests, number_dates, lead_times, var_number, size_H, size_W),
             dtype=("float32"),
@@ -221,15 +202,7 @@ def main():
 
             mean_bias[i] = np.load(
                 output_folder + "/" + experiment_list[i] + "/" + names_o_met[0] + ".npy"
-            )
-
-        D_i = 0
-        LT_i = 0
-        for i in range(number_dates * lead_times):
-
-            mean_bias_LT[:, D_i, LT_i] = mean_bias[:, i]
-            LT_i = LT_i + 1
-
+            )  # IMPORTANT CONSTANT FOR RANK DIAGRAM (with 112 members)
             if LT_i == lead_times:
 
                 D_i = D_i + 1
@@ -259,9 +232,7 @@ def main():
                 axs.tick_params(direction="in", length=12, width=1)
 
                 plt.yticks(fontsize="18")
-                # plt.title(var_names[i] ,fontdict = font)
-                # plt.text(0.6, 0.9, var_names[i] + ' ' + domain[ii],
-                #        fontdict = font, transform=axs.transAxes)
+
                 plt.ylabel(var_names_m[i], fontsize="18")
                 plt.legend(fontsize=10, ncol=1, frameon=False, loc="lower right")
                 plt.savefig(
@@ -349,10 +320,6 @@ def main():
             axs.tick_params(direction="in", length=12, width=1)
             plt.yticks(fontsize="18")
             plt.ylabel(var_names_m[i], fontsize="18", fontdict=font)
-            # plt.title(var_names[i] + ' ' + domain[ii],fontdict = font)
-            # plt.title(var_names[i] ,fontdict = font)
-            # plt.text(0.6, 0.9, var_names[i] + ' ' + domain[ii],
-            #        fontdict = font, transform=axs.transAxes)
             plt.legend(fontsize=10, ncol=1, frameon=False, loc="lower right")
             plt.savefig(
                 paths_output_plots
@@ -399,9 +366,6 @@ def main():
             fig, axs = plt.subplots(figsize=(9, 7))
 
             for k in range(len_tests):
-
-                # if k == 0 :
-                # plt.plot(np.sqrt(np.nanmean(s_p_scores_LT[k,:,:,0,i]**2., axis =(0,2,3))), label = 'SKILL AROME', color= color_p[k], linewidth =3 )
 
                 plt.plot(
                     np.sqrt(
@@ -479,7 +443,6 @@ def main():
                 fig, axs = plt.subplots(figsize=(9, 7))
                 for k in range(len_tests):
 
-                    # plt.plot(np.nanmean(Brier_scores_LT[0,:,:,i, j], axis= (0,2,3))-np.nanmean(Brier_scores_LT[k,:,:,i, j], axis= (0,2,3)), label = cases_clean[k], color = color_p[k], linestyle = line[k])
                     plt.plot(
                         np.nanmean(Brier_scores_LT[k, :, :, i, j], axis=(0, 2, 3)),
                         label=cases_clean[k],
@@ -511,7 +474,6 @@ def main():
                 fig, axs = plt.subplots(figsize=(9, 7))
                 for k in range(len_tests):
 
-                    # plt.plot(np.nanmean(Brier_scores_LT[0,:,:,i, j], axis= (0,2,3))-np.nanmean(Brier_scores_LT[k,:,:,i, j], axis= (0,2,3)), label = cases_clean[k], color = color_p[k], linestyle = line[k])
                     plt.plot(
                         np.nanmean(
                             Brier_scores_LT[0, :, :, i, j]

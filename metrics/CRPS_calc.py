@@ -47,19 +47,19 @@ def ensemble_crps(obs_data, fake_data, fair=True):
     crps_res = np.zeros((3, 1))
     sm = 0.0
     for i in range(len(obs_data_ff)):
-        crps, fcrps, acrps = psc(fake_data_ff[:, i], obs_data_ff[i]).compute()
+        crps, fcrps, _ = psc(fake_data_ff[:, i], obs_data_ff[i]).compute()
         sm = sm + fcrps if fair else sm + crps
     crps_res[0] = sm / len(obs_data_ff)
     sm = 0.0
 
     for i in range(len(obs_data_dd)):
-        crps, fcrps, acrps = psc(fake_data_dd[:, i], obs_data_dd[i]).compute()
+        crps, fcrps, _ = psc(fake_data_dd[:, i], obs_data_dd[i]).compute()
         sm = sm + fcrps if fair else sm + crps
     crps_res[1] = sm / len(obs_data_dd)
     sm = 0.0
 
     for i in range(len(obs_data_t2m)):
-        crps, fcrps, acrps = psc(fake_data_t2m[:, i], obs_data_t2m[i]).compute()
+        crps, fcrps, _ = psc(fake_data_t2m[:, i], obs_data_t2m[i]).compute()
         sm = sm + fcrps if fair else sm + crps
     crps_res[2] = sm / len(obs_data_t2m)
 
@@ -70,7 +70,7 @@ def ensemble_crps(obs_data, fake_data, fair=True):
 
 def fcrps_calc(data):
     cond_p, fake_data = data[0], data[1]
-    crps, fcrps, acrps = psc(fake_data, cond_p).compute()
+    _, fcrps, _ = psc(fake_data, cond_p).compute()
 
     return fcrps
 
@@ -89,7 +89,7 @@ def crps_multi_dates(cond, X, real_ens, debiasing=False):
 
     """
 
-    D, N, C, H, W = X.shape
+    D, N, _, _, _ = X.shape
 
     X_p = copy.deepcopy(X)
     cond_p = copy.deepcopy(cond)
@@ -110,10 +110,8 @@ def crps_multi_dates(cond, X, real_ens, debiasing=False):
 
     cond_p_ff = []
     cond_p_t2m = []
-    cond_p_dd = []
 
     X_p_ff = []
-    X_p_dd = []
     X_p_t2m = []
 
     # flattening dates and localisations on single dimension to parallelize better

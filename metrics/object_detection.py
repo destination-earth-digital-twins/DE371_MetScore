@@ -1,6 +1,3 @@
-import datetime
-import os
-import pickle
 from collections import namedtuple
 
 import numpy as np
@@ -8,7 +5,6 @@ import numpy as np
 # from cartopy.mpl.geoaxes import GeoAxes
 import skimage.measure as skimage
 from astropy.convolution import Gaussian2DKernel, convolve_fft
-from mpl_toolkits.axes_grid1 import AxesGrid
 from scipy import ndimage
 
 import metrics.help_functions_objects as hlp
@@ -44,7 +40,8 @@ def Quantiles(field, reflc, num_objet):
 
 def Contours(field, zone):
     """
-    Detect, for a given raw precipitation field, the object-types associated to "total rain" (rr>0.1), "moderate rain" (rr>2.8) and "heavy rain" (rr>6.5)
+    Detect, for a given raw precipitation field,
+    the object-types associated to "total rain" (rr>0.1), "moderate rain" (rr>2.8) and "heavy rain" (rr>6.5)
     Inputs :
         field : np.array, raw precipitation field of shape H x W
         Zone :  an instance of Zone type (namedtuple)
@@ -91,7 +88,8 @@ def attributesCore(field, reflc, zone):
         reflc : np.array of floats, shape H x W, containing continous precipitation ("raw" field)
         Zone :  an instance of Zone type (namedtuple)
     Outputs:
-        attributes : dict containing, for each attribute, list of value for this attribute of all the detected object instances in the field
+        attributes : dict containing, for each attribute,
+        list of value for this attribute of all the detected object instances in the field
     """
     attributes = {}
     attributes["num_objet"] = []  # Object id

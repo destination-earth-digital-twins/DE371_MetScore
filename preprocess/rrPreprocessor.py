@@ -119,7 +119,7 @@ class rrPreprocessor(Preprocessor):
             for _ in range(self.rr_transform["log_transform_iteration"]):
                 try:
                     data[:, rr_idx] = np.exp(data[:, rr_idx]) - 1
-                except RuntimeWarning as error:
+                except RuntimeWarning:
                     logging.debug(f"RuntimeWarning in np.exp(data[:, rr_idx]) - 1.")
             if self.rr_transform["gaussian_std"] > 0:
                 mask_no_rr = data[:, rr_idx] > self.rr_transform["gaussian_std"] * (
