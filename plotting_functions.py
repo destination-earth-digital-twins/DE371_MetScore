@@ -1,6 +1,5 @@
 import copy
 import gc
-import pickle
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -10,6 +9,7 @@ from matplotlib.ticker import FormatStrFormatter
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
 import stats.wilcoxon_test as wct
+from core.useful_funcs import restricted_loads
 
 mpl.rcParams["axes.linewidth"] = 2
 
@@ -1340,7 +1340,7 @@ def plot_MultivarCorr(experiments, metric, config):
             exp_arome = exp_idx
             print("exp_arome", exp_arome)
         else:
-            data = pickle.load(
+            data = restricted_loads(
                 open(
                     config["expe_folder"]
                     + "/"

@@ -1,3 +1,7 @@
+import builtins
+import io
+import pickle
+
 import numpy as np
 
 
@@ -107,3 +111,23 @@ def obs_clean(obs, crop_indices):
 def denorm(mat, Maxs, Means):
     res = mat * (1.0 / 0.95) * Maxs.astype("float32") + Means.astype("float32")
     return res
+
+
+# safing pickle load, following https://docs.python.org/3/library/pickle.html#restricting-globals
+
+safe_builtins = {"range", "complex", "set", "frozenset", "slice", "dict"}
+
+
+class RestrictedUnpickler(pickle.Unpickler):
+
+    def find_class(self, module, name):
+        # Only allow safe classes from builtins.
+        if module == "builtins" and name in safe_builtins:
+            return getattr(builtins, name)
+        # Forbid everything else.
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" % (module, name))
+
+
+def restricted_loads(s):
+    """Helper function analogous to pickle.loads()."""
+    return RestrictedUnpickler(io.BytesIO(s)).load()
