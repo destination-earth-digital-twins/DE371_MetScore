@@ -6,7 +6,7 @@ import numpy as np
 
 def test_and_create_path(path):
     if not os.path.exists(path):
-        os.system("mkdir -p " + path)
+        os.mkdir(path)
     return "OK"
 
 
@@ -44,7 +44,7 @@ def merge_dicts(dict_list):
     """
     merge_dic = {k: [] for k in dict_list[0].keys()}
     # trick : this uses for loops but with dictionaries this should be fast
-    for d_idx, dic in enumerate(dict_list):
+    for _, dic in enumerate(dict_list):
         for key, value in dic.items():
             # concatenating lists
             merge_dic[key] = merge_dic[key] + value
