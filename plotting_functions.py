@@ -6,7 +6,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FormatStrFormatter
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
@@ -14,7 +13,7 @@ import stats.wilcoxon_test as wct
 
 mpl.rcParams["axes.linewidth"] = 2
 
-################################# GRAPHS SETUP
+# GRAPHS SETUP
 font = {
     "family": "serif",
     "color": "black",
@@ -22,7 +21,7 @@ font = {
     "size": 25,
 }
 
-##### ESTHETICS AND TITLE NAMES
+# ESTHETICS AND TITLE NAMES
 base_vars = ["u", "v", "t2m"]
 color_p = [
     "black",
@@ -922,7 +921,7 @@ def plot_relDiagram(experiments, metric, config):
                 label="perfect",
                 color="black",
                 linewidth=3,
-            )  ### I don't remember why I'm adding 0.05
+            )
             plt.xticks(fontsize="18")
             plt.xlabel("forecast probability", fontsize="18")
             plt.ylabel("observation frequency", fontsize="18")
@@ -1362,7 +1361,7 @@ def plot_MultivarCorr(experiments, metric, config):
                 print(levels)
 
     for exp_idx, exp in enumerate(experiments):
-        if not "AROME" in exp["name"]:
+        if "AROME" not in exp["name"]:
             fig, axs = plt.subplots(1, ncouples, figsize=(4 * ncouples, 2 * ncouples))
 
             for i in range(ncouples):

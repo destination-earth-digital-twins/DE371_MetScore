@@ -9,7 +9,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 mpl.rcParams["axes.linewidth"] = 2
 
@@ -208,7 +207,7 @@ def main():
                 D_i = D_i + 1
                 LT_i = 0
 
-        ################################################ MEAN BIAS
+        # MEAN BIAS
         for i in range(var_number):
 
             fig, axs = plt.subplots(figsize=(9, 7))
@@ -250,7 +249,7 @@ def main():
         mean_bias = 0
         gc.collect()
 
-        ######################## ENSEMBLE CRPS
+        # ENSEMBLE CRPS
         crps_scores = np.zeros(
             (len_tests, number_dates * lead_times, var_number), dtype=("float32")
         )
@@ -335,7 +334,7 @@ def main():
         crps_scores_LT = 0
         gc.collect()
 
-        ###########################" SKILLSPREAD
+        # SKILLSPREAD
 
         s_p_scores = np.zeros(
             (len_tests, number_dates * lead_times, 2, var_number, size_H, size_W),
@@ -408,7 +407,7 @@ def main():
         s_p_scores_LT = 0
         gc.collect()
 
-        ####################### BRIER SCORES
+        # BRIER SCORES
 
         Brier_scores = np.zeros(
             (len_tests, number_dates * lead_times, 6, var_number, size_H, size_W),
@@ -540,7 +539,7 @@ def main():
         Brier_scores_LT = 0
         gc.collect()
 
-        #### RANK HISTOGRAM
+        # RANK HISTOGRAM
         if "rankHistogram" in names_o_p_folders:
             rank_histo = np.zeros(
                 (len_tests, number_dates * lead_times, var_number, N_bins_max)
@@ -558,9 +557,9 @@ def main():
                 )
 
             N_bins = [
-                config["experiments"][0]["dataloaders"]["N_ens"] + 1
+                config["experiments"][k]["dataloaders"]["N_ens"] + 1
                 for k in range(len_tests)
-            ]  ######## THIS IS STILL HARD CODED...
+            ]
 
             for j in range(var_number):
                 for k in range(len_tests):
@@ -592,7 +591,7 @@ def main():
             rank_histo = 0
             gc.collect()
 
-        #####################################################"PLOT REL DIAGRAM
+        # PLOT REL DIAGRAM
 
         rel_diag_scores = np.zeros(
             (len_tests, number_dates * lead_times, 6, 2, var_number, size_H, size_W)
@@ -639,7 +638,7 @@ def main():
                     label="perfect",
                     color="black",
                     linewidth=3,
-                )  ### I don't remember why I'm adding 0.05
+                )
                 plt.xticks(fontsize="18")
                 plt.xlabel("forecast probability", fontsize="18")
                 plt.ylabel("observation frequency", fontsize="18")
@@ -663,7 +662,7 @@ def main():
         rel_diag_scores = 0
         gc.collect()
 
-        ######################################"" ROC
+        # ROC
 
         rel_diag_scores = np.zeros(
             (len_tests, number_dates * lead_times, 6, 2, var_number, size_H, size_W)
@@ -672,7 +671,7 @@ def main():
 
             rel_diag_scores[i] = np.load(
                 output_folder + "/" + experiment_list[i] + "/" + names_o_met[5] + ".npy"
-            )  ### ATENTION ROC USES SCORES FROM REL_DIAG_SCORES
+            )
 
         bins_roc = np.array(
             [

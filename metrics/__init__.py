@@ -2,7 +2,6 @@ import numpy as np
 
 import metrics.bias_ensemble as BE
 import metrics.brier_score as BS
-import metrics.CRPS_calc as CRPS_calc
 import metrics.general_metrics as GM
 import metrics.length_scales as ls
 import metrics.mean_bias as mb
