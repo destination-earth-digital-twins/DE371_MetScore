@@ -132,7 +132,8 @@ class Dataset(Configurable):
     To create a custom dataset, follow these steps:
 
         1. Create a new class that inherits from the `Dataset` class.
-        2. Define the `required_keys` class attribute, which is a list of required configuration keys for the custom dataset.
+        2. Define the `required_keys` class attribute,
+        which is a list of required configuration keys for the custom dataset.
         3. Implement the `_get_filename`, `_load_file`, and `__len__` methods in the custom dataset class.
 
     Example:
