@@ -15,9 +15,6 @@ from tqdm import tqdm
 
 from core.configurable import Configurable
 from core.useful_funcs import obs_clean
-from preprocess.preprocessor import Preprocessor
-
-random.seed(42)
 
 
 # region helpers
@@ -129,17 +126,14 @@ class Dataset(Configurable):
     """
     Base class for datasets.
 
-    This class provides methods to load, preprocess,
-    and cache data from a specified folder using a given preprocessor.
-    Subclasses should define `_get_filename`, `_load_file`, and `__len__` methods.
+        This class provides methods to load and cache data from a specified folder.
+        Subclasses should define `_get_filename`, `_load_file`, and `__len__` methods.
 
     To create a custom dataset, follow these steps:
 
-    1. Create a new class that inherits from the `Dataset` class.
-    2. Define the `required_keys` class attribute, which is a list of required configuration keys
-    for the custom dataset.
-    3. Implement the `_get_filename`, `_load_file`, and `__len__` methods in the custom dataset class.
-    4. Optionally, you can override other methods like `_preprocess_batch` or `get_all_data` if needed.
+        1. Create a new class that inherits from the `Dataset` class.
+        2. Define the `required_keys` class attribute, which is a list of required configuration keys for the custom dataset.
+        3. Implement the `_get_filename`, `_load_file`, and `__len__` methods in the custom dataset class.
 
     Example:
 
@@ -170,7 +164,9 @@ class Dataset(Configurable):
     to define the behavior for loading and accessing the data.
     """
 
-    required_keys = ["data_folder", "preprocessor_config"]
+    required_keys = [
+        "data_folder",
+    ]
 
     def __init__(self, config_data, use_cache=True, **kwargs):
         """
@@ -182,10 +178,6 @@ class Dataset(Configurable):
             **kwargs: Additional keyword arguments.
         """
         super().__init__()
-        self.preprocessor = Preprocessor.from_typed_config(
-            config_data["preprocessor_config"], **config_data
-        )
-        logging.debug(f"Using preprocessor: {self.preprocessor.type}")
         self.cache = MemoryCache(use_cache)
         self.load_data_semaphore = threading.Semaphore()
 
@@ -223,48 +215,33 @@ class Dataset(Configurable):
     @abstractmethod
     def __len__(self):
         """
-        Get the length of the dataset.
+                Get the length of the dataset.
+        self.batch_size
 
-        This method should be implemented by subclasses
-        to provide the logic for determining the length of the dataset.
-
-        Returns:
-            int: The length of the dataset.
+                Returns:
+                    int: The length of the dataset.
         """
         pass
 
-    def _load_and_preprocess(self, file_path):
+    def _load(self, file_path):
         """
-        Load and preprocess the data from the specified file path.
+        Load the data from the specified file path.
 
-        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is not cached, it will be loaded and stored in the cache.
         If the data is cached, it will be retrieved from the cache.
 
         Args:
             file_path (str): The path to the file.
 
         Returns:
-            Any: The preprocessed data.
+            Any: The data.
         """
         if not self.cache.is_cached(file_path):
             data = self._load_file(file_path)
-            preprocessed_data = self._preprocess_batch(data)
-            self.cache.add_to_cache(file_path, preprocessed_data)
+            self.cache.add_to_cache(file_path, data)
         else:
-            preprocessed_data = self.cache.get_from_cache(file_path)
-        return preprocessed_data
-
-    def _preprocess_batch(self, batch):
-        """
-        Preprocess a batch of data using the preprocessor instance.
-
-        Args:
-            batch: The batch of data to preprocess.
-
-        Returns:
-            Any: The preprocessed batch of data.
-        """
-        return self.preprocessor.process_batch(batch)
+            data = self.cache.get_from_cache(file_path)
+        return data
 
     def is_dataset_cached(self):
         """
@@ -283,11 +260,11 @@ class Dataset(Configurable):
         """
         Get all data from the dataset.
 
-        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is not cached, it will be loaded and stored in the cache.
         If the data is cached, it will be retrieved from the cache.
 
         Returns:
-            np.ndarray: The concatenated preprocessed data from the entire dataset.
+            np.ndarray: The concatenated  data from the entire dataset.
         """
         all_data = []
         if not self.is_dataset_cached():
@@ -296,7 +273,7 @@ class Dataset(Configurable):
             ):
                 try:
                     file_path = self._get_filename(idx)
-                    data = self._load_and_preprocess(file_path)
+                    data = self._load(file_path)
                     all_data.append(data)
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
@@ -314,16 +291,16 @@ class Dataset(Configurable):
 
     def __getitem__(self, items):
         """
-        Get the preprocessed data for the specified index or indices.
+        Get the data for the specified index or indices.
 
         Args:
             items: The index or indices of the data to retrieve.
 
         Returns:
-            Any: The preprocessed data.
+            Any: The data.
         """
         file_path = self._get_filename(items)
-        data = self._load_and_preprocess(file_path)
+        data = self._load(file_path)
         return data
 
     def _get_full_path(self, filename, extension=".npy"):
@@ -346,7 +323,7 @@ class Dataset(Configurable):
 
 
 class DateDataset(Dataset):
-    required_keys = ["data_folder", "preprocessor_config", "crop_indices"]
+    required_keys = ["data_folder", "crop_indices"]
 
     def __init__(self, config_data, use_cache=True, **kwargs):
         super().__init__(config_data, use_cache)
@@ -416,7 +393,7 @@ class ObsDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
-        return obs_clean(np.load(file_path), self.crop_indices)
+        return obs_clean(np.load(file_path).astype(np.float32), self.crop_indices)
 
     def get_all_data(self):
         all_data = []
@@ -426,7 +403,7 @@ class ObsDataset(DateDataset):
             ):
                 try:
                     file_path = self._get_filename(idx)
-                    data = self._load_and_preprocess(file_path)
+                    data = self._load(file_path)
                     all_data.append(data[np.newaxis, :, :, :])
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
@@ -473,7 +450,7 @@ class FakeDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
-        return np.load(file_path)
+        return np.load(file_path).astype(np.float32)
 
 
 class RealDataset(DateDataset):
@@ -487,14 +464,17 @@ class RealDataset(DateDataset):
         return file_names
 
     def _load_file(self, file_path):
-        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        arrays = [
+            np.expand_dims(np.load(file_name).astype(np.float32), axis=0)
+            for file_name in file_path
+        ]
         return np.concatenate(arrays, axis=0)
 
 
 class RandomDataset(Dataset):
     required_keys = [
         "data_folder",
-        "preprocessor_config",
+        "config",
         "crop_indices",
         "filename_format",
         "maxNsamples",
@@ -530,7 +510,7 @@ class RandomDataset(Dataset):
         return self.filelist[index]
 
     def _load_file(self, file_path):
-        return np.load(file_path)
+        return np.load(file_path).astype(np.float32)
 
     def __len__(self):
         return len(self.filelist)
@@ -544,9 +524,9 @@ class RandomDataset(Dataset):
                 try:
                     file_path = self._get_filename(idx)
                     data = (
-                        self._load_and_preprocess(file_path)[np.newaxis, :, :, :]
+                        self._load(file_path)[np.newaxis, :, :, :]
                         if self.file_size == 1
-                        else self._load_and_preprocess(file_path)
+                        else self._load(file_path)
                     )
                     all_data.append(data)
                 except FileNotFoundError as e:
@@ -589,15 +569,7 @@ class MixDataset(DateDataset):
             self.N_real_mb = 16
         self.N_fake_mb = config_data["N_ens"] - self.N_real_mb
         self.real_data_folder = config_data["real_dataset_config"]["data_folder"]
-
-        self.real_preprocessor = Preprocessor.from_typed_config(
-            config_data["real_dataset_config"]["preprocessor_config"],
-            **config_data["real_dataset_config"],
-        )
-        self.real_var_indices = config_data["real_dataset_config"][
-            "preprocessor_config"
-        ]["real_var_indices"]
-        logging.debug(f"Using real preprocessor: {self.real_preprocessor.type}")
+        self.real_var_indices = config_data["real_dataset_config"]["real_var_indices"]
 
     def _get_real_full_path(self, filename, extension=".npy"):
         return os.path.join(self.real_data_folder, f"{filename}{extension}")
@@ -641,37 +613,28 @@ class MixDataset(DateDataset):
         }
 
     def _load_real_file(self, file_path):
-        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        arrays = [
+            np.expand_dims(np.load(file_name).astype(np.float32), axis=0)
+            for file_name in file_path
+        ]
         return np.concatenate(arrays, axis=0)
 
     def _load_fake_file(self, file_path):
-        return np.load(file_path)
-
-    def _preprocess_real_batch(self, batch):
-        return self.real_preprocessor.process_batch(batch)
+        return np.load(file_path).astype(np.float32)
 
     def _load_file(self, file_path):
         real_file = self._load_real_file(file_path["real"])
         fake_file = self._load_fake_file(file_path["fake"])
-
-        real_file_indices = random.sample(range(real_file.shape[0]), self.N_real_mb)
-        fake_file_indices = random.sample(range(fake_file.shape[0]), self.N_fake_mb)
-
-        real_file = self._preprocess_real_batch(
-            real_file[real_file_indices][:, self.real_var_indices]
-        )
-        fake_file = self._preprocess_batch(fake_file[fake_file_indices])
-
         sample = np.concatenate((real_file, fake_file), axis=0)
         return sample
 
-    def _load_and_preprocess(self, file_path):
+    def _load(self, file_path):
         if not self.cache.is_cached(file_path["real"]):
-            preprocessed_data = self._load_file(file_path)
-            self.cache.add_to_cache(file_path["real"], preprocessed_data)
+            data = self._load_file(file_path)
+            self.cache.add_to_cache(file_path["real"], data)
         else:
-            preprocessed_data = self.cache.get_from_cache(file_path["real"])
-        return preprocessed_data
+            data = self.cache.get_from_cache(file_path["real"])
+        return data
 
 
 class ModDataset(DateDataset):
@@ -744,22 +707,18 @@ class ModDataset(DateDataset):
         mod_filename = self._get_mod_filename(index)
         return {"fake_path": fake_filename, "mod_path": mod_filename}
 
-    def _load_and_preprocess(self, file_path):
+    def _load(self, file_path):
         if not self.cache.is_cached(file_path["fake_path"]):
             data = self._load_file(file_path)
-            preprocessed_data = {
-                "fake": self._preprocess_batch(data["fake"]),
-                "mod": self._preprocess_batch(data["mod"]),
-            }
-            self.cache.add_to_cache(file_path["fake_path"], preprocessed_data)
+            self.cache.add_to_cache(file_path["fake_path"], data)
         else:
-            preprocessed_data = self.cache.get_from_cache(file_path["fake_path"])
-        return preprocessed_data
+            data = self.cache.get_from_cache(file_path["fake_path"])
+        return data
 
     def _load_file(self, file_path):
         return {
-            "fake": np.load(file_path["fake_path"]),
-            "mod": np.load(file_path["mod_path"]),
+            "fake": np.load(file_path["fake_path"]).astype(np.float32),
+            "mod": np.load(file_path["mod_path"]).astype(np.float32),
         }
 
     def get_all_data(self):
@@ -771,7 +730,7 @@ class ModDataset(DateDataset):
             ):
                 try:
                     file_path = self._get_filename(idx)
-                    data = self._load_and_preprocess(file_path["fake_path"])
+                    data = self._load(file_path["fake_path"])
                     all_data_fake.append(data["fake"])
                     all_data_mod.append(data["mod"])
                 except FileNotFoundError as e:
