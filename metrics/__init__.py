@@ -20,7 +20,7 @@ from metrics import CRPS_calc
 from metrics import area_proportion as ap
 from metrics import object_detection as obj
 
-from metrics.metrics import Metric, PreprocessCondObs, PreprocessDist, PreprocessStandalone
+from metrics.metrics import PreprocessCondObs, PreprocessDist, PreprocessStandalone
 
 
 class W1CenterNUMPY(PreprocessDist):
