@@ -94,11 +94,11 @@ def var2Var_hist(data, bins, density=True):
     var_couples = combinations_with_replacement(range(channels), 2)
     ncouples = channels * (channels - 1) // 2
 
-    if type(bins) == int:
+    if isinstance(bins, int):
         Bins = np.zeros((ncouples * 2, bins + 1))
         bivariates = np.zeros((ncouples, bins, bins))
 
-    elif type(bins) == np.ndarray:
+    elif isinstance(bins, np.ndarray):
         Bins = bins
         bivariates = np.zeros((ncouples, Bins.shape[1] - 1, Bins.shape[1] - 1))
 
@@ -107,11 +107,11 @@ def var2Var_hist(data, bins, density=True):
         i, j = tu
 
         if i != j:
-            if type(bins) == int:
+            if isinstance(bins, int):
                 bivariates[k], Bins[i], Bins[j] = np.histogram2d(
                     data[:, i], data[:, j], bins=bins, density=density
                 )
-            elif type(bins) == np.ndarray:
+            elif isinstance(bins, np.ndarray):
                 bivariates[k], _, _ = np.histogram2d(
                     data[:, i], data[:, j], bins=[Bins[i], Bins[j]], density=density
                 )
@@ -196,13 +196,6 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
     channels = data_fake.shape[1]
     ncouples2 = channels * (channels - 1)
 
-    bins = np.linspace(
-        tuple([-1 for i in range(ncouples2)]),
-        tuple([1 for i in range(ncouples2)]),
-        101,
-        axis=1,
-    )
-
     data_f = space2batch(data_fake, offset)
     data_r = space2batch(data_real, offset)
 
@@ -211,7 +204,7 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
 
     bivariates_r, bins_r = var2Var_hist(data_r, 100, density=True)
 
-    bivariates_f, bins_f = var2Var_hist(data_f, bins_r, density=True)
+    bivariates_f, _ = var2Var_hist(data_f, bins_r, density=True)
 
     out_rf = np.zeros(
         (2, ncouples2 // 2, bivariates_f.shape[-1], bivariates_f.shape[-1])

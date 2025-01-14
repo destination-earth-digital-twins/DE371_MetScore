@@ -9,8 +9,9 @@ Metric version of quantiles calculation
 
 """
 
-import numpy as np
 import warnings
+
+import numpy as np
 
 
 def quantiles(data, qlist=[0.99]):
