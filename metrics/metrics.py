@@ -112,7 +112,7 @@ class PreprocessCondObs(Metric):
         """
         assert real_data is not None
         assert obs_data is not None
-
+        
         logging.debug(fake_data.shape)
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
             fake_data_p = fake_data.take(indices=self.var_indices, axis=self.var_channel)
@@ -133,15 +133,15 @@ class PreprocessCondObs(Metric):
         obs_data_pp = np.around(copy.deepcopy(obs_data_p[0]), 2)
         real_data_pp = copy.deepcopy(real_data_p)
 
-        fake_data_pp[:, 0], fake_data_pp[:, 1] = wc.computeWindDir(fake_data_pp[:, 0], fake_data_pp[:, 1])
-        real_data_pp[:, 0], real_data_pp[:, 1] = wc.computeWindDir(real_data_pp[:, 0], real_data_pp[:, 1])
+        fake_data_pp[:, 1], fake_data_pp[:, 2] = wc.computeWindDir(fake_data_pp[:, 1], fake_data_pp[:, 2])
+        real_data_pp[:, 1], real_data_pp[:, 2] = wc.computeWindDir(real_data_pp[:, 1], real_data_pp[:, 2])
 
         if self.debiasing == True:
             fake_data_pp = wc.debiasing(fake_data_pp, real_data_pp, self.conditioning_members, mode=self.debiasing_mode)
 
-        angle_dif = wc.angle_diff(fake_data_pp[:, 1], obs_data_pp[1])
-        fake_data_pp[:, 1] = angle_dif
-        obs_data_pp[1, ~np.isnan(obs_data_pp[1])] = 0.
+        angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2])
+        fake_data_pp[:, 2] = angle_dif
+        obs_data_pp[2, ~np.isnan(obs_data_pp[2])] = 0.
 
         return {'real_data': real_data_pp,
                 'fake_data': fake_data_pp,

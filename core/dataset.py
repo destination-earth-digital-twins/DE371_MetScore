@@ -25,7 +25,6 @@ from preprocess.preprocessor import Preprocessor
 def convert_key(func):
     def wrapper(self, key, *args, **kwargs):
         if isinstance(key, list):  # Vérifie si key est une liste
-            print(key, 'KEY')
 
             fusion_key = key[0]  # Premier élément de la liste
             for k in key[1:]:
@@ -247,9 +246,7 @@ class Dataset(Configurable):
             Any: The preprocessed data.
         """
         if not self.cache.is_cached(file_path):
-            print('JE SUIS LE FILE PATH',file_path)
             data = self._load_file(file_path)
-            # print(data)
             preprocessed_data = self._preprocess_batch(data)
             self.cache.add_to_cache(file_path, preprocessed_data)
         else:
@@ -321,7 +318,6 @@ class Dataset(Configurable):
             Any: The preprocessed data.
         """
         file_path = self._get_filename(items)
-        print('FILEPATH',file_path,items)
         data = self._load_and_preprocess(file_path)
         return data
 
@@ -435,11 +431,9 @@ class FakeDataset(DateDataset):
     def _get_filename(self, index):
         format_variables = [var.strip('}{') for var in re.findall(r'{(.*?)}', self.filename_format)]
         kwargs = {}
-
         if 'formatted_index' in format_variables:
             format_variables.remove('formatted_index')
             formatted_index = (index % self.Lead_Times + 1) * self.dh
-            print(formatted_index,'FORMATTEDINDEX')
             kwargs = {'formatted_index': formatted_index}
 
         if 'date' in format_variables:
@@ -465,10 +459,10 @@ class RealDataset(DateDataset):
                     self.df0['LeadTime'] == (index % self.Lead_Times + 1) * self.dh - 1)][
             'Name'].to_list()
         file_names = [self._get_full_path(name) for name in names]
+
         return file_names
 
     def _load_file(self, file_path):
-        print('JE SUIS LE FILE PATH2')
         arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
         return np.concatenate(arrays, axis=0)
 
@@ -507,7 +501,6 @@ class RandomDataset(Dataset):
             for idx in tqdm(range(len(self)), desc=f"{self.name} : Collecting uncached data"):
                 try:
                     file_path = self._get_filename(idx)
-                    print('LE PATH DU F',file_path)
                     data = self._load_and_preprocess(file_path)[np.newaxis, :, :, :] \
                     if self.file_size == 1 else self._load_and_preprocess(file_path)
                     all_data.append(data)
@@ -517,7 +510,6 @@ class RandomDataset(Dataset):
             for idx in tqdm(range(len(self)), desc=f"{self.name} : Getting data from cache"):
                 try:
                     file_path = self._get_filename(idx)
-                    print('LE PATH DU F',file_path)
                     data = self.cache.get_from_cache(file_path)[np.newaxis, :, :, :] \
                         if self.file_size == 1 else self.cache.get_from_cache(file_path)
                     all_data.append(data)

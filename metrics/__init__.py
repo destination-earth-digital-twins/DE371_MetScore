@@ -412,7 +412,6 @@ class biasEnsemble(PreprocessCondObs):
         else:
             exp_data = processed_data['real_data']
         obs_data = processed_data['obs_data']
-
         return BE.bias_ens(obs_data,exp_data)
 
 class meanBias(PreprocessCondObs):
