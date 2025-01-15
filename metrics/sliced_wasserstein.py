@@ -29,18 +29,18 @@ from torch import tensor
 def get_descriptors_for_minibatch(minibatch, nhood_size, nhoods_per_image):
     r"""Compute the descriptors from the minibatch
 
-            Parameters
-            ----------
-            minibatch : np.array
-            nhood_size : int
-            nhoods_per_image : int
+    Parameters
+    ----------
+    minibatch : np.array
+    nhood_size : int
+    nhoods_per_image : int
 
-            Returns
-            -------
-            descriptors : np.array
-            
+    Returns
+    -------
+    descriptors : np.array
 
-        """
+
+    """
     S = minibatch.shape  # (minibatch, channel, height, width)
     assert len(S) == 4
     N = nhoods_per_image * S[0]
