@@ -793,12 +793,12 @@ class DiffDataset(Dataset):
             Any: The preprocessed data.
         """
         file_path_t, file_path_t_next = self._get_filename(items)
-        data_t = self._load_and_preprocess(file_path_t)
-        data_t_next = self._load_and_preprocess(file_path_t_next)
+        data_t = self._load(file_path_t)
+        data_t_next = self._load(file_path_t_next)
         if self.temporal_difference_type == 'absolute':
-            return np.abs(data_t_next-data_t)/self.dh
+            return np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh
         elif self.temporal_difference_type == 'simple':
-            return np.array(data_t_next-data_t)/self.dh
+            return np.array(data_t_next-data_t, dtype=np.float32)/self.dh
         else :
             raise NotImplementedError
         
@@ -850,12 +850,12 @@ class DiffDataset(Dataset):
             for idx in tqdm(range(len(self)), desc=f"{self.name} : Collecting uncached data"):
                 try:
                     file_path_t, file_path_t_next = self._get_filename(idx)
-                    data_t = self._load_and_preprocess(file_path_t)
-                    data_t_next = self._load_and_preprocess(file_path_t_next)
+                    data_t = self._load(file_path_t)
+                    data_t_next = self._load(file_path_t_next)
                     if self.temporal_difference_type == 'absolute':
-                        all_data.append(np.abs(data_t_next-data_t)/self.dh)
+                        all_data.append(np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh)
                     elif self.temporal_difference_type == 'simple':
-                        all_data.append(np.array(data_t_next-data_t)/self.dh)
+                        all_data.append(np.array(data_t_next-data_t, dtype=np.float32)/self.dh)
                     else :
                         raise NotImplementedError
                 except FileNotFoundError as e:
@@ -867,9 +867,9 @@ class DiffDataset(Dataset):
                     data_t = self.cache.get_from_cache(file_path_t)
                     data_t_next = self.cache.get_from_cache(file_path_t_next)
                     if self.temporal_difference_type == 'absolute':
-                        all_data.append(np.abs(data_t_next-data_t)/self.dh)
+                        all_data.append(np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh)
                     elif self.temporal_difference_type == 'simple':
-                        all_data.append(np.array(data_t_next-data_t)/self.dh)
+                        all_data.append(np.array(data_t_next-data_t, dtype=np.float32)/self.dh)
                     else :
                         raise NotImplementedError
                 except FileNotFoundError as e:
@@ -894,7 +894,7 @@ class DiffDateDataset(DateDataset):
             formatted_index = (index % self.Lead_Times + 1) * self.dh
             kwargs_t = {'formatted_index': formatted_index}
             kwargs_t_next = {'formatted_index': formatted_index + self.dh}
-            print(f'Comparing time steps {formatted_index} and {formatted_index+self.dh}')
+            # print(f'Comparing time steps {formatted_index} and {formatted_index+self.dh}')
 
         if 'date' in format_variables:
             format_variables.remove('date')
@@ -937,12 +937,12 @@ class DiffDateDataset(DateDataset):
             Any: The preprocessed data.
         """
         file_path_t, file_path_t_next = self._get_filename(items)
-        data_t = self._load_and_preprocess(file_path_t)
-        data_t_next = self._load_and_preprocess(file_path_t_next)
+        data_t = self._load(file_path_t)
+        data_t_next = self._load(file_path_t_next)
         if self.temporal_difference_type == 'absolute':
-            return np.abs(data_t_next-data_t)/self.dh
+            return np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh
         elif self.temporal_difference_type == 'simple':
-            return np.array(data_t_next-data_t)/self.dh
+            return np.array(data_t_next-data_t, dtype=np.float32)/self.dh
         else :
             raise NotImplementedError
         
@@ -964,12 +964,12 @@ class DiffDateDataset(DateDataset):
             for idx in tqdm(range(len(self)), desc=f"{self.name} : Collecting uncached data"):
                 try:
                     file_path_t, file_path_t_next = self._get_filename(idx)
-                    data_t = self._load_and_preprocess(file_path_t)
-                    data_t_next = self._load_and_preprocess(file_path_t_next)
+                    data_t = self._load(file_path_t)
+                    data_t_next = self._load(file_path_t_next)
                     if self.temporal_difference_type == 'absolute':
-                        all_data.append(np.abs(data_t_next-data_t)/self.dh)
+                        all_data.append(np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh)
                     elif self.temporal_difference_type == 'simple':
-                        all_data.append(np.array(data_t_next-data_t)/self.dh)
+                        all_data.append(np.array(data_t_next-data_t, dtype=np.float32)/self.dh)
                     else :
                         raise NotImplementedError
                 except FileNotFoundError as e:
@@ -981,9 +981,9 @@ class DiffDateDataset(DateDataset):
                     data_t = self.cache.get_from_cache(file_path_t)
                     data_t_next = self.cache.get_from_cache(file_path_t_next)
                     if self.temporal_difference_type == 'absolute':
-                        all_data.append(np.abs(data_t_next-data_t)/self.dh)
+                        all_data.append(np.abs(np.array(data_t_next-data_t, dtype=np.float32))/self.dh)
                     elif self.temporal_difference_type == 'simple':
-                        all_data.append(np.array(data_t_next-data_t)/self.dh)
+                        all_data.append(np.array(data_t_next-data_t, dtype=np.float32)/self.dh)
                     else :
                         raise NotImplementedError
                 except FileNotFoundError as e:
