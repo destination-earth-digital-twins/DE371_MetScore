@@ -1,4 +1,4 @@
-output_plots: /project/scratch/p200177/DE_371/angeliquebonamy/results/dates/GOOD_DATA/scores/test/isonreal7/plots_pert #" Centre MéditJura_Alpes_Drôme-N" Massif-C Sud  Rien signif
+output_plots: /home/users/u101957/DE371_MetScore/isonreal72/plot_pert_inv 
 experiments:  
   # - name: 'AROME'
   #   short_name: "Arome"
@@ -9,32 +9,29 @@ experiments:
   # - name: 'Experiment2'
   #   short_name: "inv AMSE  "
   #   N_ens: 112
-  # # - name: 'Arome_vgg'
-  # #   short_name: "AROME"
-  # #   N_ens: 112
-  # - name: 'Experiment_vgg'
-  #   short_name: "inv Perceptual loss"
+  # - name: 'Arome_vgg'
+  #   short_name: "AROME"
   #   N_ens: 112
-  # # # # - name: 'Inversion_testing_set'
-  # # # #   short_name: "vgg"
-  # # # #   N_ens: 112
-  # - name: 'Perturbation_vgg_16' 
-  #   short_name: "Pertub Perceptual loss"
-  #   N_ens: 112
+  - name: 'Experiment_vgg'
+    short_name: "inv Perceptual loss"
+    N_ens: 112
+  - name: 'Perturbation_vgg_16' 
+    short_name: "Pertub Perceptual loss"
+    N_ens: 112
   # - name: 'Perturbation_amse_16' 
   #   short_name: "Pertub AMSE"
   #   N_ens: 112
   # - name: 'Experiment3'
   #   short_name: "Perceptual loss"
   #   N_ens: 112
-  # - name: 'Experiment_sol2_noise_rdm_seule_vgg_amse'
-  #   short_name: "amse + sol2 noise rdm"
+  # - name: 'AROME_bootstrap'
+  #   short_name: "AROME"
   #   N_ens: 112
-  # - name: 'Experiment_sol2_rdm'
-  #   short_name: "WAMSE sol2 - rdm "
+  # - name: 'AROME_test_4'
+  #   short_name: "AROME_test_4"
   #   N_ens: 112
-  # - name: 'Experiment_sol5_rdm'
-  #   short_name: "WAMSE sol5 - rdm "
+  # - name: 'AROME_test_8'
+  #   short_name: "AROME_test_8 "
   #   N_ens: 112
   # # - name: 'Experiment5'
   # #   short_name: "mul_pixel_loss_mae"
@@ -80,7 +77,7 @@ metrics:
   # # #   folder: QuantilesScore
   # # #   qlist: [0.01,0.1,0.9,0.99]
   # - name: SWD
-  #   folder: SWDall
+    # folder: SWDall
   # - name: ObjectsAttribution
   #   folder : ObjectsAttribution
   # - name : AreaProportion
@@ -91,10 +88,10 @@ metrics:
     folder: ensembleCRPS
   - name: skillSpread
     folder: skillSpread
-expe_folder: /project/scratch/p200177/DE_371/angeliquebonamy/results/dates/GOOD_DATA/scores/test/isonreal7
-number_dates : 2
+expe_folder: /home/users/u101957/DE371_MetScore/isonreal72
+number_dates : 35
 lead_times : 15
-var_number : 3
+var_number : 4
 size_H : 256
 size_W : 256
 N_bins_max: 121

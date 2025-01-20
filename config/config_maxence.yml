@@ -68,10 +68,10 @@ experiments: #list of experiments
         #   fair: True # this is an additional argument, specific to the ensembleCRPS metric. It should be specified here, but it can also be specified in the args section.
         # - name: brierScore
         #   type: brierScore
-        - name: skillSpread
-          type: skillSpread
-        # - name: biasEnsemble
-        #   type: biasEnsemble
+        # - name: skillSpread
+        #   type: skillSpread
+        - name: biasEnsemble
+          type: biasEnsemble
 
   # - name: Conditioned_224_epochs_rho_7_10_steps_large_lt_test_3h_spectral # the name is a unique identifier to each experiment
   #   dataloaders: # defining the sources of data (datasets), their sampling logic and the preprocessing
