@@ -829,7 +829,8 @@ class DiffDataset(Dataset):
         # Selecting Leadtime ids :
 
         # index % self.Lead_Times + 1 : allow to iterate over Leadtimes no matter what index is
-        # ex : if index is [0, 1, 2, 3, 4, 5, 6] and Lead_Times is 3 then the list obtain will be [1, 2, 3, 1, 2, 3, 1]
+        # ex : if index is [0, 1, 2, 3, 4, 5, 6] and Lead_Times is 3 then the list obtain will be
+        # [1, 2, 3, 1, 2, 3, 1]
         # But we also want to jump over leadtime with a certain step
         # (index % self.Lead_Times + 1) * self.dh - 1
         # ex : like before if we have dh=3 then we will obtain the list [2, 5, 8, 2, 5, 8, 2]
@@ -859,7 +860,6 @@ class DiffDataset(Dataset):
             )
         ]["Name"].to_list()
 
-        # print(f'Comparing : t={index % (self.Lead_Times - self.dh)} with t={index % (self.Lead_Times - self.dh) + self.dh}')
         file_names_t = [self._get_full_path(name) for name in names_t]
         file_names_t_next = [self._get_full_path(name) for name in names_t_next]
         return file_names_t, file_names_t_next
