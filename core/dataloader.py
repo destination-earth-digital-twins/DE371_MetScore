@@ -7,7 +7,6 @@ import numpy as np
 from core.configurable import Configurable
 from core.dataset import (
     Dataset,
-    DiffDateDataset,
     DiffObsDataset,
     ModDataset,
     ObsDataset,
@@ -408,7 +407,8 @@ class DiffDateDataloader(DataLoader):
     """
     A data loader for difference date datasets.
 
-    This class extends the DataLoader base class and loads difference date real and fake datasets based on the provided configuration.
+    This class extends the DataLoader base class and loads difference date real and fake datasets
+    based on the provided configuration.
     It iterates over the datasets and returns samples for each iteration.
     See DiffDateDataset class to see explanation about Difference Date.
 
