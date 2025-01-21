@@ -224,6 +224,8 @@ class DateDataloader(DataLoader):
                 obs_samples = self.obs_dataset[self.current_index]
 
                 real_samples = self.real_dataset[self.current_index]
+                
+                self.current_index += min(1, self._data_length - self.current_index)
 
                 return fake_samples, real_samples, obs_samples
             except FileNotFoundError as e:
