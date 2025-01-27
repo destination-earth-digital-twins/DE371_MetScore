@@ -1336,6 +1336,7 @@ def plot_MultivarCorr(experiments, metric, config):
     Ysindices = [1, 2, 2]
     ncouples = 3
     for exp_idx, exp in enumerate(experiments):
+
         if "AROME" in exp["name"]:
             exp_arome = exp_idx
             print("exp_arome", exp_arome)
@@ -1401,6 +1402,68 @@ def plot_MultivarCorr(experiments, metric, config):
                 + "/"
                 + metric["name"]
                 + exp["name"]
+                + ".pdf"
+            )
+            plt.close()
+
+
+def plot_Quantiles(experiments, metric, config):
+    quantiles = np.zeros(
+        (len(experiments), len(config["qlist"]), config["var_number"], 256, 256)
+    )
+
+    for exp_idx, exp in enumerate(experiments):
+        quantiles[exp_idx] = np.load(
+            config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
+        )
+
+    vmins = np.zeros((len(config["qlist"]), config["var_number"]))
+    vmaxs = np.zeros((len(config["qlist"]), config["var_number"]))
+
+    exp_arome = None
+    for exp_idx, exp in enumerate(experiments):
+        if "AROME" in exp["name"]:
+            exp_arome = exp_idx
+            for quantile_idx in range(len(config["qlist"])):
+                for var_idx in range(config["var_number"]):
+                    vmins[quantile_idx][var_idx] = np.min(
+                        [np.min(quantiles[exp_idx][quantile_idx][var_idx])]
+                    )
+                    vmaxs[quantile_idx][var_idx] = np.min(
+                        [np.max(quantiles[exp_idx][quantile_idx][var_idx])]
+                    )
+    if exp_arome is None:
+        raise ValueError("Not Experiment contains AROME in its name")
+
+    cmap = plt.get_cmap("PiYG", 8)
+    for exp_idx, exp in enumerate(experiments):
+        for quantile_idx in range(len(config["qlist"])):
+            fig, axs = plt.subplots(
+                nrows=1, ncols=config["var_number"], figsize=(15, 5)
+            )
+            for var_idx in range(config["var_number"]):
+                im = axs[var_idx].imshow(
+                    quantiles[exp_idx][quantile_idx][var_idx],
+                    clim=(vmins[quantile_idx][var_idx], vmaxs[quantile_idx][var_idx]),
+                    origin="lower",
+                    cmap=cmap,
+                )
+                fig.colorbar(im, ax=axs[var_idx], shrink=0.5)
+                axs[var_idx].set_title(base_vars[var_idx], fontdict=font)
+
+            quantile_value = config["qlist"][quantile_idx]
+            fig.suptitle(f"Quantile {quantile_value} per variable", fontdict=font)
+            fig.tight_layout()
+            fig.savefig(
+                config["output_plots"]
+                + "/"
+                + metric["folder"]
+                + "/"
+                + metric["name"]
+                + "_"
+                + exp["name"]
+                + "_"
+                + str(quantile_value)
                 + ".pdf"
             )
             plt.close()
