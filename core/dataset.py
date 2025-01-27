@@ -344,7 +344,7 @@ class DateDataset(Dataset):
         self.liste_dates_rep = [
             item
             for item in self.liste_dates_repl
-            for _ in range(config_data["Lead_Times"])
+            for _ in range(config_data["Lead_Times"] // config_data["dh"])
         ]
 
     def _get_filename(self, index):
@@ -750,3 +750,430 @@ class ModDataset(DateDataset):
         return np.concatenate(all_data_fake, axis=0), np.concatenate(
             all_data_mod, axis=0
         )
+
+
+class DiffDataset(Dataset):
+    r"""
+    Dataset where data are temporal difference (absolute or not) of meteorological fields.
+    Delta_X(t,dh) = X(t + dh) - X(t) ; Where X(t) is a meteorological field at time step t.
+    """
+
+    required_keys = [
+        "data_folder",
+        "preprocessor_config",
+        "crop_indices",
+        "temporal_difference_type",
+    ]
+
+    def __init__(self, config_data, use_cache=True, **kwargs):
+        super().__init__(config_data, use_cache)
+        self.df0 = pd.read_csv(
+            os.path.join(config_data["path_to_csv"], config_data["csv_file"])
+        )
+        df_extract = self.df0[
+            (self.df0["Date"] >= config_data["date_start"])
+            & (self.df0["Date"] < config_data["date_end"])
+        ]
+        self.df0 = self.df0
+        self.liste_dates = df_extract["Date"].unique().tolist()
+        self.liste_dates = self.liste_dates[0 : config_data["number_of_dates"]]
+        self.liste_dates_repl = [
+            date_string.replace("T21:00:00Z", "") for date_string in self.liste_dates
+        ]
+        self.liste_dates_rep = [
+            item
+            for item in self.liste_dates_repl
+            for _ in range(config_data["Lead_Times"] // config_data["dh"])
+        ]
+
+    def is_dataset_cached(self):
+        """
+        Check if the entire dataset is cached.
+
+        Returns:
+            bool: True if the entire dataset is cached, False otherwise.
+        """
+        for idx in range(len(self)):
+            file_path_t, file_path_t_next = self._get_filename(idx)
+            if not self.cache.is_cached(file_path_t):
+                return False
+            if not self.cache.is_cached(file_path_t_next):
+                return False
+        return True
+
+    def __getitem__(self, items):
+        """
+        Get the preprocessed data for the specified index or indices.
+
+        Args:
+            items: The index or indices of the data to retrieve.
+
+        Returns:
+            Any: The preprocessed data.
+        """
+        file_path_t, file_path_t_next = self._get_filename(items)
+        data_t = self._load(file_path_t)
+        data_t_next = self._load(file_path_t_next)
+        if self.temporal_difference_type == "absolute":
+            return np.abs(np.array(data_t_next - data_t, dtype=np.float32)) / self.dh
+        elif self.temporal_difference_type == "simple":
+            return np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+        else:
+            raise NotImplementedError
+
+    def __len__(self):
+        return len(self.liste_dates_rep)
+
+    def _get_filename(self, index):
+        date = self.liste_dates_rep[index]
+        # Selecting Leadtime ids :
+
+        # index % self.Lead_Times + 1 : allow to iterate over Leadtimes no matter what index is
+        # ex : if index is [0, 1, 2, 3, 4, 5, 6] and Lead_Times is 3 then the list obtain will be
+        # [1, 2, 3, 1, 2, 3, 1]
+        # But we also want to jump over leadtime with a certain step
+        # (index % self.Lead_Times + 1) * self.dh - 1
+        # ex : like before if we have dh=3 then we will obtain the list [2, 5, 8, 2, 5, 8, 2]
+
+        # names_t = self.df0[
+        #     (self.df0['Date'] == f"{date}T21:00:00Z") & (
+        #             self.df0['LeadTime'] == (index % self.Lead_Times + 1) * self.dh - 1 )][
+        #     'Name'].to_list()
+
+        # # We select the next time step by adding 1 step to leadtime id
+        # names_t_next = self.df0[
+        #     (self.df0['Date'] == f"{date}T21:00:00Z") & (
+        #             self.df0['LeadTime'] == (index % self.Lead_Times + 1) * self.dh)][
+        #     'Name'].to_list()
+
+        names_t = self.df0[
+            (self.df0["Date"] == f"{date}T21:00:00Z")
+            & (self.df0["LeadTime"] == (index % (self.Lead_Times - self.dh) + 1))
+        ]["Name"].to_list()
+
+        # We select the next time step by adding 1 step to leadtime id
+        names_t_next = self.df0[
+            (self.df0["Date"] == f"{date}T21:00:00Z")
+            & (
+                self.df0["LeadTime"]
+                == (index % (self.Lead_Times - self.dh) + +1 + self.dh)
+            )
+        ]["Name"].to_list()
+
+        file_names_t = [self._get_full_path(name) for name in names_t]
+        file_names_t_next = [self._get_full_path(name) for name in names_t_next]
+        return file_names_t, file_names_t_next
+
+    def _load_file(self, file_path):
+        arrays = [np.expand_dims(np.load(file_name), axis=0) for file_name in file_path]
+        return np.concatenate(arrays, axis=0)
+
+    def get_all_data(self):
+        """
+        Get all data from the dataset.
+
+        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is cached, it will be retrieved from the cache.
+
+        Returns:
+            np.ndarray: The concatenated preprocessed data from the entire dataset.
+        """
+        all_data = []
+        if not self.is_dataset_cached():
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Collecting uncached data"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self._load(file_path_t)
+                    data_t_next = self._load(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        else:
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Getting data from cache"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self.cache.get_from_cache(file_path_t)
+                    data_t_next = self.cache.get_from_cache(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        return np.concatenate(all_data, axis=0)
+
+
+class DiffDateDataset(DateDataset):
+    def __init__(self, config_data, use_cache=True, **kwargs):
+        super().__init__(config_data, use_cache)
+
+        self.filename_format = config_data.get(
+            "filename_format",
+            "genFsemble_{date}_{formatted_index}_{inv_step}_{cond_members}_{N_ens}",
+        )
+
+    def _get_filename(self, index):
+        format_variables = [
+            var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
+        ]
+        kwargs_t = {}
+        kwargs_t_next = {}
+
+        if "formatted_index" in format_variables:
+            format_variables.remove("formatted_index")
+            formatted_index = index % (self.Lead_Times - self.dh) + 1
+            kwargs_t = {"formatted_index": formatted_index}
+            kwargs_t_next = {"formatted_index": formatted_index + self.dh}
+            # print(f'Comparing time steps {formatted_index} and {formatted_index+self.dh}')
+
+        if "date" in format_variables:
+            format_variables.remove("date")
+            date = self.liste_dates_rep[index]
+            kwargs_t = kwargs_t | {"date": date}
+            kwargs_t_next = kwargs_t_next | {"date": date}
+
+        kwargs_t = kwargs_t | {var: getattr(self, var, "") for var in format_variables}
+        kwargs_t_next = kwargs_t_next | {
+            var: getattr(self, var, "") for var in format_variables
+        }
+
+        return self._get_full_path(
+            self.filename_format.format(**kwargs_t)
+        ), self._get_full_path(self.filename_format.format(**kwargs_t_next))
+
+    def is_dataset_cached(self):
+        """
+        Check if the entire dataset is cached.
+
+        Returns:
+            bool: True if the entire dataset is cached, False otherwise.
+        """
+        for idx in range(len(self)):
+            file_path_t, file_path_t_next = self._get_filename(idx)
+            if not self.cache.is_cached(file_path_t):
+                return False
+            if not self.cache.is_cached(file_path_t_next):
+                return False
+        return True
+
+    def __getitem__(self, items):
+        """
+        Get the preprocessed data for the specified index or indices.
+
+        Args:
+            items: The index or indices of the data to retrieve.
+
+        Returns:
+            Any: The preprocessed data.
+        """
+        file_path_t, file_path_t_next = self._get_filename(items)
+        data_t = self._load(file_path_t)
+        data_t_next = self._load(file_path_t_next)
+        if self.temporal_difference_type == "absolute":
+            return np.abs(np.array(data_t_next - data_t, dtype=np.float32)) / self.dh
+        elif self.temporal_difference_type == "simple":
+            return np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+        else:
+            raise NotImplementedError
+
+    def __len__(self):
+        return len(self.liste_dates_rep)
+
+    def get_all_data(self):
+        """
+        Get all data from the dataset.
+
+        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is cached, it will be retrieved from the cache.
+
+        Returns:
+            np.ndarray: The concatenated preprocessed data from the entire dataset.
+        """
+        all_data = []
+        if not self.is_dataset_cached():
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Collecting uncached data"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self._load(file_path_t)
+                    data_t_next = self._load(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        else:
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Getting data from cache"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self.cache.get_from_cache(file_path_t)
+                    data_t_next = self.cache.get_from_cache(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        return np.concatenate(all_data, axis=0)
+
+    def _load_file(self, file_path):
+        return np.load(file_path)
+
+
+class DiffObsDataset(DateDataset):
+    def __init__(self, config_data, use_cache=True, **kwargs):
+        super().__init__(config_data, use_cache)
+        self.filename_format = config_data.get(
+            "filename_format", "obs{date}_{formatted_index}"
+        )
+
+    def _get_filename(self, index):
+        format_variables = [
+            var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
+        ]
+        kwargs_t = {}
+        kwargs_t_next = {}
+
+        real_hour_t = self.start_time + index % (self.Lead_Times - self.dh) + 1
+        real_hour_t_next = real_hour_t + self.dh
+
+        if "formatted_index" in format_variables:
+            format_variables.remove("formatted_index")
+            formatted_index_t = real_hour_t % 24
+            kwargs_t = {"formatted_index": formatted_index_t}
+            formatted_index_t_next = real_hour_t_next % 24
+            kwargs_t_next = {"formatted_index": formatted_index_t_next}
+
+        if "date" in format_variables:
+            format_variables.remove("date")
+            date = self.liste_dates_rep[index]
+            date_index = int(np.floor(real_hour_t / 24.0))
+            date_0 = datetime.strptime(date, "%Y-%m-%d")
+            next_date_1 = date_0 + timedelta(days=1)
+            next_date_2 = date_0 + timedelta(days=2)
+            date_1 = next_date_1.strftime("%Y-%m-%d")
+            date_2 = next_date_2.strftime("%Y-%m-%d")
+            dates = [date, date_1, date_2]
+            kwargs_t = kwargs_t | {"date": dates[date_index].replace("-", "")}
+            kwargs_t_next = kwargs_t_next | {"date": dates[date_index].replace("-", "")}
+
+        kwargs_t = kwargs_t | {var: getattr(self, var, "") for var in format_variables}
+        kwargs_t_next = kwargs_t_next | {
+            var: getattr(self, var, "") for var in format_variables
+        }
+
+        return self._get_full_path(
+            self.filename_format.format(**kwargs_t)
+        ), self._get_full_path(self.filename_format.format(**kwargs_t_next))
+
+    def __getitem__(self, items):
+        """
+        Get the data for the specified index or indices.
+
+        Args:
+            items: The index or indices of the data to retrieve.
+
+        Returns:
+            Any: The data.
+        """
+        file_path_t, file_path_t_next = self._get_filename(items)
+        data_t = self._load(file_path_t)
+        data_t_next = self._load(file_path_t_next)
+        return data_t, data_t_next
+
+    def _load_file(self, file_path):
+        return obs_clean(np.load(file_path).astype(np.float32), self.crop_indices)
+
+    def get_all_data(self):
+        """
+        Get all data from the dataset.
+
+        If the data is not cached, it will be loaded, preprocessed, and stored in the cache.
+        If the data is cached, it will be retrieved from the cache.
+
+        Returns:
+            np.ndarray: The concatenated preprocessed data from the entire dataset.
+        """
+        all_data = []
+        if not self.is_dataset_cached():
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Collecting uncached data"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self._load(file_path_t)
+                    data_t_next = self._load(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        else:
+            for idx in tqdm(
+                range(len(self)), desc=f"{self.name} : Getting data from cache"
+            ):
+                try:
+                    file_path_t, file_path_t_next = self._get_filename(idx)
+                    data_t = self.cache.get_from_cache(file_path_t)
+                    data_t_next = self.cache.get_from_cache(file_path_t_next)
+                    if self.temporal_difference_type == "absolute":
+                        all_data.append(
+                            np.abs(np.array(data_t_next - data_t, dtype=np.float32))
+                            / self.dh
+                        )
+                    elif self.temporal_difference_type == "simple":
+                        all_data.append(
+                            np.array(data_t_next - data_t, dtype=np.float32) / self.dh
+                        )
+                    else:
+                        raise NotImplementedError
+                except FileNotFoundError as e:
+                    logging.warning(f"FileNotFound {e}, continuing")
+        return np.concatenate(all_data, axis=0)
