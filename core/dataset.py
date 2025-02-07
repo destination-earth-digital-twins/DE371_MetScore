@@ -344,7 +344,7 @@ class DateDataset(Dataset):
         self.liste_dates_rep = [
             item
             for item in self.liste_dates_repl
-            for _ in range(config_data["Lead_Times"] // config_data["dh"])
+            for _ in range(config_data["Lead_Times"])
         ]
 
     def _get_filename(self, index):
