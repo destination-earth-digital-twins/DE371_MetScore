@@ -57,19 +57,19 @@ def ensemble_crps(obs_data, fake_data, fair=True):
     for i in range(len(obs_data_ff)):
         crps, fcrps, acrps = psc(fake_data_ff[:, i], obs_data_ff[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[0] = sm / len(obs_data_ff)
+    crps_res[1] = sm / len(obs_data_ff)
     sm = 0.0
 
     for i in range(len(obs_data_dd)):
         crps, fcrps, acrps = psc(fake_data_dd[:, i], obs_data_dd[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[1] = sm / len(obs_data_dd)
+    crps_res[2] = sm / len(obs_data_dd)
     sm = 0.0
 
     for i in range(len(obs_data_t2m)):
         crps, fcrps, acrps = psc(fake_data_t2m[:, i], obs_data_t2m[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[2] = sm / len(obs_data_t2m)
+    crps_res[3] = sm / len(obs_data_t2m)
 
     logging.debug(f"CRPS results : {crps_res}")
 
