@@ -1,4 +1,7 @@
 ﻿.idea
+.sh
+.yml
+config/
 __pycache__
 samples
 data
