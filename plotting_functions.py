@@ -5,7 +5,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FormatStrFormatter
-
+import pickle
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
 import stats.wilcoxon_test as wct
@@ -1341,25 +1341,29 @@ def plot_MultivarCorr(experiments, metric, config):
             exp_arome = exp_idx
             print("exp_arome", exp_arome)
         else:
-            data = restricted_loads(
-                open(
-                    config["expe_folder"]
-                    + "/"
-                    + exp["name"]
-                    + "/"
-                    + metric["name"]
-                    + ".p",
-                    "rb",
-                )
-            )
-            print("multivar shape", data.keys(), data["hist"].shape)
-            multivar[exp_idx] = data["hist"][1]
+            # data = restricted_loads(
+            #     open(
+            #         config["expe_folder"]
+            #         + "/"
+            #         + exp["name"]
+            #         + "/"
+            #         + metric["name"]
+            #         + ".p",
+            #         "rb",
+            #     )
+            # )
+            # print("multivar shape", data.keys(), data["hist"].shape)
+            # multivar[exp_idx] = data["hist"][1]
 
-            if exp_idx == len(experiments) - 1:
-                multivar[exp_arome] = data["hist"][0]
-                bins = data["bins"]
-                levels = multiv.define_levels(multivar[exp_arome], 5)
-                print(levels)
+            data = pickle.load(open(config['expe_folder'] + '/' + exp['name'] + '/' + metric['name'] + '.p','rb'))
+            # print("multivar shape", data.keys(), data['hist'].shape)
+            multivar[exp_idx] = data['hist'][1]
+
+            if exp_idx==len(experiments)-1:
+                multivar[exp_arome] = data['hist'][0]
+                bins = data['bins']
+                levels = multiv.define_levels(multivar[exp_arome],5)
+                # print(levels)
 
     for exp_idx, exp in enumerate(experiments):
         if "AROME" not in exp["name"]:
