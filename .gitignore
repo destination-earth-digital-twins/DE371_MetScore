@@ -17,3 +17,5 @@ output
 *.out
 scripts/
 *.code-workspace
+*.sh
+file_rename.py
