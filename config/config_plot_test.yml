@@ -1,4 +1,4 @@
-output_plots: //home/users/u101957/DE371_MetScore/tests_scores/plots
+output_plots: /home/users/u101957/DE371_MetScore/tests_scores/plots
 experiments:  
 
   # - name: 'Experiment_vgg'

@@ -84,7 +84,6 @@ def fcrps_calc(data):
 
 
 def crps_multi_dates(cond, X, real_ens, debiasing=False):
-    print("je suis la ")
     """
     Inputs :
 

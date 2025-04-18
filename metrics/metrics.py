@@ -44,7 +44,6 @@ class Metric(ABC, Configurable):
         Returns:
             The calculated metric result.
         """
-        print('JE SUIS LES DATAS', type(real_data),real_data.shape)
         # np.save('real_data.npy',real_data[0])
         # np.save('fake_data.npy',fake_data[0])
 
@@ -260,7 +259,6 @@ class PreprocessStandalone(Metric):
         else:
             if len(fake_data.shape)==5:
                 fake_data= fake_data[:, 0,:,:,:]
-            print("VAR INDICES", len(self.var_indices),"FAKE DATA SHAPE'",fake_data.shape[self.var_channel],self.var_channel)
             # if len(self.var_indices) != fake_data.shape[self.var_channel]:
             if len(self.var_indices) != fake_data.shape[1]:
 
