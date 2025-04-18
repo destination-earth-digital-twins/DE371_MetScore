@@ -2,6 +2,7 @@
 .sh
 .yml
 config/
+tests_scores/
 __pycache__
 samples
 data

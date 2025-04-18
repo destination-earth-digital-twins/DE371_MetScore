@@ -245,7 +245,7 @@ def plot_skillSpread(experiments, metric, config):
             if exp_idx>0:
                 markers_on = significance_0[var_idx,min(0,exp_idx - 1)].nonzero()[0]
                 print('markers_on',markers_on)
-                print('significance', significance_0[var_idx,exp_idx -1])
+                # print('significance', significance_0[var_idx,exp_idx -1])
                 plt.plot(np.sqrt(np.nanmean(s_p_scores_LT[exp_idx,:,:,0,var_idx]**2., axis =(0,2,3))), 
                         label=exp['short_name'], markevery=markers_on, marker="D", color=color_p[exp_idx], linestyle='solid', linewidth=4.5 - exp_idx)
                 

@@ -346,4 +346,3 @@ class ModDataloader(DateDataloader):
         if cut<self.maxNsamples:
             logging.warning(f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
         return data1shuf[:cut], data2shuf[:cut]
-
