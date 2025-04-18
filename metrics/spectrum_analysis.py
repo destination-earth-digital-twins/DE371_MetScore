@@ -20,10 +20,9 @@ from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.fftpack import dct, idct, fft
+from scipy.fftpack import dct, fft, idct
 
 import metrics.wind_comp as wc
-
 
 ################## DCT ########################################################
 
@@ -263,8 +262,6 @@ def PSD_compare_multidates(obsdata, real_data, fake_data, debiasing=False):
         fake_data.shape[0] * fake_data.shape[1], channels, H, W
     )
 
-    logging.debug(resh_real.shape, resh_fake.shape)
-
     return 10 * PSD_compare(resh_real, resh_fake)
 
 
@@ -274,7 +271,6 @@ if __name__ == "__main__":
     ranges = [2.0, 3.0, 5.0, 10.0]
 
     for r in ranges[-2:]:
-        logging.debug(r / 0.25)
         t, p = np.ogrid[-r:r:0.01, -r:r:0.01]
         x = np.cos((2 * np.pi / 0.1) * np.sqrt(t**2 + p**2)) + np.cos(
             (2 * np.pi / 0.0333333) * np.sqrt(t**2 + p**2)
@@ -309,7 +305,7 @@ def radial_bin_dct_old(dct_sig, UniRad=None, Rad=None, Inds=None):
     """
     N = dct_sig.shape[0]
 
-    if Inds == None and UniRad == None:
+    if (Inds is None) and (UniRad is None):
         Inds = np.array([[[i, j] for i in range(N)] for j in range(N)])
 
         Rad = np.linalg.norm(Inds, axis=-1) / (N)

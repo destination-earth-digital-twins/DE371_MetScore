@@ -19,7 +19,7 @@ class Metric(ABC, Configurable):
         isBatched (bool): Indicates whether the metric is calculated in batches or not. Default is False.
     """
 
-    required_keys = ['name']
+    required_keys = ["name"]
 
     def __init__(self, isBatched=False, **kwargs):
         """
@@ -50,6 +50,11 @@ class Metric(ABC, Configurable):
 
         processed_data = self._preprocess(real_data, fake_data, obs_data)
         result = self._calculateCore(processed_data)
+        if isinstance(result, dict):
+            for k in result.keys():
+                result[k] = result[k].astype(np.float32)
+        else:
+            result = result.astype(np.float32)
         return result
 
     @abstractmethod
@@ -115,17 +120,23 @@ class PreprocessCondObs(Metric):
         
         logging.debug(fake_data.shape)
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
-            fake_data_p = fake_data.take(indices=self.var_indices, axis=self.var_channel)
+            fake_data_p = fake_data.take(
+                indices=self.var_indices, axis=self.var_channel
+            )
         else:
             fake_data_p = fake_data
 
         if len(self.real_var_indices) != real_data.shape[self.var_channel]:
-            real_data_p = real_data.take(indices=self.real_var_indices, axis=self.var_channel)
+            real_data_p = real_data.take(
+                indices=self.real_var_indices, axis=self.var_channel
+            )
         else:
             real_data_p = real_data
 
         if len(self.obs_var_indices) != obs_data.shape[self.obs_var_channel]:
-            obs_data_p = obs_data.take(indices=self.obs_var_indices, axis=self.obs_var_channel)
+            obs_data_p = obs_data.take(
+                indices=self.obs_var_indices, axis=self.obs_var_channel
+            )
         else:
             obs_data_p = obs_data
 
@@ -136,16 +147,23 @@ class PreprocessCondObs(Metric):
         fake_data_pp[:, 1], fake_data_pp[:, 2] = wc.computeWindDir(fake_data_pp[:, 1], fake_data_pp[:, 2])
         real_data_pp[:, 1], real_data_pp[:, 2] = wc.computeWindDir(real_data_pp[:, 1], real_data_pp[:, 2])
 
-        if self.debiasing == True:
-            fake_data_pp = wc.debiasing(fake_data_pp, real_data_pp, self.conditioning_members, mode=self.debiasing_mode)
+        if self.debiasing:
+            fake_data_pp = wc.debiasing(
+                fake_data_pp,
+                real_data_pp,
+                self.conditioning_members,
+                mode=self.debiasing_mode,
+            )
 
         angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2])
         fake_data_pp[:, 2] = angle_dif
         obs_data_pp[2, ~np.isnan(obs_data_pp[2])] = 0.
 
-        return {'real_data': real_data_pp,
-                'fake_data': fake_data_pp,
-                'obs_data': obs_data_pp}
+        return {
+            "real_data": real_data_pp,
+            "fake_data": fake_data_pp,
+            "obs_data": obs_data_pp,
+        }
 
 
 class PreprocessDist(Metric):
@@ -167,7 +185,7 @@ class PreprocessDist(Metric):
             **kwargs: Additional keyword arguments.
         """
         super().__init__(isBatched, **kwargs)
-        #if self.isOnReal:
+        # if self.isOnReal:
         #    raise Warning(f"Metric {self} is defined with 'isOnReal' argument, but this is a distance metric.\
         #                         Argument `isOnReal` reset to default.")
         #    self.isOnReal = False
@@ -176,7 +194,8 @@ class PreprocessDist(Metric):
         """
         Preprocess data for distance metrics.
 
-        This method performs data preprocessing specific to distance metrics, such as selecting the right indicesfor variables.
+        This method performs data preprocessing specific to distance metrics,
+        such as selecting the right indicesfor variables.
 
         Args:
             real_data: The real data.
@@ -192,15 +211,18 @@ class PreprocessDist(Metric):
         # While this is surely costly, at first hand we want to do so
         # because not all metrics might use the same variables
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
-            fake_data_p = fake_data.take(indices=self.var_indices, axis=self.var_channel)
+            fake_data_p = fake_data.take(
+                indices=self.var_indices, axis=self.var_channel
+            )
         else:
             fake_data_p = fake_data
         if len(self.real_var_indices) != real_data.shape[self.var_channel]:
-            real_data_p = real_data.take(indices=self.real_var_indices, axis=self.var_channel)
+            real_data_p = real_data.take(
+                indices=self.real_var_indices, axis=self.var_channel
+            )
         else:
             real_data_p = real_data
-        return {'real_data': real_data_p,
-                'fake_data': fake_data_p}
+        return {"real_data": real_data_p, "fake_data": fake_data_p}
 
 
 class PreprocessStandalone(Metric):
@@ -210,7 +232,7 @@ class PreprocessStandalone(Metric):
     This preprocessor handles data preprocessing for metrics that are calculated independently on real or fake data.
     """
 
-    required_keys = ['isOnReal']
+    required_keys = ["isOnReal"]
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
         """
@@ -229,7 +251,9 @@ class PreprocessStandalone(Metric):
         """
         if self.isOnReal:
             if len(self.real_var_indices) != real_data.shape[self.var_channel]:
-                real_data_p = real_data.take(indices=self.var_indices, axis=self.var_channel)
+                real_data_p = real_data.take(
+                    indices=self.var_indices, axis=self.var_channel
+                )
             else:
                 real_data_p = real_data
             return real_data_p
@@ -240,7 +264,9 @@ class PreprocessStandalone(Metric):
             # if len(self.var_indices) != fake_data.shape[self.var_channel]:
             if len(self.var_indices) != fake_data.shape[1]:
 
-                fake_data_p = fake_data.take(indices=self.var_indices, axis=self.var_channel)
+                fake_data_p = fake_data.take(
+                    indices=self.var_indices, axis=self.var_channel
+                )
             else:
                 fake_data_p = fake_data
             return fake_data_p

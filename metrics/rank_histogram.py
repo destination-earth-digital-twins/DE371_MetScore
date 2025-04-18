@@ -24,7 +24,7 @@ def rank_histo(obs_data, fake_data):
         bins (C, N + 1)
     """
 
-    N, C, H, W = fake_data.shape
+    _, C, _, _ = fake_data.shape
 
     fake_data_p = copy.deepcopy(fake_data)
     obs_data_p = copy.deepcopy(obs_data)
@@ -42,7 +42,7 @@ def rank_histo(obs_data, fake_data):
             ens_sort.sort()
             ens_sort = np.concatenate((ens_sort, [9999999.0]))
             out = np.where((ens_sort < obs[j]), True, False)
-            bins[i, np.argmax(out == False)] += 1 / obs.shape[0]
+            bins[i, np.argmax(~out)] += 1 / obs.shape[0]
 
     return bins
 
@@ -66,6 +66,8 @@ def unreliability(rankHisto, N_obs):
     delta = np.zeros((C,))
 
     for var_idx in range(C):
-        delta[var_idx] = (1.0/(N_bins-1)) * ((rankHisto[var_idx,:] - (N_obs /N_bins)) ** 2).sum()
+        delta[var_idx] = (1.0 / (N_bins - 1)) * (
+            (rankHisto[var_idx, :] - (N_obs / N_bins)) ** 2
+        ).sum()
 
     return delta, delta0, delta / delta0

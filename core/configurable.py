@@ -1,5 +1,7 @@
-import yaml
 import logging
+
+import yaml
+
 
 class Configurable:
     """
@@ -9,6 +11,7 @@ class Configurable:
     should define `required_keys` and `aliases` class attributes. When a subclass is initialized with configuration
     data, the attributes defined in the configuration will be automatically set on the instance.
     """
+
     required_keys = []
 
     # aliases for the class name
@@ -50,9 +53,11 @@ class Configurable:
         """
         config_data = cls._safe_open(cls, config_data)
         try:
-            type_name = config_data['type']
+            type_name = config_data["type"]
         except KeyError:
-            raise ValueError(f"Missing required key: type for class {cls.__name__} in config file for {cls.__name__}")
+            raise ValueError(
+                f"Missing required key: type for class {cls.__name__} in config file for {cls.__name__}"
+            )
 
         def find_subclass_recursive(parent_cls):
             """
@@ -78,8 +83,10 @@ class Configurable:
         if result is not None:
             return result
         else:
-            raise Exception(f"Type {type_name} non trouvé, veuillez vérifier le fichier de configuration. "
-                            f"Liste des types disponibles : {[el.__name__ for el in cls.__subclasses__()]}")
+            raise Exception(
+                f"Type {type_name} non trouvé, veuillez vérifier le fichier de configuration. "
+                f"Liste des types disponibles : {[el.__name__ for el in cls.__subclasses__()]}"
+            )
 
     def __repr__(self):
         """
@@ -92,17 +99,21 @@ class Configurable:
         Open and load configuration data from a YAML file or return the provided dictionary.
         """
         if not isinstance(config_data, (str, dict)):
-            raise TypeError("Invalid type for config_data. Expected str (file path) or dict.")
+            raise TypeError(
+                "Invalid type for config_data. Expected str (file path) or dict."
+            )
 
         if isinstance(config_data, str):
             try:
-                with open(config_data, 'r') as file:
+                with open(config_data, "r") as file:
                     config_data = yaml.safe_load(file)
             except Exception as e:
                 raise IOError(f"Error loading config file: {e}")
 
         if not isinstance(config_data, dict):
-            raise TypeError("Invalid type for config_data. Expected dict after loading from YAML.")
+            raise TypeError(
+                "Invalid type for config_data. Expected dict after loading from YAML."
+            )
 
         return config_data
 
@@ -121,18 +132,20 @@ def _check_config(cls, config_data, typed=False):
     """
     required_keys = []
     if typed:
-        required_keys = cls.required_keys + ['type']
+        required_keys = cls.required_keys + ["type"]
     current_class = cls
-    while hasattr(current_class, 'required_keys'):
+    while hasattr(current_class, "required_keys"):
         required_keys += current_class.required_keys
         current_class = current_class.__base__
 
     invalid_keys = set(config_data.keys()) - set(required_keys) - set(cls.__dict__)
     if invalid_keys:
-        logging.debug(f"Supplementary keys in configuration for class {cls.__name__}: {', '.join(invalid_keys)}")
-    
+        logging.debug(
+            f"Supplementary keys in configuration for class {cls.__name__}: {', '.join(invalid_keys)}"
+        )
+
     missing_keys = [key for key in required_keys if key not in config_data]
     if missing_keys:
-        raise ValueError(f"Missing required keys for class {cls.__name__}: {', '.join(missing_keys)}")
-
-    
+        raise ValueError(
+            f"Missing required keys for class {cls.__name__}: {', '.join(missing_keys)}"
+        )

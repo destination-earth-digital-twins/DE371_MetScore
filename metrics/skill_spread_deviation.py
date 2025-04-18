@@ -29,12 +29,10 @@ def skill_spread_deviation_multi_dates(
         devaition :  C x H x W array containing the result
 
     """
-    D, N, C, H, W = X.shape
+    _, N, _, _, _ = X.shape
     # correction factor according to Fortin et al., 2014
     # Why should ensemble Spread match RMSE of the ensemble mean ?
     correction_factor = np.sqrt((N + 1) / N)
-
-    sp_out = np.zeros((D, 2, C, H, W))
 
     X_p = copy.deepcopy(X)
     cond_p = copy.deepcopy(cond)
@@ -109,8 +107,6 @@ def skill_spread_vs_aro_multi_dates(cond, X, real_ens, debiasing=False):
     # correction factor according to Fortin et al., 2014
     # Why should ensemble Spread match RMSE of the ensemble mean ?
     correction_factor = np.sqrt((N + 1) / N)
-
-    sp_out = np.zeros((D, 2, C, H, W))
 
     X_p = copy.deepcopy(X)
     cond_p = copy.deepcopy(cond)

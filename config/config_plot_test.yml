@@ -1,20 +1,20 @@
-output_plots: /home/users/u101957/DE371_MetScore/tests_scores/plots_tests21/
+output_plots: //home/users/u101957/DE371_MetScore/tests_scores/plots
 experiments:  
 
-  - name: 'Experiment_vgg'
-    short_name: "Experiment1"
-    N_ens: 16
+  # - name: 'Experiment_vgg'
+  #   short_name: "Experiment1"
+  #   N_ens: 16
 
-  - name: 'sigmoid_stdmean_rruvt_pca_8_spr_1.0'
-    short_name: "sigmoid_stdmean_pca_8_spr_1.0"
-    N_ens: 112
+  # - name: 'sigmoid_stdmean_rruvt_pca_8_spr_1.0'
+  #   short_name: "sigmoid_stdmean_pca_8_spr_1.0"
+  #   N_ens: 112
   # - name: 'sigmoid_stdmean_rruvt_pca_8_spr_1.2'
   #   short_name: "sigmoid_stdmean_pca_8_spr_1.2"
   #   N_ens: 112  
 
-  - name: 'sigmoid_stdmean_rruvt_pca_10_spr_1.0'
-    short_name: "sigmoid_stdmean_pca_10_spr_1.0"
-    N_ens: 112
+  # - name: 'sigmoid_stdmean_rruvt_pca_10_spr_1.0'
+  #   short_name: "sigmoid_stdmean_pca_10_spr_1.0"
+  #   N_ens: 112
   # - name: 'sigmoid_stdmean_rruvt_pca_10_spr_1.2'
   #   short_name: "sigmoid_stdmean_pca_10_spr_1.2"
   #   N_ens: 112 
@@ -36,9 +36,9 @@ experiments:
   #   short_name: "quantile_sigmoid_pca_10_spr_1.2"
   #   N_ens: 112  
 
-  # - name: 'sigmoid_quantile_rr_stdmean_uvt_pca_8_spr_1.0'
-  #   short_name: "quantile_sigmoid_pca_8_spr_1.0"
-  #   N_ens: 112
+  - name: 'sigmoid_quantile_rr_stdmean_uvt_pca_8_spr_1.0'
+    short_name: "quantile_sigmoid_pca_8_spr_1.0"
+    N_ens: 112
   # - name: 'sigmoid_quantile_rr_stdmean_uvt_pca_8_spr_1.2'
   #   short_name: "quantile_sigmoid_pca_8_spr_1.0"
   #   N_ens: 112  
@@ -76,9 +76,9 @@ experiments:
   # - name: 'pert_init'
   #   short_name: "pert_init"
   #   N_ens: 112
-  - name: 'linear'
-    short_name: "linear"
-    N_ens: 112
+  # - name: 'linear'
+  #   short_name: "linear"
+  #   N_ens: 112
 
   # - name: 'sigmoid_inflate_rdm'
   #   short_name: "sigmoid_inflate_rdm"
@@ -98,30 +98,30 @@ experiments:
   #   N_ens: 112
 
 
-  - name: 'pert_init'
-    short_name: "pert_init"
-    N_ens: 112
+  # - name: 'pert_init'
+  #   short_name: "pert_init"
+  #   N_ens: 112
 
 
 metrics:
-  # - name: spectralCompute
-    # folder: spectralCompute
-  # # - name: MultivarCorr
-  # #   folder: MultivarCorr
-  # # # - name: Quantiles
-  # # #   folder: Quantiles
-  # # #   qlist: [0.05,0.5,0.8,0.9]
-  # # # - name: QuantilesScore
-  # # #   folder: QuantilesScore
-  # # #   qlist: [0.01,0.1,0.9,0.99]
-  # - name: SWD
-    # folder: SWDall
+  - name: spectralCompute
+    folder: spectralCompute
+  # - name: MultivarCorr
+  #   folder: MultivarCorr
+  # # - name: Quantiles
+  # #   folder: Quantiles
+  # #   qlist: [0.05,0.5,0.8,0.9]
+  # # - name: QuantilesScore
+  # #   folder: QuantilesScore
+  # #   qlist: [0.01,0.1,0.9,0.99]
+  - name: SWD
+    folder: SWDall
   # - name: ObjectsAttribution
     # folder : ObjectsAttribution
-  # - name : AreaProportion
-  #   folder : AreaProportion 
-  # - name: biasEnsemble
-  #   folder: biasEnsemble
+  - name : AreaProportion
+    folder : AreaProportion 
+  - name: biasEnsemble
+    folder: biasEnsemble
   - name: ensembleCRPS
     folder: ensembleCRPS
   - name: skillSpread

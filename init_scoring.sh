@@ -20,3 +20,4 @@ module load Apptainer/1.2.4-GCCcore-12.3.0
 
 apptainer exec --nv /project/home/p200177/DE_371/resources/apptainer_container/container_for_scoring.sif python3 main.py --config '/home/users/u101957/DE371_MetScore/config/config_cond.yml' 
 
+

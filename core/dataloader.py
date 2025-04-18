@@ -5,10 +5,17 @@ from typing import Type
 import numpy as np
 
 from core.configurable import Configurable
-from core.dataset import Dataset, RealDataset, ObsDataset, RandomDataset, ModDataset
-
+from core.dataset import (
+    Dataset,
+    DiffObsDataset,
+    ModDataset,
+    ObsDataset,
+    RandomDataset,
+    RealDataset,
+)
 
 # region Base DataLoader
+
 
 class DataLoader(ABC, Configurable):
     """
@@ -125,7 +132,11 @@ class DataLoader(ABC, Configurable):
         Returns:
             tuple: A tuple containing all data from the real, fake, and observed datasets, respectively.
         """
-        return self._real_dataset.get_all_data(), self._fake_dataset.get_all_data(), self._obs_dataset.get_all_data()
+        return (
+            self._real_dataset.get_all_data(),
+            self._fake_dataset.get_all_data(),
+            self._obs_dataset.get_all_data(),
+        )
 
     def __iter__(self):
         """
@@ -142,7 +153,8 @@ class DataLoader(ABC, Configurable):
         """
         Abstract method for implementing the iterator protocol.
 
-        This method should be implemented in subclasses to provide the specific behavior for returning the next sample from the datasets.
+        This method should be implemented in subclasses to provide
+        the specific behavior for returning the next sample from the datasets.
 
         Raises:
             StopIteration: When there are no more samples to iterate over.
@@ -163,33 +175,45 @@ class DataLoader(ABC, Configurable):
 
 # region Custom Dataloader
 
+
 class DateDataloader(DataLoader):
     """
-       A data loader for date-based datasets.
+    A data loader for date-based datasets.
 
-       This class extends the DataLoader base class and loads real, fake, and observed datasets based on the provided configuration.
-       It iterates over the datasets and returns samples for each iteration.
+    This class extends the DataLoader base class and loads
+    real, fake, and observed datasets based on the provided configuration.
+    It iterates over the datasets and returns samples for each iteration.
 
-       Attributes:
-           real_dataset (Type[RealDataset]): The real dataset.
-           fake_dataset (Type[Dataset]): The fake dataset.
-           obs_dataset (Type[ObsDataset]): The observed dataset.
-           _data_length (int): The length of the data.
-           _current_index (int): The current index in the data.
+    Attributes:
+        real_dataset (Type[RealDataset]): The real dataset.
+        fake_dataset (Type[Dataset]): The fake dataset.
+        obs_dataset (Type[ObsDataset]): The observed dataset.
+        _data_length (int): The length of the data.
+        _current_index (int): The current index in the data.
     """
 
     def __init__(self, config_data, use_cache=False, **kwargs):
         # Appel du __init__ de la classe mère
         super().__init__()
-        del config_data['type']  # ensuring 'type' of dataloader does not leak on 'type' of datasets
-        config_data['real_dataset_config'].update(config_data)
-        config_data['fake_dataset_config'].update(config_data)
-        config_data['obs_dataset_config'].update(config_data)
+        del config_data[
+            "type"
+        ]  # ensuring 'type' of dataloader does not leak on 'type' of datasets
+        config_data["real_dataset_config"].update(config_data)
+        config_data["fake_dataset_config"].update(config_data)
+        config_data["obs_dataset_config"].update(config_data)
 
-        self.real_dataset = RealDataset.fromConfig(config_data['real_dataset_config'], use_cache=use_cache)
-        self.fake_dataset = Dataset.from_typed_config(config_data['fake_dataset_config'], use_cache=use_cache)
-        self.obs_dataset = ObsDataset.fromConfig(config_data['obs_dataset_config'], use_cache=use_cache)
-        self._data_length = min(len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset))
+        self.real_dataset = RealDataset.fromConfig(
+            config_data["real_dataset_config"], use_cache=use_cache
+        )
+        self.fake_dataset = Dataset.from_typed_config(
+            config_data["fake_dataset_config"], use_cache=use_cache
+        )
+        self.obs_dataset = ObsDataset.fromConfig(
+            config_data["obs_dataset_config"], use_cache=use_cache
+        )
+        self._data_length = min(
+            len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
+        )
         logging.debug(f"Dataset length is {self._data_length}")
 
     # def __next__(self):
@@ -209,16 +233,36 @@ class DateDataloader(DataLoader):
     def __next__(self):
         while self.current_index < self._data_length:
             try:
-                print('CURRENT',self.current_index)
-                fake_samples = np.array([self.fake_dataset[self.current_index + i] for i in range(self.batch_size)])
-                obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
-                real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.batch_size)])
-                self.current_index += min(self.batch_size, self._data_length - self.current_index)
+                fake_samples = np.array(
+                    [
+                        self.fake_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                obs_samples = np.array(
+                    [
+                        self.obs_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                real_samples = np.array(
+                    [
+                        self.real_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
                 return fake_samples[0], real_samples[0], obs_samples
-            except (FileNotFoundError, KeyError) as e:
-                logging.warning(f"{self.name}: Skipping missing data at index {self.current_index} due to {e}")
-                self.current_index += 1  # Skip the problematic index and continue
-        raise StopIteration
+            except FileNotFoundError as e:
+                logging.warning(f"{self.name} :  File not found, {e}")
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
+                return None, None, None
+        else:
+            raise StopIteration
 
 
     def get_all_data(self):
@@ -234,43 +278,60 @@ class DateDataloader(DataLoader):
         cut = min([self.maxNsamples, data1shuf.shape[0], data2shuf.shape[0]])
         if cut < self.maxNsamples:
             logging.warning(
-                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
+                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
+            )
         return data1shuf[:cut], data2shuf[:cut]
+
 
 class RandomDataloader(DataLoader):
     """
-       A data loader for random datasets.
+    A data loader for random datasets.
 
-       This class extends the DataLoader base class and loads random real and fake datasets based on the provided configuration.
-       It iterates over the datasets and returns samples for each iteration.
+    This class extends the DataLoader base class and loads
+    random real and fake datasets based on the provided configuration.
+    It iterates over the datasets and returns samples for each iteration.
 
-       Attributes:
-           real_dataset (Type[RandomDataset]): The real dataset.
-           fake_dataset (Type[RandomDataset]): The fake dataset.
-           _data_length (int): The length of the data.
-           _current_index (int): The current index in the data.
+    Attributes:
+        real_dataset (Type[RandomDataset]): The real dataset.
+        fake_dataset (Type[RandomDataset]): The fake dataset.
+        _data_length (int): The length of the data.
+        _current_index (int): The current index in the data.
     """
 
-    required_keys = ['real_dataset_config', 'fake_dataset_config']
+    required_keys = ["real_dataset_config", "fake_dataset_config"]
 
     def __init__(self, config_data, use_cache=False, **kwargs):
         # Appel du __init__ de la classe mère
         super().__init__()
 
-        config_data['real_dataset_config'].update(config_data)
-        config_data['fake_dataset_config'].update(config_data)
-        self.real_dataset = RandomDataset.fromConfig(config_data['real_dataset_config'], use_cache=use_cache)
-        self.fake_dataset = RandomDataset.fromConfig(config_data['fake_dataset_config'], use_cache=use_cache)
+        config_data["real_dataset_config"].update(config_data)
+        config_data["fake_dataset_config"].update(config_data)
+        self.real_dataset = RandomDataset.fromConfig(
+            config_data["real_dataset_config"], use_cache=use_cache
+        )
+        self.fake_dataset = RandomDataset.fromConfig(
+            config_data["fake_dataset_config"], use_cache=use_cache
+        )
         self._data_length = min(len(self.real_dataset), len(self.fake_dataset))
         logging.debug(f"Dataset length is {self._data_length}")
 
     def __next__(self):
         if self.current_index < self._data_length:
             fake_samples = np.array(
-                [self.fake_dataset[self.current_index + i] for i in range(self.fake_dataset.batch_size)])
+                [
+                    self.fake_dataset[self.current_index + i]
+                    for i in range(self.fake_dataset.batch_size)
+                ]
+            )
             real_samples = np.array(
-                [self.real_dataset[self.current_index + i] for i in range(self.real_dataset.batch_size)])
-            self.current_index += min(self.batch_size, self._data_length - self.current_index)
+                [
+                    self.real_dataset[self.current_index + i]
+                    for i in range(self.real_dataset.batch_size)
+                ]
+            )
+            self.current_index += min(
+                self.batch_size, self._data_length - self.current_index
+            )
             return fake_samples[0], real_samples[0], None
         else:
             raise StopIteration
@@ -287,62 +348,218 @@ class RandomDataloader(DataLoader):
         cut = min([self.maxNsamples, data1shuf.shape[0], data2shuf.shape[0]])
         if cut < self.maxNsamples:
             logging.warning(
-                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
+                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
+            )
         return data1shuf[:cut], data2shuf[:cut]
 
+
 class ModDataloader(DateDataloader):
-    required_keys = ['constant_debias', 'real_dataset_config', 'fake_dataset_config', 'obs_dataset_config']
-    def __init__(self, config_data, use_cache=False,**kwargs):
+    required_keys = [
+        "constant_debias",
+        "real_dataset_config",
+        "fake_dataset_config",
+        "obs_dataset_config",
+    ]
+
+    def __init__(self, config_data, use_cache=False, **kwargs):
         # Appel du __init__ de la classe mère
-        super().__init__(config_data,use_cache,**kwargs)
-        config_data['real_dataset_config'].update(config_data)
-        config_data['fake_dataset_config'].update(config_data)
-        self.real_dataset = RealDataset.fromConfig(config_data['real_dataset_config'], use_cache=use_cache)
-        self.fake_dataset = ModDataset.fromConfig(config_data['fake_dataset_config'], use_cache=use_cache)
-        self.obs_dataset = ObsDataset.fromConfig(config_data['obs_dataset_config'],use_cache=use_cache)
+        super().__init__(config_data, use_cache, **kwargs)
+        config_data["real_dataset_config"].update(config_data)
+        config_data["fake_dataset_config"].update(config_data)
+        self.real_dataset = RealDataset.fromConfig(
+            config_data["real_dataset_config"], use_cache=use_cache
+        )
+        self.fake_dataset = ModDataset.fromConfig(
+            config_data["fake_dataset_config"], use_cache=use_cache
+        )
+        self.obs_dataset = ObsDataset.fromConfig(
+            config_data["obs_dataset_config"], use_cache=use_cache
+        )
         self._data_length = min(len(self.real_dataset), len(self.fake_dataset))
         logging.debug(f"Dataset length is {self._data_length}")
 
     def __next__(self):
         if self.current_index < self._data_length:
             try:
-                fake_samples = np.array([self.fake_dataset[ self.current_index + i]['fake'] for i in range(self.fake_dataset.batch_size)])
-                mod_samples = np.array([self.fake_dataset[ self.current_index + i]['mod'] for i in range(self.fake_dataset.batch_size)])
-                real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.real_dataset.batch_size)])
-                obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
+                fake_samples = np.array(
+                    [
+                        self.fake_dataset[self.current_index + i]["fake"]
+                        for i in range(self.fake_dataset.batch_size)
+                    ]
+                )
+                mod_samples = np.array(
+                    [
+                        self.fake_dataset[self.current_index + i]["mod"]
+                        for i in range(self.fake_dataset.batch_size)
+                    ]
+                )
+                real_samples = np.array(
+                    [
+                        self.real_dataset[self.current_index + i]
+                        for i in range(self.real_dataset.batch_size)
+                    ]
+                )
+                obs_samples = np.array(
+                    [
+                        self.obs_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
 
-                self.current_index += min(self.batch_size, self._data_length - self.current_index)
-                logging.debug(f"mod'ing with option constant_debias set to {self.constant_debias}")
-                logging.debug(f"real shape {real_samples.shape} fake shape {fake_samples.shape} mod shape {mod_samples.shape}")
-                logging.debug(f"real dataset indices {self.real_dataset.var_indices} resulting shape {real_samples[0][:,self.real_dataset.var_indices,:,:].shape}")
-                mod_bias = mod_samples[0].mean(axis=(0,-2,-1)) - real_samples[0][:,self.real_dataset.var_indices,:,:].mean(axis=(0,-2,-1)) if self.constant_debias \
-                            else mod_samples[0].mean(axis=0) - real_samples[0][:,self.real_dataset.var_indices,:,:].mean(axis=0)
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
+                logging.debug(
+                    f"mod'ing with option constant_debias set to {self.constant_debias}"
+                )
+                logging.debug(
+                    f"real {real_samples.shape} fake {fake_samples.shape} mod {mod_samples.shape}"
+                )
+                logging.debug(
+                    f"indices {self.real_dataset.var_indices}, shape {real_samples.shape}"
+                )
+                mod_bias = (
+                    mod_samples[0].mean(axis=(0, -2, -1))
+                    - real_samples[0][:, self.real_dataset.var_indices, :, :].mean(
+                        axis=(0, -2, -1)
+                    )
+                    if self.constant_debias
+                    else mod_samples[0].mean(axis=0)
+                    - real_samples[0][:, self.real_dataset.var_indices, :, :].mean(
+                        axis=0
+                    )
+                )
                 if self.constant_debias:
                     logging.debug(f"applying bias {mod_bias}")
-                fake_samples[0] = fake_samples[0] - mod_bias[np.newaxis,:,np.newaxis,np.newaxis] if self.constant_debias else fake_samples[0] - mod_bias[np.newaxis]
+                fake_samples[0] = (
+                    fake_samples[0] - mod_bias[np.newaxis, :, np.newaxis, np.newaxis]
+                    if self.constant_debias
+                    else fake_samples[0] - mod_bias[np.newaxis]
+                )
                 logging.debug(f"mod'ing done")
             except FileNotFoundError as e:
                 logging.warning(f"{self.name} :  File not found, {e}")
-                self.current_index += min(self.batch_size, self._data_length - self.current_index)
-                return None,None,None
-            return fake_samples[0], real_samples[0], obs_samples          
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
+                return None, None, None
+            return fake_samples[0], real_samples[0], obs_samples
         else:
             raise StopIteration
 
     def get_all_data(self):
-        #TODO (?) --> find a way to modify on the fly to compute scores on mod'ed data
-        # otherwise this feature is quite useless (either FakeDataset makes the trick or you just cannot compute non-batched on mod'ed data)
+        """
+        TODO  find a way to modify on the fly to compute scores on mod'ed data
+        otherwise this feature is useless (either FakeDataset is ok or one cannot use non-batched on mod'ed data)
+        """
         real = self._real_dataset.get_all_data()
-        logging.debug("Not mod'ing on data gathering") 
+        logging.debug("Not mod'ing on data gathering")
         fake, _ = self._fake_dataset.get_all_data()
-        obs = self._obs_dataset.get_all_data()      
+        obs = self._obs_dataset.get_all_data()
         real, fake = self.randomize_and_cut(real, fake)
         return real, fake, obs
 
     def randomize_and_cut(self, data1, data2):
         data1shuf = np.random.permutation(data1)
         data2shuf = np.random.permutation(data2)
-        cut = min([self.maxNsamples,data1shuf.shape[0],data2shuf.shape[0]])
-        if cut<self.maxNsamples:
-            logging.warning(f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples.")
+        cut = min([self.maxNsamples, data1shuf.shape[0], data2shuf.shape[0]])
+        if cut < self.maxNsamples:
+            logging.warning(
+                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
+            )
+        return data1shuf[:cut], data2shuf[:cut]
+
+
+class DiffDateDataloader(DataLoader):
+    """
+    A data loader for difference date datasets.
+
+    This class extends the DataLoader base class and loads difference date real and fake datasets
+    based on the provided configuration.
+    It iterates over the datasets and returns samples for each iteration.
+    See DiffDateDataset class to see explanation about Difference Date.
+
+    Attributes:
+        real_dataset (Type[Dataset]): The real dataset.
+        fake_dataset (Type[Dataset]): The fake dataset.
+        _data_length (int): The length of the data.
+        _current_index (int): The current index in the data.
+    """
+
+    required_keys = ["real_dataset_config", "fake_dataset_config"]
+
+    def __init__(self, config_data, use_cache=False, **kwargs):
+        # Appel du __init__ de la classe mère
+        super().__init__()
+        del config_data[
+            "type"
+        ]  # ensuring 'type' of dataloader does not leak on 'type' of datasets
+        config_data["real_dataset_config"].update(config_data)
+        config_data["fake_dataset_config"].update(config_data)
+        config_data["obs_dataset_config"].update(config_data)
+
+        self.real_dataset = Dataset.from_typed_config(
+            config_data["real_dataset_config"], use_cache=use_cache
+        )
+        self.fake_dataset = Dataset.from_typed_config(
+            config_data["fake_dataset_config"], use_cache=use_cache
+        )
+        self.obs_dataset = DiffObsDataset.fromConfig(
+            config_data["obs_dataset_config"], use_cache=use_cache
+        )
+        self._data_length = min(
+            len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
+        )
+        logging.debug(f"Dataset length is {self._data_length}")
+
+    def __next__(self):
+        # print('current_index:{} _data_length|:{} '.format(self.current_index, self._data_length))
+        if self.current_index < self._data_length:
+            try:
+                fake_samples = np.array(
+                    [
+                        self.fake_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                obs_samples = np.array(
+                    [
+                        self.obs_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                real_samples = np.array(
+                    [
+                        self.real_dataset[self.current_index + i]
+                        for i in range(self.batch_size)
+                    ]
+                )
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
+                return fake_samples[0], real_samples[0], obs_samples
+            except FileNotFoundError as e:
+                logging.warning(f"{self.name} :  File not found, {e}")
+                self.current_index += min(
+                    self.batch_size, self._data_length - self.current_index
+                )
+                return None, None, None
+        else:
+            raise StopIteration
+
+    def get_all_data(self):
+        real = self._real_dataset.get_all_data()
+        fake = self._fake_dataset.get_all_data()
+        obs = self._obs_dataset.get_all_data()
+        real, fake = self.randomize_and_cut(real, fake)
+        return real, fake, obs
+
+    def randomize_and_cut(self, data1, data2):
+        data1shuf = np.random.permutation(data1)
+        data2shuf = np.random.permutation(data2)
+        cut = min([self.maxNsamples, data1shuf.shape[0], data2shuf.shape[0]])
+        if cut < self.maxNsamples:
+            logging.warning(
+                f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
+            )
         return data1shuf[:cut], data2shuf[:cut]
