@@ -56,32 +56,32 @@ def plot_quantiles(
           figname_info=".png",  
           var_names=['u','v','t2m'], 
           dict_var={'u': 0, 'v': 1, 't2m': 2},
-          axis_title_global='',
           quantiles_list=[0.01,0.1,0.5,0.9,0.99]
           ):
 
         cmap = plt.get_cmap("PiYG", 8)
         quantiles_arome = np.quantile(packsample[:,:,crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
         quantiles_gen = np.quantile(pert_sample[:,:,crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
-        vmins = np.zeros((len(quantiles_list), len(var_names)))
-        vmaxs = np.zeros((len(quantiles_list), len(var_names)))
+        vmins = np.zeros((len(quantiles_list), len(var_names)-1))
+        vmaxs = np.zeros((len(quantiles_list), len(var_names)-1))
 
         # Quantiles of AROME
-        fig, ax = plt.subplots(figsize=(5*len(quantiles_list),15), nrows=len(var_names), ncols=len(quantiles_list))
+        fig, ax = plt.subplots(figsize=(5*len(quantiles_list),15), nrows=len(var_names)-1, ncols=len(quantiles_list))
         for quantile_idx, quantile in enumerate(quantiles_list):
             for var_idx, var in enumerate(var_names):
-                vmins[quantile_idx][var_idx] = np.min(
-                    [np.min(quantiles_arome[quantile_idx][var_idx])]
-                )
-                vmaxs[quantile_idx][var_idx] = np.min(
-                    [np.max(quantiles_arome[quantile_idx][var_idx])]
-                )
+                if var_idx>0:
+                    vmins[quantile_idx][var_idx-1] = np.min(
+                        [np.min(quantiles_arome[quantile_idx][var_idx])]
+                    )
+                    vmaxs[quantile_idx][var_idx-1] = np.min(
+                        [np.max(quantiles_arome[quantile_idx][var_idx])]
+                    )
 
-                clim = (vmins[quantile_idx][var_idx],vmaxs[quantile_idx][var_idx])
+                    clim = (vmins[quantile_idx][var_idx-1],vmaxs[quantile_idx][var_idx-1])
 
-                ax[var_idx][quantile_idx].set_title(f"{axis_title_global}{var} real - Q{quantile}")
-                im = ax[var_idx][quantile_idx].imshow(quantiles_arome[quantile_idx][var_idx], origin="lower", cmap=cmap, clim=clim)
-                fig.colorbar(im, ax=ax[var_idx][quantile_idx], shrink=0.5)
+                    ax[var_idx-1][quantile_idx].set_title(f"{var} real - Q{quantile}")
+                    im = ax[var_idx-1][quantile_idx].imshow(quantiles_arome[quantile_idx][var_idx], origin="lower", cmap=cmap, clim=clim)
+                    fig.colorbar(im, ax=ax[var_idx-1][quantile_idx], shrink=0.5)
 
         fig.suptitle('Quantiles of AROME ensemble for '+title_info)
         fig.tight_layout()
@@ -92,14 +92,15 @@ def plot_quantiles(
         plt.close()
         
         # Quantiles of Generated samples
-        fig, ax = plt.subplots(figsize=(5*len(quantiles_list),15), nrows=len(var_names), ncols=len(quantiles_list))
+        fig, ax = plt.subplots(figsize=(5*len(quantiles_list),15), nrows=len(var_names)-1, ncols=len(quantiles_list))
         for quantile_idx, quantile in enumerate(quantiles_list):
             for var_idx, var in enumerate(var_names):
-                clim = (vmins[quantile_idx][var_idx],vmaxs[quantile_idx][var_idx])
+                if var_idx>0:
+                    clim = (vmins[quantile_idx][var_idx-1],vmaxs[quantile_idx][var_idx-1])
 
-                ax[var_idx][quantile_idx].set_title(f"{axis_title_global}{var} GEN - Q{quantile}")
-                im = ax[var_idx][quantile_idx].imshow(quantiles_gen[quantile_idx][var_idx], origin="lower", cmap=cmap, clim=clim)
-                fig.colorbar(im, ax=ax[var_idx][quantile_idx], shrink=0.5)
+                    ax[var_idx-1][quantile_idx].set_title(f"{var} GEN - Q{quantile}")
+                    im = ax[var_idx-1][quantile_idx].imshow(quantiles_gen[quantile_idx][var_idx], origin="lower", cmap=cmap, clim=clim)
+                    fig.colorbar(im, ax=ax[var_idx-1][quantile_idx], shrink=0.5)
 
         fig.suptitle('Quantiles of Generated ensemble for '+title_info)
         fig.tight_layout()
@@ -118,8 +119,7 @@ def plot_probability_exceeding_threshold_wind(
           figname_info=".png",  
           var_names=['rr', 'u','v','t2m'], 
           dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-          axis_title_global='',
-          threshold_wind=[5,10,15,20,25,30] # 15m/s = 54km/h
+          threshold_wind=[5,10,15,20] # 15m/s = 54km/h
           ):
         r'''
         Plot a map representing the spatial probability to exceed a given threshold.
@@ -127,7 +127,7 @@ def plot_probability_exceeding_threshold_wind(
         '''
         cmap = plt.get_cmap("Blues", 5)
         wind_arome = np.sqrt(packsample[:,dict_var['u']]**2+packsample[:,dict_var['v']]**2)
-        wind_gen = np.sqrt(packsample[:,dict_var['u']]**2+packsample[:,dict_var['v']]**2)
+        wind_gen = np.sqrt(pert_sample[:,dict_var['u']]**2+pert_sample[:,dict_var['v']]**2)
 
         fig, ax = plt.subplots(figsize=(10*len(threshold_wind),15), ncols=len(threshold_wind), nrows=2)
         for threshold_id, threshold in enumerate(threshold_wind):
@@ -162,8 +162,7 @@ def plot_probability_exceeding_threshold_temperature(
           figname_info=".png",  
           var_names=['rr', 'u','v','t2m'], 
           dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-          axis_title_global='',
-          threshold_t2m=[10,15,20,30,35,40]
+          threshold_t2m=[15,20,30,35,40]
           ):
         r'''
         Plot a map representing the spatial probability to exceed a given threshold.
@@ -268,7 +267,7 @@ def plot_panache_density(
                     borne_inf_level = mean - level*(mean-minimum)
                     borne_sup_level = mean + level*(maximum-mean)
                     density = np.mean(np.multiply(arome[id_lt,:,id_var]>=borne_inf_level, arome[id_lt,:,id_var]<=borne_sup_level))
-                    print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
+                    # print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
                     arome_density[id_lt][id_var][0][level_id] = mean - density*(mean-minimum)
                     arome_density[id_lt][id_var][1][level_id] = mean + density*(maximum-mean)
                     density_mem=density
@@ -287,7 +286,7 @@ def plot_panache_density(
                     borne_inf_level = mean - level*(mean-minimum)
                     borne_sup_level = mean + level*(maximum-mean)
                     density = np.mean(np.multiply(gen[id_lt,:,id_var]>=borne_inf_level, gen[id_lt,:,id_var]<=borne_sup_level))
-                    print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
+                    # print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
                     gen_density[id_lt][id_var][0][level_id] = mean - density*(mean-minimum)
                     gen_density[id_lt][id_var][1][level_id] = mean + density*(maximum-mean)
                     density_mem=density
@@ -295,38 +294,53 @@ def plot_panache_density(
         colors=['purple', 'purple', 'magenta','magenta', 'red','red', 'orange','orange', 'gold','gold']
         # colors=['purple', 'magenta', 'red', 'orange','gold']
         colors_lines=['black', 'black', 'dimgrey','dimgrey', 'grey', 'grey', 'silver', 'silver', 'lightgray', 'lightgray']
-        fig, ax = plt.subplots(figsize=(25,15), ncols=3, nrows=3)
-        ax[0][0].set_title('Panache AROME')
-        ax[0][1].set_title('Panache AROME&Generated')
-        ax[0][2].set_title('Panache Generated')
+        fig, axes = plt.subplots(figsize=(25,15), ncols=3, nrows=3, layout='constrained')
+        axes[0][0].set_title('Panache AROME')
+        axes[0][1].set_title('Panache AROME&Generated')
+        axes[0][2].set_title('Panache Generated')
         
         for id_var, var_name in enumerate(var_names):
             if id_var>0:
-                ax[id_var-1][0].set_xlabel('leadtimes (h)')
-                ax[id_var-1][1].set_xlabel('leadtimes (h)')
-                ax[id_var-1][2].set_xlabel('leadtimes (h)')
-                ax[id_var-1][0].grid(True, linestyle='--')
-                ax[id_var-1][0].set_ylabel(var_name)
-                ax[id_var-1][0].plot(np.mean(arome[:,:,id_var], axis=1), c='black', linewidth=2)
-                ax[id_var-1][1].grid(True, linestyle='--')
-                ax[id_var-1][1].set_ylabel(var_name)
-                ax[id_var-1][2].grid(True, linestyle='--')
-                ax[id_var-1][2].set_ylabel(var_name)
-                ax[id_var-1][2].plot(np.mean(gen[:,:,id_var], axis=1), c='black', linewidth=2)
-                # ax[id_var-1].plot(arome[:,:,id_var], c='blue', linewidth=1, alpha=0.2)
-                # ax[id_var-1].plot(gen[:,:,id_var], c='red', alpha=0.5)
+                axes[id_var-1][0].set_xlabel('leadtimes (h)')
+                axes[id_var-1][1].set_xlabel('leadtimes (h)')
+                axes[id_var-1][2].set_xlabel('leadtimes (h)')
+                axes[id_var-1][0].grid(True, linestyle='--')
+                axes[id_var-1][0].set_ylabel(var_name)
+                axes[id_var-1][0].plot(np.mean(arome[:,:,id_var], axis=1), c='black', linewidth=2)
+                axes[id_var-1][1].grid(True, linestyle='--')
+                axes[id_var-1][1].set_ylabel(var_name)
+                axes[id_var-1][2].grid(True, linestyle='--')
+                axes[id_var-1][2].set_ylabel(var_name)
+                axes[id_var-1][2].plot(np.mean(gen[:,:,id_var], axis=1), c='black', linewidth=2)
+                # axes[id_var-1].plot(arome[:,:,id_var], c='blue', linewidth=1, alpha=0.2)
+                # axes[id_var-1].plot(gen[:,:,id_var], c='red', alpha=0.5)
                 for level_id in reversed(range(0,levels)):
                     # AROME panache
-                    ax[id_var-1][0].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
-                    ax[id_var-1][1].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
-                    ax[id_var-1][2].fill_between(list(range(lt)), gen_density[:,id_var,0, level_id], gen_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    axes[id_var-1][0].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    axes[id_var-1][1].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    axes[id_var-1][2].fill_between(list(range(lt)), gen_density[:,id_var,0, level_id], gen_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
                     # Generated panache (only lines)
                     if (level_id+1)%2==0 :
-                        ax[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,0, level_id], linewidth=1, color=colors_lines[level_id])
-                        ax[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,1, level_id], linewidth=1, color=colors_lines[level_id])
+                        axes[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,0, level_id], linewidth=1, color=colors_lines[level_id])
+                        axes[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,1, level_id], linewidth=1, color=colors_lines[level_id])
                 # ax[id_var-1].fill_between(list(range(lt)), gen_min_max[:,id_var,0], gen_min_max[:,id_var,1], alpha=.5, linewidth=0, color='red')
-                
-        fig.savefig(figname_info+'__test.png', dpi=100)
+        
+        
+        cmap = mpl.colors.ListedColormap(['gold', 'orange', 'red', 'magenta', 'purple'])
+        bounds = [0,0.2,0.4,0.6,0.8,1]
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        cax,kw = mpl.colorbar.make_axes([ax for ax in axes.flat])
+        fig.colorbar(
+            # im,
+            mpl.cm.ScalarMappable(cmap=cmap, norm=norm),
+            cax=cax,
+            orientation='vertical',
+            spacing='proportional',
+            label='Density of members',
+        )
+
+        fig.suptitle(f'Probability Exceeding Temperature Threshold map comparison for '+title_info)
+        fig.savefig(figname_info+'.png', dpi=100)
         plt.close()
 
         
@@ -338,12 +352,12 @@ if __name__=="__main__" :
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit/sampling_sdedit_ddpm/sampling_10steps/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_residus/sampling_sdedit_residus_ddpm/sampling_250steps/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
-    parser.add_argument("--date_start", type=str, default = "2020-08-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-08-10")
+    parser.add_argument("--date_start", type=str, default = "2020-10-01")
+    parser.add_argument("--date_stop", type=str, default = "2020-10-04")
     parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,15,18,21,24,27,30,33,36,39,42])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
@@ -382,40 +396,45 @@ if __name__=="__main__" :
             print(f'Importing 4var_fake_ensemble_{datename}_{lt}.npy')
             Ens_Gen = np.load(f'{params.gen_data_dir}4var_fake_ensemble_{datename}_{lt}.npy')
 
-            # plot_probability_exceeding_threshold_temperature(
-            #     Ens_AROME, 
-            #     Ens_Gen, 
-            #     title_info=f'{datename}_{lt}',
-            #     figname_info=output_dir+f'probability_temperature_threshold_{datename}_{lt}',
-            #     var_names=['rr', 'u','v','t2m'], 
-            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-            #     axis_title_global=''
-            # )
+            directory = output_dir+'/probability_threshold_map/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            plot_probability_exceeding_threshold_temperature(
+                Ens_AROME, 
+                Ens_Gen, 
+                title_info=f'{datename}_{lt}',
+                figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
+                threshold_t2m=[15,20,30,35,40]       
+            )
+            plot_probability_exceeding_threshold_wind(
+                Ens_AROME, 
+                Ens_Gen, 
+                title_info=f'{datename}_{lt}',
+                figname_info=directory+f'probability_wind_threshold_{datename}_{lt}',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+                threshold_wind=[5,10,15,20]
+            )
 
-            # plot_probability_exceeding_threshold_wind(
-            #     Ens_AROME, 
-            #     Ens_Gen, 
-            #     title_info=f'{datename}_{lt}',
-            #     figname_info=output_dir+f'wind_zone_over_5_{datename}_{lt}',
-            #     var_names=['rr', 'u','v','t2m'], 
-            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-            #     axis_title_global='',
-            #     threshold_wind=[5,10,15,20,25,30]
-            # )
-
-            # plot_quantiles(
-            #     Ens_AROME, 
-            #     Ens_Gen, 
-            #     title_info=f'Quantile {datename}_{lt}',
-            #     figname_info=output_dir+f'quantiles_{datename}_{lt}',
-            #     var_names=['rr', 'u','v','t2m'], 
-            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-            #     axis_title_global='',
-            #     quantiles_list=[0.01,0.1,0.5,0.9,0.99]      
-            # )
+            directory = output_dir+'/quantiles/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            plot_quantiles(
+                Ens_AROME, 
+                Ens_Gen, 
+                title_info=f'{datename}_{lt}',
+                figname_info=directory+f'quantiles_{datename}_{lt}',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+                quantiles_list=[0.01,0.1,0.5,0.9,0.99]      
+            )
             
-            # data2plot = Ens_AROME[0]
 
+            # Projection on orographie
+            # data2plot = Ens_AROME[0]
+            
             # canvas = art.canvasHolder("MassifCentral",256,256)
             # Datamax = data2plot.max(axis=(0,-1, -2))
             # Datamin = data2plot.min(axis=(0,-1, -2))
@@ -427,9 +446,20 @@ if __name__=="__main__" :
             # var_names = [('ff', 'm/s'), ('t2m', 'K')]
             # canvas.plot_data_ff_t2m(data2plot, var_names, output_dir, f"{'test'}_fft2m.pdf", contrast=False,
             #                 )
+
+
             Ens_AROME_date.append(Ens_AROME)
             Ens_Gen_date.append(Ens_Gen)
-        plot_panache_density(np.array(Ens_AROME_date), np.array(Ens_Gen_date),figname_info=output_dir+f'panache_{datename}',)
+
+        directory = output_dir+'/panaches/'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        plot_panache_density(
+            np.array(Ens_AROME_date),
+            np.array(Ens_Gen_date),
+            title_info=f'{datename}',
+            figname_info=directory+f'panache_{datename}'
+        )
             
             
 
