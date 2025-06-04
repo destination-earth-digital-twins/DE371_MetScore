@@ -32,7 +32,7 @@ matplotlib.use('Agg')
 from collections import OrderedDict
 from ast import literal_eval as make_tuple
 import glob
-
+import matplotlib as mpl
 
 torch.manual_seed(42) #reproducibility of runs
 def str2intlist(li):
@@ -197,42 +197,8 @@ def plot_probability_exceeding_threshold_temperature(
         return
 
 
-def plot_contour_temperature(
-          packsample, 
-          pert_sample, 
-          crop=[0,-1,0,-1], 
-          title_info=" ", 
-          figname_info=".png",  
-          var_names=['rr', 'u','v','t2m'], 
-          dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-          axis_title_global='',
-          quantiles_list=[0.01,0.1,0.5,0.9,0.99],
-          threshold_t2m=303.15 # 30°C
-          ):
 
-        cmap = plt.get_cmap("coolwarm", 5)
-
-        fig, ax = plt.subplots(figsize=(15,6), nrows=1, ncols=2)
-        x = y = np.arange(0, 256)
-        X, Y = np.meshgrid(x, y)
-        levels = 273.15+np.array([5,10,15,20,25,30,35])
-
-        cs = ax[0].contourf(X, Y, packsample[0,dict_var['t2m']], levels, extend="neither", origin="lower", cmap='coolwarm')
-        fig.colorbar(cs, ax=ax[0])
-        ax[0].set_title("AROME")
-
-        cs = ax[1].contourf(X, Y, pert_sample[0,dict_var['t2m']], levels, extend="neither", origin="lower", cmap='coolwarm')
-        fig.colorbar(cs, ax=ax[1])
-        ax[1].set_title("GEN")
-        
-        fig.suptitle('Maximum comparison of AROME end Generated ensemble for '+title_info)
-        # fig.tight_layout()
-        fig.savefig(figname_info+'.png', dpi=100)
-        plt.close()
-        
-        return
-
-def plot_panache(
+def plot_panache_min_max(
           packsample, 
           pert_sample, 
           crop=[0,-1,0,-1], 
@@ -244,9 +210,125 @@ def plot_panache(
           quantiles_list=[0.01,0.1,0.5,0.9,0.99],
           coord = [63,38] # Toulouse
           ):
+        
+        arome = packsample[ :, :, :, coord[0], coord[1]]
+        lt,_,v = arome.shape
+        arome_min_max = np.zeros((lt,v,2))
+        for id_lt in range(lt):
+            for id_var, var_name in enumerate(var_names):
+                arome_min_max[id_lt][id_var][0] = np.min(arome[id_lt,:,id_var])
+                arome_min_max[id_lt][id_var][1] = np.max(arome[id_lt,:,id_var])
 
-        arome = packsample[:,dict_var['t2m'],coord[0],coord[1]]
-        gen = pert_sample[:,dict_var['t2m'],coord[0],coord[1]]
+        gen = pert_sample[:,:,:,coord[0],coord[1]]
+        lt,_,v = gen.shape
+        gen_min_max = np.zeros((lt,v,2))
+        for id_lt in range(lt):
+            for id_var, var_name in enumerate(var_names):
+                gen_min_max[id_lt][id_var][0] = np.min(gen[id_lt,:,id_var])
+                gen_min_max[id_lt][id_var][1] = np.max(gen[id_lt,:,id_var])
+
+        fig, ax = plt.subplots(figsize=(10,15), ncols=1, nrows=3)
+        for id_var, var_name in enumerate(var_names):
+            if id_var>0:
+                # ax[id_var-1].plot(arome[:,:,id_var], c='blue')
+                # ax[id_var-1].plot(gen[:,:,id_var], c='red', alpha=0.5)
+                ax[id_var-1].fill_between(list(range(lt)), arome_min_max[:,id_var,0], arome_min_max[:,id_var,1], linewidth=0, color='blue')
+                ax[id_var-1].fill_between(list(range(lt)), gen_min_max[:,id_var,0], gen_min_max[:,id_var,1], alpha=.5, linewidth=0, color='red')
+        fig.savefig(figname_info+'_.png', dpi=100)
+        plt.close()
+
+        
+        return
+
+def plot_panache_density(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          title_info=" ", 
+          figname_info=".png",  
+          var_names=['rr', 'u (m/s)','v (m/s)','t2m (K)'], 
+          dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+          axis_title_global='',
+          quantiles_list=[0.01,0.1,0.5,0.9,0.99],
+          coord = [63,38] # Toulouse
+          ):
+        
+        arome = packsample[ :, :, :, coord[0], coord[1]]
+        lt,_,v = arome.shape
+        levels=10
+        arome_density = np.zeros((lt,v,2,levels))
+        for id_lt in range(lt):
+            for id_var, var_name in enumerate(var_names):
+                minimum = np.min(arome[id_lt,:,id_var])
+                maximum = np.max(arome[id_lt,:,id_var])
+                mean = np.mean(arome[id_lt,:,id_var])
+                # mean = minimum + (maximum-minimum)/2
+                density_mem = 0
+                for level_id, level in enumerate(np.linspace(0,1,levels)):
+                    borne_inf_level = mean - level*(mean-minimum)
+                    borne_sup_level = mean + level*(maximum-mean)
+                    density = np.mean(np.multiply(arome[id_lt,:,id_var]>=borne_inf_level, arome[id_lt,:,id_var]<=borne_sup_level))
+                    print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
+                    arome_density[id_lt][id_var][0][level_id] = mean - density*(mean-minimum)
+                    arome_density[id_lt][id_var][1][level_id] = mean + density*(maximum-mean)
+                    density_mem=density
+            # raise NotImplementedError
+
+        gen = pert_sample[:,:,:,coord[0],coord[1]]
+        gen_density = np.zeros((lt,v,2,levels))
+        for id_lt in range(lt):
+            for id_var, var_name in enumerate(var_names):
+                minimum = np.min(gen[id_lt,:,id_var])
+                maximum = np.max(gen[id_lt,:,id_var])
+                mean = np.mean(gen[id_lt,:,id_var])
+                # mean = minimum + (maximum-minimum)/2
+                density_mem = 0
+                for level_id, level in enumerate(np.linspace(0,1,levels)):
+                    borne_inf_level = mean - level*(mean-minimum)
+                    borne_sup_level = mean + level*(maximum-mean)
+                    density = np.mean(np.multiply(gen[id_lt,:,id_var]>=borne_inf_level, gen[id_lt,:,id_var]<=borne_sup_level))
+                    print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
+                    gen_density[id_lt][id_var][0][level_id] = mean - density*(mean-minimum)
+                    gen_density[id_lt][id_var][1][level_id] = mean + density*(maximum-mean)
+                    density_mem=density
+
+        colors=['purple', 'purple', 'magenta','magenta', 'red','red', 'orange','orange', 'gold','gold']
+        # colors=['purple', 'magenta', 'red', 'orange','gold']
+        colors_lines=['black', 'black', 'dimgrey','dimgrey', 'grey', 'grey', 'silver', 'silver', 'lightgray', 'lightgray']
+        fig, ax = plt.subplots(figsize=(25,15), ncols=3, nrows=3)
+        ax[0][0].set_title('Panache AROME')
+        ax[0][1].set_title('Panache AROME&Generated')
+        ax[0][2].set_title('Panache Generated')
+        
+        for id_var, var_name in enumerate(var_names):
+            if id_var>0:
+                ax[id_var-1][0].set_xlabel('leadtimes (h)')
+                ax[id_var-1][1].set_xlabel('leadtimes (h)')
+                ax[id_var-1][2].set_xlabel('leadtimes (h)')
+                ax[id_var-1][0].grid(True, linestyle='--')
+                ax[id_var-1][0].set_ylabel(var_name)
+                ax[id_var-1][0].plot(np.mean(arome[:,:,id_var], axis=1), c='black', linewidth=2)
+                ax[id_var-1][1].grid(True, linestyle='--')
+                ax[id_var-1][1].set_ylabel(var_name)
+                ax[id_var-1][2].grid(True, linestyle='--')
+                ax[id_var-1][2].set_ylabel(var_name)
+                ax[id_var-1][2].plot(np.mean(gen[:,:,id_var], axis=1), c='black', linewidth=2)
+                # ax[id_var-1].plot(arome[:,:,id_var], c='blue', linewidth=1, alpha=0.2)
+                # ax[id_var-1].plot(gen[:,:,id_var], c='red', alpha=0.5)
+                for level_id in reversed(range(0,levels)):
+                    # AROME panache
+                    ax[id_var-1][0].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    ax[id_var-1][1].fill_between(list(range(lt)), arome_density[:,id_var,0, level_id], arome_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    ax[id_var-1][2].fill_between(list(range(lt)), gen_density[:,id_var,0, level_id], gen_density[:,id_var,1, level_id], linewidth=0, color=colors[level_id])
+                    # Generated panache (only lines)
+                    if (level_id+1)%2==0 :
+                        ax[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,0, level_id], linewidth=1, color=colors_lines[level_id])
+                        ax[id_var-1][1].plot(list(range(lt)), gen_density[:,id_var,1, level_id], linewidth=1, color=colors_lines[level_id])
+                # ax[id_var-1].fill_between(list(range(lt)), gen_min_max[:,id_var,0], gen_min_max[:,id_var,1], alpha=.5, linewidth=0, color='red')
+                
+        fig.savefig(figname_info+'__test.png', dpi=100)
+        plt.close()
+
         
         return
 
@@ -256,12 +338,12 @@ if __name__=="__main__" :
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_residus/sampling_sdedit_residus_ddpm/sampling_150steps/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit/sampling_sdedit_ddpm/sampling_10steps/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
-    parser.add_argument("--date_start", type=str, default = "2020-10-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-10-04")
+    parser.add_argument("--date_start", type=str, default = "2020-08-01")
+    parser.add_argument("--date_stop", type=str, default = "2020-08-10")
     parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,15,18,21,24,27,30,33,36,39,42])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
@@ -285,6 +367,8 @@ if __name__=="__main__" :
     #################### main loop ##################
     for date_ in list_dates:
         datename = date_.strftime('%Y-%m-%d')
+        Ens_AROME_date = []
+        Ens_Gen_date = []
         for lt in params.leadtimes:
             # Loading AROME ensemble   
             df0 = df_extract[(df_extract['Date']==date_) & (df_extract['LeadTime']==lt-1)]
@@ -308,16 +392,16 @@ if __name__=="__main__" :
             #     axis_title_global=''
             # )
 
-            plot_probability_exceeding_threshold_wind(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=output_dir+f'wind_zone_over_5_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                axis_title_global='',
-                threshold_wind=[5,10,15,20,25,30]
-            )
+            # plot_probability_exceeding_threshold_wind(
+            #     Ens_AROME, 
+            #     Ens_Gen, 
+            #     title_info=f'{datename}_{lt}',
+            #     figname_info=output_dir+f'wind_zone_over_5_{datename}_{lt}',
+            #     var_names=['rr', 'u','v','t2m'], 
+            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+            #     axis_title_global='',
+            #     threshold_wind=[5,10,15,20,25,30]
+            # )
 
             # plot_quantiles(
             #     Ens_AROME, 
@@ -343,6 +427,9 @@ if __name__=="__main__" :
             # var_names = [('ff', 'm/s'), ('t2m', 'K')]
             # canvas.plot_data_ff_t2m(data2plot, var_names, output_dir, f"{'test'}_fft2m.pdf", contrast=False,
             #                 )
+            Ens_AROME_date.append(Ens_AROME)
+            Ens_Gen_date.append(Ens_Gen)
+        plot_panache_density(np.array(Ens_AROME_date), np.array(Ens_Gen_date),figname_info=output_dir+f'panache_{datename}',)
             
             
 
