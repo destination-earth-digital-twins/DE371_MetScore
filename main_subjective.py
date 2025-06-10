@@ -17,6 +17,7 @@ Please make sure to configure the directory paths, parameters, and other setting
 # import argparse
 # font_names = [f.name for f in fm.fontManager.ttflist]
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 #mpl.rcParams['font.family'] = 'Helvetica'
 plt.rcParams['font.size'] = 20
 plt.rcParams['axes.linewidth'] = 2
@@ -162,7 +163,7 @@ def plot_probability_exceeding_threshold_temperature(
           figname_info=".png",  
           var_names=['rr', 'u','v','t2m'], 
           dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-          threshold_t2m=[15,20,30,35,40]
+          threshold_t2m=[15,20,30,35]
           ):
         r'''
         Plot a map representing the spatial probability to exceed a given threshold.
@@ -239,7 +240,7 @@ def plot_panache_min_max(
         
         return
 
-def plot_panache_density(
+def plot_panache_density_around_mean(
           packsample, 
           pert_sample, 
           crop=[0,-1,0,-1], 
@@ -258,7 +259,7 @@ def plot_panache_density(
         arome_density = np.zeros((lt,v,2,levels))
         for id_lt in range(lt):
             for id_var, var_name in enumerate(var_names):
-                minimum = np.min(arome[id_lt,:,id_var])
+                minimum_arome = np.min(arome[id_lt,:,id_var])
                 maximum = np.max(arome[id_lt,:,id_var])
                 mean = np.mean(arome[id_lt,:,id_var])
                 # mean = minimum + (maximum-minimum)/2
@@ -346,13 +347,308 @@ def plot_panache_density(
         
         return
 
+def plot_panache_density(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          title_info=" ", 
+          figname_info=".png",  
+          var_names=['rr', 'u (m/s)','v (m/s)','t2m (K)'], 
+          dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+          axis_title_global='',
+          coord = [63,38] # Toulouse
+          ):
+        
+        arome = packsample[ :, :, :, coord[0], coord[1]]
+        lt,m,v = arome.shape
+
+        threshold_density = [0, 0.01, 0.05, 0.25, 0.50, 0.75, 1]
+        colors=['white', 'gold', 'orange', 'red', 'magenta','purple']
+        num_level = 4
+        
+        arome_distribution = np.zeros((lt,v,num_level,4))
+        arome_enveloppe = np.zeros((lt, v, 3))
+        threshold_color = np.zeros((lt,v,num_level), dtype=np.int8)
+
+        minimum = np.min(arome.reshape((lt*m,v)), axis=0)
+        maximum = np.max(arome.reshape((lt*m,v)), axis=0)
+        
+        for id_lt in range(lt):
+            for id_var, var_name in enumerate(var_names):
+                
+                
+                min_enveloppe_lt=np.min(arome[id_lt,:,id_var])
+                max_enveloppe_lt=np.max(arome[id_lt,:,id_var])
+                arome_enveloppe[id_lt, id_var, 0] = min_enveloppe_lt
+                arome_enveloppe[id_lt, id_var, 1] = max_enveloppe_lt
+                arome_enveloppe[id_lt, id_var, 2] = max_enveloppe_lt-min_enveloppe_lt
+
+                levels=np.linspace(min_enveloppe_lt,max_enveloppe_lt,num_level)
+
+                for level_id in range(len(levels)-1):
+                    # Compute a density for each level
+                    borne_inf_level=levels[level_id]
+                    borne_sup_level=levels[level_id+1]
+                    density = np.mean(np.multiply(arome[id_lt,:,id_var]>=borne_inf_level, arome[id_lt,:,id_var]<=borne_sup_level))
+                    # Compute corresponding color for density
+                    color_id=None
+                    for threshold_id in range(len(threshold_density)):
+                        if density > threshold_density[threshold_id] and density <= threshold_density[threshold_id+1]:
+                           color_id=threshold_id
+                           break
+                    arome_distribution[id_lt][id_var][level_id][0] = density 
+                    arome_distribution[id_lt][id_var][level_id][1] = color_id 
+                    arome_distribution[id_lt][id_var][level_id][2] = borne_inf_level
+                    arome_distribution[id_lt][id_var][level_id][3] = borne_sup_level
+                
+
+        # gen = pert_sample[:,:,:,coord[0],coord[1]]
+        # gen_density = np.zeros((lt,v,2,levels))
+        # for id_lt in range(lt):
+        #     for id_var, var_name in enumerate(var_names):
+        #         minimum = np.min(gen[id_lt,:,id_var])
+        #         maximum = np.max(gen[id_lt,:,id_var])
+        #         mean = np.mean(gen[id_lt,:,id_var])
+        #         # mean = minimum + (maximum-minimum)/2
+        #         density_mem = 0
+        #         for level_id, level in enumerate(np.linspace(0,1,levels)):
+        #             borne_inf_level = mean - level*(mean-minimum)
+        #             borne_sup_level = mean + level*(maximum-mean)
+        #             density = np.mean(np.multiply(gen[id_lt,:,id_var]>=borne_inf_level, gen[id_lt,:,id_var]<=borne_sup_level))
+        #             # print(f'[{borne_inf_level},{borne_sup_level}]', int((density-density_mem)*16))
+        #             gen_density[id_lt][id_var][0][level_id] = mean - density*(mean-minimum)
+        #             gen_density[id_lt][id_var][1][level_id] = mean + density*(maximum-mean)
+        #             density_mem=density
+
+        fig, axes = plt.subplots(figsize=(25,15), ncols=3, nrows=3, layout='constrained')
+        axes[0][0].set_title('Panache AROME')
+        axes[0][1].set_title('Panache AROME&Generated')
+        axes[0][2].set_title('Panache Generated')
+        cmap = mpl.colors.ListedColormap(colors)
+        norm = mpl.colors.BoundaryNorm(threshold_density, cmap.N)
+        for id_var, var_name in enumerate(var_names):
+            if id_var>0:
+                axes[id_var-1][0].set_xlabel('leadtimes (h)')
+                axes[id_var-1][0].set_ylim([minimum[id_var], maximum[id_var]])
+                axes[id_var-1][1].set_xlabel('leadtimes (h)')
+                axes[id_var-1][1].set_ylim([minimum[id_var], maximum[id_var]])
+                axes[id_var-1][2].set_xlabel('leadtimes (h)')
+                axes[id_var-1][2].set_ylim([minimum[id_var], maximum[id_var]])
+
+                axes[id_var-1][0].grid(True, linestyle='--')
+                axes[id_var-1][0].set_ylabel(var_name)
+                axes[id_var-1][1].grid(True, linestyle='--')
+                axes[id_var-1][1].set_ylabel(var_name)
+                axes[id_var-1][2].grid(True, linestyle='--')
+                axes[id_var-1][2].set_ylabel(var_name)
+
+                axes[id_var-1][0].fill_between(
+                    list(range(0, lt*3, 3)),
+                    arome_enveloppe[:, id_var, 0],
+                    arome_enveloppe[:, id_var, 1],
+                    linewidth=0,
+                    color='gray',
+                    alpha=0.5,
+                    # where=np.where(arome_enveloppe[:][id_var][2]==0)
+                    )
+                
+
+                # for level_id in range(len(levels)):
+                #     points = np.array([list(range(0, lt*3, 3)), arome_distribution[:,id_var,level_id,2]]).T.reshape(-1, 1, 2)
+                #     segments = np.concatenate([points[:-1], points[1:]], axis=1)
+                #     lc = LineCollection(segments, cmap=cmap, norm=norm, linewidths=60/num_level)
+                #     color = arome_distribution[:,id_var,level_id,0]
+                #     lc.set_array(color)
+                #     axes[id_var-1][0].add_collection(lc)
+
+        
+        cax,kw = mpl.colorbar.make_axes([ax for ax in axes.flat])
+        fig.colorbar(
+            mpl.cm.ScalarMappable(cmap=cmap, norm=norm),
+            cax=cax,
+            orientation='vertical',
+            label='Density of members',
+        )
+
+        fig.suptitle(f'Probability Exceeding Temperature Threshold map comparison for '+title_info)
+        fig.savefig(figname_info+'test__.png', dpi=100)
+        plt.close()
+
+        
+        return
+
+def compute_density(density):
+    return np.where(
+                density<0.01,
+                'white',
+                np.where(
+                    density<=0.05,
+                    'gold',
+                    np.where(
+                        density<0.25,
+                        'orange',
+                        np.where(
+                            density<0.5,
+                            'red',
+                            np.where(
+                                density<0.75,
+                                'magenta',
+                                np.where(
+                                    density<1.,
+                                    'purple',
+                                    'black'
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+
+def plot_panache_density_dynamic(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          title_info=" ", 
+          figname_info=".png",  
+          var_names=['rr', 'u (m/s)','v (m/s)','t2m (K)'], 
+          dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+          axis_title_global='',
+          coord = [63,38] # Toulouse
+          ):
+        
+        arome = packsample[ :, :, :, coord[0], coord[1]]
+        gen = pert_sample[ :, :, :, coord[0], coord[1]]
+        lt_arome, num_member_arome, v = arome.shape
+        arome_enveloppe = np.zeros((lt_arome, v, 3))
+        minimum_arome = np.min(arome.reshape((lt_arome*num_member_arome,v)), axis=0)
+        maximum_arome = np.max(arome.reshape((lt_arome*num_member_arome,v)), axis=0)
+        
+        lt_gen, num_member_gen, v = gen.shape
+        gen_enveloppe = np.zeros((lt_gen, v, 3))
+        minimum_gen = np.min(gen.reshape((lt_gen*num_member_gen,v)), axis=0)
+        maximum_gen = np.max(gen.reshape((lt_gen*num_member_gen,v)), axis=0)
+
+        dL_arome = (maximum_arome - minimum_arome)/20
+        dL_gen = (maximum_gen - minimum_gen)/20
+        
+        
+        fig, axes = plt.subplots(figsize=(25,15), ncols=3, nrows=3, layout='constrained')
+        axes[0][0].set_title('Panache AROME')
+        axes[0][1].set_title('Panache AROME&Generated')
+        axes[0][2].set_title('Panache Generated')
+        threshold_density = [0, 0.01, 0.05, 0.25, 0.50, 0.75, 1]
+        colors=['white', 'gold', 'orange', 'red', 'magenta','purple']
+        cmap = mpl.colors.ListedColormap(colors)
+        norm = mpl.colors.BoundaryNorm(threshold_density, cmap.N)
+
+        for id_var, var_name in enumerate(var_names):
+            if id_var>0:
+                levels_arome = np.arange(minimum_arome[id_var],maximum_arome[id_var], dL_arome[id_var]) 
+                levels_gen = np.arange(minimum_gen[id_var],maximum_gen[id_var], dL_gen[id_var])  
+                minimum_global = np.min((minimum_arome[id_var], minimum_gen[id_var]))
+                maximum_global = np.max((maximum_arome[id_var], maximum_gen[id_var]))
+
+                axes[id_var-1][0].set_xlabel('leadtimes (h)')
+                axes[id_var-1][0].set_ylim([minimum_global, maximum_global])
+
+                axes[id_var-1][1].set_xlabel('leadtimes (h)')
+                axes[id_var-1][1].set_ylim([minimum_global, maximum_global])
+                
+                axes[id_var-1][2].set_xlabel('leadtimes (h)')
+                axes[id_var-1][2].set_ylim([minimum_global, maximum_global])
+
+                axes[id_var-1][0].grid(True, linestyle='--')
+                axes[id_var-1][0].set_ylabel(var_name)
+                axes[id_var-1][1].grid(True, linestyle='--')
+                axes[id_var-1][1].set_ylabel(var_name)
+                axes[id_var-1][2].grid(True, linestyle='--')
+                axes[id_var-1][2].set_ylabel(var_name)
+
+                min_enveloppe_arome_lt = []
+                max_enveloppe_arome_lt = []
+                min_enveloppe_gen_lt = []
+                max_enveloppe_gen_lt = []
+                for id_lt in range(lt_arome):
+                    min_enveloppe_arome_lt.append(np.min(arome[id_lt,:,id_var]))
+                    max_enveloppe_arome_lt.append(np.max(arome[id_lt,:,id_var]))
+                    min_enveloppe_gen_lt.append(np.min(gen[id_lt,:,id_var]))
+                    max_enveloppe_gen_lt.append(np.max(gen[id_lt,:,id_var]))
+
+                    for level_id in range(len(levels_arome)-1):
+                        borne_inf_level=levels_arome[level_id]
+                        borne_sup_level=levels_arome[level_id+1]
+                        density = np.mean(np.multiply(arome[id_lt,:,id_var]>=borne_inf_level, arome[id_lt,:,id_var]<=borne_sup_level))
+                        color = compute_density(density)
+                        axes[id_var-1][0].scatter(id_lt*3, borne_inf_level + (borne_sup_level-borne_inf_level)/2, color=str(color), linewidth=10)
+                        
+                        borne_inf_level=levels_gen[level_id]
+                        borne_sup_level=levels_gen[level_id+1]
+                        density = np.mean(np.multiply(gen[id_lt,:,id_var]>=borne_inf_level, gen[id_lt,:,id_var]<=borne_sup_level))
+                        color = compute_density(density)
+                        axes[id_var-1][2].scatter(id_lt*3, borne_inf_level + (borne_sup_level-borne_inf_level)/2, color=str(color), linewidth=10)
+                
+                axes[id_var-1][0].fill_between(
+                    list(range(0, lt_arome*3, 3)),
+                    min_enveloppe_arome_lt,
+                    max_enveloppe_arome_lt,
+                    linewidth=0,
+                    color='lightgray',
+                    alpha=0.2,
+                    )
+                axes[id_var-1][0].plot(list(range(0, lt_arome*3, 3)),min_enveloppe_arome_lt,color='black')
+                axes[id_var-1][0].plot(list(range(0, lt_arome*3, 3)),max_enveloppe_arome_lt,color='black')
+                
+                axes[id_var-1][1].fill_between(
+                    list(range(0, lt_arome*3, 3)),
+                    min_enveloppe_arome_lt,
+                    max_enveloppe_arome_lt,
+                    linewidth=0,
+                    color='gray'
+                    )
+                
+                axes[id_var-1][1].plot(list(range(0, lt_arome*3, 3)),min_enveloppe_arome_lt,color='black')
+                axes[id_var-1][1].plot(list(range(0, lt_arome*3, 3)),max_enveloppe_arome_lt,color='black')
+                axes[id_var-1][1].plot(list(range(0, lt_arome*3, 3)),min_enveloppe_gen_lt,color='black',linestyle='--')
+                axes[id_var-1][1].plot(list(range(0, lt_arome*3, 3)),max_enveloppe_gen_lt,color='black',linestyle='--')
+
+                axes[id_var-1][2].fill_between(
+                    list(range(0, lt_arome*3, 3)),
+                    min_enveloppe_gen_lt,
+                    max_enveloppe_gen_lt,
+                    linewidth=0,
+                    color='lightgray',
+                    alpha=0.2,
+                    )
+                axes[id_var-1][2].plot(list(range(0, lt_arome*3, 3)),min_enveloppe_gen_lt,color='black',linestyle='--')
+                axes[id_var-1][2].plot(list(range(0, lt_arome*3, 3)),max_enveloppe_gen_lt,color='black',linestyle='--')
+
+
+                axes[id_var-1][0].plot(list(range(0, lt_arome*3, 3)), arome[:,:,id_var], color='blue', alpha=0.05)
+                axes[id_var-1][2].plot(list(range(0, lt_arome*3, 3)), gen[:,:,id_var], color='blue', alpha=0.05)
+
+        cax,kw = mpl.colorbar.make_axes([ax for ax in axes.flat])
+        fig.colorbar(
+            mpl.cm.ScalarMappable(cmap=cmap, norm=norm),
+            cax=cax,
+            orientation='vertical',
+            label='Density of members',
+        )
+
+        fig.suptitle(f'Plumes comparison for '+title_info)
+        fig.savefig(figname_info+'.png', dpi=100)
+        plt.close()
+        
+
+        
+        return
+
 if __name__=="__main__" :
     
     parser = argparse.ArgumentParser()
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_residus/sampling_sdedit_residus_ddpm/sampling_250steps/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit/sampling_sdedit_ddpm/sampling_200steps/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
@@ -406,7 +702,7 @@ if __name__=="__main__" :
                 figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
                 var_names=['rr', 'u','v','t2m'], 
                 dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
-                threshold_t2m=[15,20,30,35,40]       
+                threshold_t2m=[15,20,30,35]       
             )
             plot_probability_exceeding_threshold_wind(
                 Ens_AROME, 
@@ -454,7 +750,7 @@ if __name__=="__main__" :
         directory = output_dir+'/panaches/'
         if not os.path.exists(directory):
             os.makedirs(directory)
-        plot_panache_density(
+        plot_panache_density_dynamic(
             np.array(Ens_AROME_date),
             np.array(Ens_Gen_date),
             title_info=f'{datename}',
