@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-This script performs ensemble forecast inversion using a pre-trained StyleGAN2 model.
-
-The code uses command-line arguments for setting directories, inversion parameters, and data control parameters.
-The inversion is performed for a specified set of dates and lead times, generating latent code representations for real-ensemble data and saving the results.
-
-Please make sure to configure the directory paths, parameters, and other settings based on your specific environment before running the script.
+This script performs ensemble evaluation on a given situation
 
 """
 # import artistic as art
@@ -48,6 +43,149 @@ def str2intlist(li):
 
     else : 
         raise ValueError("li argument must be a string or a list, not '{}'".format(type(li)))
+
+
+def plot_mean(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          mem_idx=0, 
+          mem_pert_idx=0,
+          figtitle=" ", 
+          figname=".png",  
+          var_names=['u','v','t2m'], 
+          dict_var={'u': 0, 'v': 1, 't2m': 2},
+          colormap_var=['viridis','viridis','viridis','coolwarm'],
+          clim_global=[(0,0),(-5,5),(-5,5),(270,300)],
+          axis_title_global=''
+          ):
+        fig, ax = plt.subplots(figsize=(15,5*len(var_names)-5), nrows=3, ncols=len(var_names)-1)
+        for id, var in enumerate(var_names):
+            if id>0:
+                var_id = dict_var[var]
+                if not clim_global :
+                    vmin = np.min([np.min(np.mean(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]]))], axis=0)
+                    vmax = np.min([np.max(np.mean(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]]))], axis=0)
+                    clim_mean = (vmin, vmax)
+                else :
+                    clim_mean = clim_global[id-1]
+                ax[0][id-1].set_title(f"mean {axis_title_global}{var} real")
+                im = ax[0][id-1].imshow(np.mean(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0), origin="lower", cmap=colormap_var[id-1], clim=clim_mean)
+                fig.colorbar(im, ax=ax[0][id-1], shrink=0.5)
+
+                ax[1][id-1].set_title(f"mean {axis_title_global}{var} generated")
+                im = ax[1][id-1].imshow(np.mean(pert_sample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0),  origin="lower", cmap=colormap_var[id-1], clim=clim_mean)
+                fig.colorbar(im, ax=ax[1][id-1], shrink=0.5)
+
+                diff = np.mean(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0) - np.mean(pert_sample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0)
+                ax[2][id-1].set_title(f"diff of mean {axis_title_global}{var}")
+                im = ax[2][id-1].imshow(diff, origin="lower", cmap="RdYlGn", clim=(-2,2))
+                fig.colorbar(im, ax=ax[2][id-1], shrink=0.5)
+
+        fig.suptitle(figtitle)
+        fig.tight_layout()
+        try:
+            fig.savefig(figname, dpi=100)
+        except Exception as e : 
+            print(f"unable to save figure: {figname}")
+        plt.close()
+        return
+
+
+def plot_var(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          mem_idx=0, 
+          mem_pert_idx=0,
+          figtitle=" ", 
+          figname=".png",  
+          var_names=['u','v','t2m'], 
+          dict_var={'u': 0, 'v': 1, 't2m': 2},
+          colormap_var=['viridis','viridis','coolwarm'],
+          clim_global=[(0,5),(0,5),(0,5)],
+          axis_title_global=''
+          ):
+        fig, ax = plt.subplots(figsize=(15,5*len(var_names)-5), nrows=3, ncols=len(var_names)-1)
+        for id, var in enumerate(var_names):
+            if id>0:
+                var_id = dict_var[var]
+                if not clim_global :
+                    vmin = np.min([np.min(np.var(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]]))], axis=0)
+                    vmax = np.min([np.max(np.var(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]]))], axis=0)
+                    clim_var = (vmin, vmax)
+                else :
+                    clim_var = clim_global[id-1]
+                ax[0][id-1].set_title(f"var {axis_title_global}{var} real")
+                im = ax[0][id-1].imshow(np.var(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0), origin="lower", cmap=colormap_var[id-1])
+                fig.colorbar(im, ax=ax[0][id-1], shrink=0.5)
+
+                ax[1][id-1].set_title(f"var {axis_title_global}{var} generated")
+                im = ax[1][id-1].imshow(np.var(pert_sample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0),  origin="lower", cmap=colormap_var[id-1])
+                fig.colorbar(im, ax=ax[1][id-1], shrink=0.5)
+
+                diff = np.var(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0) - np.var(pert_sample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]], axis=0)
+                ax[2][id-1].set_title(f"diff var {axis_title_global}{var}")
+                im = ax[2][id-1].imshow(diff, origin="lower", cmap="RdYlGn", clim=(-2,2))
+                fig.colorbar(im, ax=ax[2][id-1], shrink=0.5)
+
+        fig.suptitle(figtitle)
+        fig.tight_layout()
+        try:
+            fig.savefig(figname, dpi=100)
+        except Exception as e : 
+            print(f"unable to save figure: {figname}")
+        plt.close()
+        return
+
+
+def plot_samples(
+          packsample, 
+          pert_sample, 
+          crop=[0,-1,0,-1], 
+          mem_idx=0, 
+          mem_pert_idx=0,
+          title_info=" ", 
+          figname_info=".png",  
+          var_names=['u','v','t2m'], 
+          dict_var={'u': 0, 'v': 1, 't2m': 2},
+          colormap_var=['viridis','viridis','coolwarm'],
+          clim_global=[(-1,1), (-5,5),(-5,5),(270,300)],
+          axis_title_global=''
+          ):
+
+        fig, ax = plt.subplots(figsize=(15,5*(len(var_names)-1)), nrows=3, ncols=(len(var_names)-1))
+        for id, var in enumerate(var_names):
+            if id>0:
+                var_id = dict_var[var]
+                if not clim_global :
+                    vmin = np.min([np.min(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]])])
+                    vmax = np.min([np.max(packsample[:,var_id,crop[0]:crop[1],crop[2]:crop[3]])])
+                    clim = (vmin, vmax)
+                else :
+                    clim = clim_global[id]
+                ax[0][id-1].set_title(f"{axis_title_global}{var} real")
+                im = ax[0][id-1].imshow(packsample[mem_idx,var_id,crop[0]:crop[1],crop[2]:crop[3]], origin="lower", cmap=colormap_var[id], clim=clim)
+                fig.colorbar(im, ax=ax[0][id-1], shrink=0.5)
+
+                ax[1][id-1].set_title(f"{axis_title_global}{var} generated")
+                im = ax[1][id-1].imshow(pert_sample[mem_pert_idx,var_id,crop[0]:crop[1],crop[2]:crop[3]],  origin="lower", cmap=colormap_var[id], clim=clim)
+                fig.colorbar(im, ax=ax[1][id-1], shrink=0.5)
+
+                diff = packsample[mem_idx,var_id,crop[0]:crop[1],crop[2]:crop[3]] - pert_sample[mem_pert_idx,var_id,crop[0]:crop[1],crop[2]:crop[3]]
+                ax[2][id-1].set_title(f"diff {axis_title_global}{var}")
+                im = ax[2][id-1].imshow(diff, origin="lower", cmap="RdYlGn", clim=(-2,2))
+                fig.colorbar(im, ax=ax[2][id-1], shrink=0.5)
+
+        fig.suptitle(title_info)
+        fig.tight_layout()
+        try:
+            fig.savefig(figname_info, dpi=100)
+        except Exception as e : 
+            print(f"unable to save figure: {figname_info}")
+        plt.close()
+        return
+
 
 def plot_quantiles(
           packsample, 
@@ -154,7 +292,6 @@ def plot_probability_exceeding_threshold_wind(
         
         return
 
-
 def plot_probability_exceeding_threshold_temperature(
           packsample, 
           pert_sample, 
@@ -195,8 +332,6 @@ def plot_probability_exceeding_threshold_temperature(
         plt.close()
         
         return
-
-
 
 def plot_panache_min_max(
           packsample, 
@@ -648,12 +783,12 @@ if __name__=="__main__" :
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit/sampling_sdedit_ddpm/sampling_200steps/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_residus/sampling_sdedit_residus_ddpm/sampling_250steps/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
-    parser.add_argument("--date_start", type=str, default = "2020-10-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-10-04")
+    parser.add_argument("--date_start", type=str, default = "2020-09-30")
+    parser.add_argument("--date_stop", type=str, default = "2020-10-02")
     parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,15,18,21,24,27,30,33,36,39,42])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
@@ -691,71 +826,113 @@ if __name__=="__main__" :
             # Loading Generated ensemble
             print(f'Importing 4var_fake_ensemble_{datename}_{lt}.npy')
             Ens_Gen = np.load(f'{params.gen_data_dir}4var_fake_ensemble_{datename}_{lt}.npy')
-
-            directory = output_dir+'/probability_threshold_map/'
+            
+            directory = output_dir+'/samples_aromes/'
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            plot_probability_exceeding_threshold_temperature(
+            plot_samples(
                 Ens_AROME, 
                 Ens_Gen, 
                 title_info=f'{datename}_{lt}',
-                figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
-                threshold_t2m=[15,20,30,35]       
-            )
-            plot_probability_exceeding_threshold_wind(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'probability_wind_threshold_{datename}_{lt}',
+                figname_info=directory+f'samples_{datename}_{lt}.png',
                 var_names=['rr', 'u','v','t2m'], 
                 dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                threshold_wind=[5,10,15,20]
+                colormap_var=['viridis','viridis','viridis','coolwarm'],
+                clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
             )
 
-            directory = output_dir+'/quantiles/'
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            plot_quantiles(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'quantiles_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                quantiles_list=[0.01,0.1,0.5,0.9,0.99]      
-            )
+
+        #     directory = output_dir+'/statistics/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        #     plot_mean(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         figtitle=f'{datename}_{lt}',
+        #         figname=directory+f'mean_2D_{datename}_{lt}.png',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         colormap_var=['viridis','viridis','viridis','coolwarm'],
+        #         clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+        #     )
+
+        #     plot_var(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         figtitle=f'{datename}_{lt}',
+        #         figname=directory+f'var_2D_{datename}_{lt}.png',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         colormap_var=['viridis','viridis','viridis','coolwarm'],
+        #         clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+        #     )
+
+
+        #     directory = output_dir+'/probability_threshold_map/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        #     # plot_probability_exceeding_threshold_temperature(
+        #     #     Ens_AROME, 
+        #     #     Ens_Gen, 
+        #     #     title_info=f'{datename}_{lt}',
+        #     #     figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
+        #     #     var_names=['rr', 'u','v','t2m'], 
+        #     #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
+        #     #     threshold_t2m=[15,20,30,35]       
+        #     # )
+        #     plot_probability_exceeding_threshold_wind(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'probability_wind_threshold_{datename}_{lt}',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         threshold_wind=[5,10,15,20]
+        #     )
+
+        #     directory = output_dir+'/quantiles/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        #     plot_quantiles(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'quantiles_{datename}_{lt}',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         quantiles_list=[0.01,0.1,0.5,0.9,0.99]      
+        #     )
             
 
-            # Projection on orographie
-            # data2plot = Ens_AROME[0]
+        #     # Projection on orographie
+        #     # data2plot = Ens_AROME[0]
             
-            # canvas = art.canvasHolder("MassifCentral",256,256)
-            # Datamax = data2plot.max(axis=(0,-1, -2))
-            # Datamin = data2plot.min(axis=(0,-1, -2))
-            # var_names = [('u', 'm/s'), ('v', 'm/s'), ('t2m', 'K')]
-            # #data2plot0 = data2plot[(0,1,2,4),:,:,:]
-            # canvas.plot_data_normal(data2plot, var_names, output_dir, f"{'test'}.pdf", contrast=True,
-            #                     cvalues=(Datamin, Datamax))
+        #     # canvas = art.canvasHolder("MassifCentral",256,256)
+        #     # Datamax = data2plot.max(axis=(0,-1, -2))
+        #     # Datamin = data2plot.min(axis=(0,-1, -2))
+        #     # var_names = [('u', 'm/s'), ('v', 'm/s'), ('t2m', 'K')]
+        #     # #data2plot0 = data2plot[(0,1,2,4),:,:,:]
+        #     # canvas.plot_data_normal(data2plot, var_names, output_dir, f"{'test'}.pdf", contrast=True,
+        #     #                     cvalues=(Datamin, Datamax))
 
-            # var_names = [('ff', 'm/s'), ('t2m', 'K')]
-            # canvas.plot_data_ff_t2m(data2plot, var_names, output_dir, f"{'test'}_fft2m.pdf", contrast=False,
-            #                 )
+        #     # var_names = [('ff', 'm/s'), ('t2m', 'K')]
+        #     # canvas.plot_data_ff_t2m(data2plot, var_names, output_dir, f"{'test'}_fft2m.pdf", contrast=False,
+        #     #                 )
 
 
-            Ens_AROME_date.append(Ens_AROME)
-            Ens_Gen_date.append(Ens_Gen)
+        #     Ens_AROME_date.append(Ens_AROME)
+        #     Ens_Gen_date.append(Ens_Gen)
 
-        directory = output_dir+'/panaches/'
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        plot_panache_density_dynamic(
-            np.array(Ens_AROME_date),
-            np.array(Ens_Gen_date),
-            title_info=f'{datename}',
-            figname_info=directory+f'panache_{datename}'
-        )
+        # directory = output_dir+'/panaches/'
+        # if not os.path.exists(directory):
+        #     os.makedirs(directory)
+        # plot_panache_density_dynamic(
+        #     np.array(Ens_AROME_date),
+        #     np.array(Ens_Gen_date),
+        #     title_info=f'{datename}',
+        #     figname_info=directory+f'panache_{datename}',
+        #     coord=[60,240]
+        # )
             
             
 

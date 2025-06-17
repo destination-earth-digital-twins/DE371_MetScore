@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+This script performs ensemble evaluation on a given situation
+
+"""
+# import artistic as art
+# import numpy as np
+# import random
+# import matplotlib as mpl
+# import matplotlib.font_manager as fm# Collect all the font names available to matplotlib
+# import argparse
+# font_names = [f.name for f in fm.fontManager.ttflist]
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+#mpl.rcParams['font.family'] = 'Helvetica'
+plt.rcParams['font.size'] = 20
+plt.rcParams['axes.linewidth'] = 2
+plt.rcParams["figure.autolayout"] = True
+import torch
+import argparse
+import os
+import numpy as np
+import yaml
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+from collections import OrderedDict
+from ast import literal_eval as make_tuple
+import glob
+import matplotlib as mpl
+
+torch.manual_seed(42) #reproducibility of runs
+def str2intlist(li):
+    if type(li)==list:
+        li2 = [int(p) for p in li]
+        return li2
+    
+    elif type(li)==str:
+        li2 = li[1:-1].split(',')
+        li3 = [int(p) for p in li2]
+        return li3
+
+    else : 
+        raise ValueError("li argument must be a string or a list, not '{}'".format(type(li)))
+
+var_names=['u','v','t2m']
+dict_var={'u': 0, 'v': 1, 't2m': 2}
+colormap_var=['viridis','viridis','coolwarm']
+
+if __name__=="__main__" :
+    
+    parser = argparse.ArgumentParser()
+
+    # Real Data Directory - PATH to samples of the dataset
+    parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
+    parser.add_argument('--output_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/')
+    # Output Directory - PATH where the output of the inversion will be saved
+    ########################## CONTROL of Data to invert ######################
+    parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
+    parser.add_argument("--date_start", type=str, default = "2020-10-01")
+    parser.add_argument("--date_stop", type=str, default = "2020-10-05")
+    parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,15,18,21,24,27,30,33,36,39,42,45])
+    parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
+    parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
+    
+    params = parser.parse_args()
+    directory = params.output_dir + 'comparison_subjective_scores/alex_storm_2020/'
+    # create output directories
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    ################## loading dates and file names ##
+    df = pd.read_csv(params.real_data_dir + params.dates_file)
+    df_date = df.copy()
+    df_date['Date'] = pd.to_datetime(df_date['Date'])
+    df_extract = df_date[(df_date['Date']>=params.date_start) & (df_date['Date']<=params.date_stop)]
+
+    list_dates = df_extract['Date'].unique()
+
+
+    #################### main loop ##################
+    for date_ in list_dates:
+        datename = date_.strftime('%Y-%m-%d')
+        for lt in params.leadtimes:
+            # Loading AROME ensemble   
+            df0 = df_extract[(df_extract['Date']==date_) & (df_extract['LeadTime']==lt-1)]
+            Nb = len(df0)
+            Ens_AROME = np.zeros((Nb,) + tuple((4,256,256)))
+            for i,s in enumerate(df0['Name']):
+                sn = np.load(f'{params.real_data_dir}{s}.npy')[params.var_indices,:,:].astype(np.float32)
+                Ens_AROME[i] = sn
+
+            # Loading Generated ensemble
+            print(f'Importing 4var_fake_ensemble_{datename}_{lt}.npy')
+            title_info=f'{datename}_{lt}'
+            figname_info=directory+f'{datename}_{lt}'
+            coord = [60,240]
+            fig, ax = plt.subplots(figsize=(5*len(var_names),5), nrows=1, ncols=len(var_names))
+            for id, var in enumerate(var_names):
+                var_id = dict_var[var]
+                vmin = np.min(Ens_AROME[0,var_id])
+                vmax = np.max(Ens_AROME[0,var_id])
+                clim = (vmin, vmax)
+                ax[id].set_title(f"{var} real")
+                im = ax[id].imshow(Ens_AROME[0,var_id], origin="lower", cmap=colormap_var[id], clim=clim)
+                fig.colorbar(im, ax=ax[id], shrink=0.5)
+                ax[id].scatter(coord[1], coord[0], color='red', linewidth=2)
+
+            fig.suptitle(title_info)
+            fig.tight_layout()
+            fig.savefig(figname_info+'.png', dpi=100)
+            plt.close()
