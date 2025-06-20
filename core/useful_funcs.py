@@ -67,7 +67,6 @@ def obs_clean(obs, crop_indices):
             indice_lat = np.floor((obs[i, 1] - Lat_min) / dlat)
             indices_obs.append([indice_lat, indice_lon])
             obs_reduced.append(obs[i])
-
     indices_obs = np.array(indices_obs, dtype="int")
     obs_reduced = np.array(obs_reduced, dtype="float32")
 

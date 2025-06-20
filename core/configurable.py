@@ -64,7 +64,6 @@ class Configurable:
             Recursively search for the correct subclass based on the 'type' key.
             """
             for subclass in parent_cls.__subclasses__() + [parent_cls]:
-                print(type_name,subclass.aliases + [subclass.__name__],"JE SUIS LES DIFFERENTS TYPES")
 
                 if type_name in subclass.aliases + [subclass.__name__]:
                     

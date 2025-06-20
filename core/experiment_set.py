@@ -53,6 +53,7 @@ class ExperimentSet(Configurable):
                 "var_indices"
             ],
         }
+        print("je susi var_indices",data_metrics_config)
         metrics_config = self.config_data["metrics"]
 
         # Initialize metrics using Metric.from_typed_config() and store them in self.metrics
@@ -77,6 +78,7 @@ class ExperimentSet(Configurable):
         self.dataloader = DataLoader.from_typed_config(
             self.config_data["dataloaders"], use_cache=use_cache
         )
+        # print('je suis dataloader', self.dataloader)
 
     def _prep_folder(self):
         """
@@ -155,6 +157,8 @@ class ExperimentSet(Configurable):
         for batch_fake, batch_real, batch_obs in tqdm(
             self.dataloader, desc=f"{self.name}: Processing batches"
         ):
+            print("je suis batch fake", type(batch_fake))
+            print(batch_fake.shape)
             # the if statement is here in case a file is missing in the dataset
             # in which case the dataloader returns a None
             if not (
@@ -162,6 +166,8 @@ class ExperimentSet(Configurable):
             ):
                 for metric in self.batched_metrics:
                     logging.debug(f"Running Metric {type(metric)}")
+                    print("je suis batch fake2", batch_fake.shape)
+
                     res = metric.calculate(batch_real, batch_fake, batch_obs)
                     batched_metric_results[metric.name].append(res)
 

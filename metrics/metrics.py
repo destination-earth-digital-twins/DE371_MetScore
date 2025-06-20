@@ -46,8 +46,11 @@ class Metric(ABC, Configurable):
         """
         # np.save('real_data.npy',real_data[0])
         # np.save('fake_data.npy',fake_data[0])
-
         processed_data = self._preprocess(real_data, fake_data, obs_data)
+        # ici on passe de dim 8 à dim 7 pour les données de base du dataset 
+        # img1 = processed_data[0]
+        # print('apres prepro', processed_data.shape)
+        # print('je suis dans metrics preprocessed_date',img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape,self)
         result = self._calculateCore(processed_data)
         if isinstance(result, dict):
             for k in result.keys():
@@ -58,6 +61,7 @@ class Metric(ABC, Configurable):
 
     @abstractmethod
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
+        # print('je passe la preprco 1')
         """
         Preprocess the data before calculating the metric.
 
@@ -100,6 +104,7 @@ class PreprocessCondObs(Metric):
     """
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
+        # print('je passe par la preprcoe 2')
         """
         Preprocess data for conditioning on observations.
 
@@ -190,6 +195,7 @@ class PreprocessDist(Metric):
         #    self.isOnReal = False
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
+        # print('je passe preproce3')
         """
         Preprocess data for distance metrics.
 
@@ -209,18 +215,28 @@ class PreprocessDist(Metric):
         # for that we use np.take, which copies data.
         # While this is surely costly, at first hand we want to do so
         # because not all metrics might use the same variables
+        # print('shape des datas a',real_data.shape,fake_data.shape,self.var_indices,self.var_channel)
+
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
             fake_data_p = fake_data.take(
                 indices=self.var_indices, axis=self.var_channel
             )
+            # print('je suis preprocess3 a')
         else:
+            # print('je suis preprocess3 b')
+
             fake_data_p = fake_data
         if len(self.real_var_indices) != real_data.shape[self.var_channel]:
+            # print('je suis preprocess3 c')
+
             real_data_p = real_data.take(
                 indices=self.real_var_indices, axis=self.var_channel
             )
         else:
+            # print('je suis preprocess3 d')
             real_data_p = real_data
+            
+        # print('shape des datas b',real_data_p.shape,fake_data_p.shape)
         return {"real_data": real_data_p, "fake_data": fake_data_p}
 
 
@@ -234,6 +250,7 @@ class PreprocessStandalone(Metric):
     required_keys = ["isOnReal"]
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
+        # print('je passe la preprocess4')
         """
         Preprocess data for standalone metrics.
 

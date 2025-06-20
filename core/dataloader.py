@@ -350,6 +350,7 @@ class RandomDataloader(DataLoader):
             logging.warning(
                 f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
             )
+        print('je suis dans dataloader',data1shuf[:cut].shape, data2shuf[:cut].shape,data1.shape,data2.shape)
         return data1shuf[:cut], data2shuf[:cut]
 
 

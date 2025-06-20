@@ -23,9 +23,10 @@ font = {
     "weight": "normal",
     "size": 25,
 }
+base_vars  = ["u", "v", "t2m" ,"rr","t850","tpw850","z500"]
 
 ##### ESTHETICS AND TITLE NAMES
-base_vars = ['rr','u','v','t2m']
+# base_vars = ['rr','u','v','t2m']
 color_p = ['black', 'darkgreen','royalblue', 'red', 'darkorange', 'cyan', 'gold', 'pink', 'tan', 'slategray', 'purple', 'palegreen', 'orchid', 'crimson', 'firebrick']
 line = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid','solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',]
 dot = ['dotted', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid','solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',]
@@ -1186,7 +1187,8 @@ def plot_ROCfast(experiments, metric, config):
 
 
 def plot_spectralCompute(experiments, metric, config):
-    spectral = np.zeros((len(experiments), 4, 90))
+    print(experiments)
+    spectral = np.zeros((len(experiments), len(base_vars), 90))
     for exp_idx, exp in enumerate(experiments):
         spectral[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
