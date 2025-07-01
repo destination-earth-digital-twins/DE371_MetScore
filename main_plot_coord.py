@@ -45,7 +45,7 @@ def str2intlist(li):
         raise ValueError("li argument must be a string or a list, not '{}'".format(type(li)))
 
 var_names=['u','v','t2m']
-dict_var={'u': 0, 'v': 1, 't2m': 2}
+dict_var={'u': 1, 'v': 2, 't2m': 3}
 colormap_var=['viridis','viridis','coolwarm']
 
 if __name__=="__main__" :
@@ -59,13 +59,14 @@ if __name__=="__main__" :
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
     parser.add_argument("--date_start", type=str, default = "2020-10-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-10-05")
-    parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,15,18,21,24,27,30,33,36,39,42,45])
+    parser.add_argument("--date_stop", type=str, default = "2020-10-02")
+    parser.add_argument("--leadtimes", type=str2intlist, default=[3])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
-    
+    parser.add_argument("--orography_path",type=str, default='/project/home/p200177/DE_371/resources/AROME_orography/PEARO_EURW1S40_Orography.npy')
+
     params = parser.parse_args()
-    directory = params.output_dir + 'comparison_subjective_scores/alex_storm_2020/'
+    directory = params.output_dir + 'comparison_subjective_scores/test/'
     # create output directories
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -78,7 +79,7 @@ if __name__=="__main__" :
 
     list_dates = df_extract['Date'].unique()
 
-
+    orog = np.load(params.orography_path)[180:436,500:756]
     #################### main loop ##################
     for date_ in list_dates:
         datename = date_.strftime('%Y-%m-%d')
@@ -96,7 +97,11 @@ if __name__=="__main__" :
             title_info=f'{datename}_{lt}'
             figname_info=directory+f'{datename}_{lt}'
             coord = [60,240]
-            fig, ax = plt.subplots(figsize=(5*len(var_names),5), nrows=1, ncols=len(var_names))
+            fig, ax = plt.subplots(figsize=(5*(len(var_names)+1),5), nrows=1, ncols=len(var_names)+1)
+            x = y = np.arange(0, 256)
+            X, Y = np.meshgrid(x, y)
+            CS = ax[3].contourf(X, Y, np.where(orog<10,orog,0), 5, cmap=plt.cm.bone)
+
             for id, var in enumerate(var_names):
                 var_id = dict_var[var]
                 vmin = np.min(Ens_AROME[0,var_id])
@@ -106,6 +111,8 @@ if __name__=="__main__" :
                 im = ax[id].imshow(Ens_AROME[0,var_id], origin="lower", cmap=colormap_var[id], clim=clim)
                 fig.colorbar(im, ax=ax[id], shrink=0.5)
                 ax[id].scatter(coord[1], coord[0], color='red', linewidth=2)
+                ax[id].contour(CS, levels=CS.levels[::2], colors='black')
+
 
             fig.suptitle(title_info)
             fig.tight_layout()
