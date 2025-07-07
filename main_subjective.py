@@ -264,25 +264,40 @@ def plot_quantiles_comparison(
           ):
 
         cmap = plt.get_cmap("PiYG", 8)
-        quantiles_arome = np.quantile(packsample[:,:,crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
-        quantiles_gen = np.quantile(pert_sample[:,:,crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
-        quantiles_diff = np.zeros((len(var_names), len(quantiles_list)))
-        for var_idx, var in enumerate(var_names):
-            for q in range(len(quantiles_list)):
-                quantiles_diff[var_idx][q] = quantiles_gen[q][var_idx].mean() - quantiles_arome[q][var_idx].mean()
+        packsample_ff = np.sqrt(packsample[:,dict_var['u'],crop[0]:crop[1],crop[2]:crop[3]]**2+packsample[:,dict_var['v'],crop[0]:crop[1],crop[2]:crop[3]]**2)
+        quantiles_arome_ff = np.quantile(packsample_ff, quantiles_list, axis=0)
+        pert_sample_ff = np.sqrt(pert_sample[:,dict_var['u'],crop[0]:crop[1],crop[2]:crop[3]]**2+pert_sample[:,dict_var['v'],crop[0]:crop[1],crop[2]:crop[3]]**2)
+        quantiles_gen_ff = np.quantile(pert_sample_ff, quantiles_list, axis=0)
+        quantiles_diff_ff = np.zeros((len(quantiles_list)))
+
+        quantiles_arome_t2m = np.quantile(packsample[:,dict_var['t2m'],crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
+        quantiles_gen_t2m = np.quantile(pert_sample[:,dict_var['t2m'],crop[0]:crop[1],crop[2]:crop[3]], quantiles_list, axis=0)
+        quantiles_diff_t2m = np.zeros((len(quantiles_list)))
+        
+        for q in range(len(quantiles_list)):
+            quantiles_diff_ff[q] = quantiles_gen_ff[q].mean() - quantiles_arome_ff[q].mean()
+            quantiles_diff_t2m[q] = quantiles_gen_t2m[q].mean() - quantiles_arome_t2m[q].mean()
 
         # Diff Quantiles to AROME
-        fig, ax = plt.subplots(figsize=(20,15), nrows=len(var_names)-1, ncols=1)
-        for var_idx, var in enumerate(var_names):
-            if var_idx > 0:
-                ax[var_idx-1].scatter(range(len(quantiles_list)), quantiles_diff[var_idx], linewidth=20, c='r')
-                ax[var_idx-1].plot(range(len(quantiles_list)), np.zeros(np.size(quantiles_list)), linewidth=5, c='b')
-                list_ticks=[str(i*100)+'%' for i in quantiles_list]
-                ax[var_idx-1].set_xticks(range(len(quantiles_list)) ,labels=list_ticks)
-                ax[var_idx-1].set_ylabel(var)
-                ax[var_idx-1].set_xlabel('Quantiles')
-                ax[var_idx-1].set_ylim(dict_var_lim[var])
+        fig, ax = plt.subplots(figsize=(20,15), nrows=2, ncols=1)
+        ax[0].scatter(range(len(quantiles_list)), quantiles_diff_ff, linewidth=20, c='r')
+        ax[0].plot(range(len(quantiles_list)), np.zeros(np.size(quantiles_list)), linewidth=5, c='b')
+        list_ticks=[str(i*100)+'%' for i in quantiles_list]
+        ax[0].set_xticks(range(len(quantiles_list)) ,labels=list_ticks)
+        ax[0].set_ylabel('ff (m/s)')
+        ax[0].set_xlabel('Quantiles')
+        ax[0].set_ylim([-2,2])
 
+        ax[1].scatter(range(len(quantiles_list)), quantiles_diff_t2m, linewidth=20, c='r')
+        ax[1].plot(range(len(quantiles_list)), np.zeros(np.size(quantiles_list)), linewidth=5, c='b')
+        list_ticks=[str(i*100)+'%' for i in quantiles_list]
+        ax[1].set_xticks(range(len(quantiles_list)) ,labels=list_ticks)
+        ax[1].set_ylabel('t2m (K)')
+        ax[1].set_xlabel('Quantiles')
+        ax[1].set_ylim([-5,5])
+
+        ax[0].grid(True)
+        ax[1].grid(True)
         fig.suptitle('Diff Quantiles with AROME ensemble for '+title_info)
         fig.tight_layout()
         try:
@@ -563,7 +578,7 @@ if __name__=="__main__" :
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_ED/sampling_3steps/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_ED/sampling_4steps_128/')
     parser.add_argument('--obs_dir', type=str, default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/obs_databases/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
@@ -661,16 +676,16 @@ if __name__=="__main__" :
             print(obs_date_filename)
             obs_data = obs_clean(np.load(params.obs_dir+obs_date_filename).astype(np.float32), [180, 436, 500, 756])
 
-            # plot_probability_exceeding_threshold_temperature(
-            #     Ens_AROME, 
-            #     Ens_Gen, 
-            #     title_info=f'{datename}_{lt}',
-            #     figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
-            #     var_names=['rr', 'u','v','t2m'], 
-            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
-            #     threshold_t2m=[10,15,20,30],
-            #     obs_data=obs_data[2] if obs_data is not None else None
-            # )
+            plot_probability_exceeding_threshold_temperature(
+                Ens_AROME, 
+                Ens_Gen, 
+                title_info=f'{datename}_{lt}',
+                figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
+                threshold_t2m=[10,15,20,30],
+                obs_data=obs_data[2] if obs_data is not None else None
+            )
             plot_probability_exceeding_threshold_wind(
                 Ens_AROME, 
                 Ens_Gen, 
