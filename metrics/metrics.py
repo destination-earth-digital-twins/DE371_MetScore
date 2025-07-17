@@ -48,9 +48,10 @@ class Metric(ABC, Configurable):
         # np.save('fake_data.npy',fake_data[0])
         processed_data = self._preprocess(real_data, fake_data, obs_data)
         # ici on passe de dim 8 à dim 7 pour les données de base du dataset 
-        # img1 = processed_data[0]
+        img1 = fake_data[0]
         # print('apres prepro', processed_data.shape)
-        # print('je suis dans metrics preprocessed_date',img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape,self)
+        print('JE SUIS DANS METRIC;PU',real_data.shape,fake_data.shape,processed_data.shape,processed_data[0,0,0,0])
+        print('je suis dans metrics preprocessed_date',img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape)
         result = self._calculateCore(processed_data)
         if isinstance(result, dict):
             for k in result.keys():

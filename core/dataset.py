@@ -470,7 +470,6 @@ class FakeDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
-        # print('JE SUIS LE FILE PATH', file_path)
         
         return np.load(file_path).astype(np.float32)
 
@@ -512,48 +511,64 @@ class RandomDataset(Dataset):
         self.data_folder = config_data["data_folder"]
         self.crop_indices = config_data["crop_indices"]
         self.config_data = config_data
-        # format_variables = [
-        #     var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
-        # ]
-        # kwargs = {}
-        # kwargs = kwargs | {
-        #     var: getattr(self, var, "") for var in format_variables if var != "index"
-        # }
-        # kwargs["index"] = "*"
-        # if list(config_data.keys())[0]== "data_folder":
-        #     print('je suis self.filename_format.format(**kwargs)',self.filename_format.format(**kwargs))
-        #     self.filelist = glob.glob(
-        #         os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        #     )
-        # else:
-
-        # self.filelist = glob.glob(
-        #         os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        #     )
-        # Charger le CSV RAJOUTER LA CONDITION POUR DIRE SI ON EST DANS RANDOM DATASET ALORS .... ET SI ON EST DANS REAL OU FAKE 
-        if list(config_data.keys())[0]== "data_folder":
-            # print('je suis la 1')
+        format_variables = [
+            var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
+        ]
+        kwargs = {}
+        kwargs = kwargs | {
+            var: getattr(self, var, "") for var in format_variables if var != "index"
+        }
+        kwargs["index"] = "*"
+        
+        # We add this condition to use random dataset in all configurations of dataset, csv ...
+        if "datasets" in config_data["data_folder"]: # to confirm that we are in REAL dataset 
+            
+            # self.filelist = glob.glob(
+            #     os.path.join(self.data_folder, self.filename_format.format(**kwargs))
+            # )
+        # self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
             df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
 
-            # Récupérer la colonne 'nom'
+            #     # # Récupérer la colonne 'nom'
             npy_filenames = df['Name'].tolist()
-
-            # Construire les chemins complets
-            self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
+            # # for f in npy_filenames :
+                
+            self.filelist = [os.path.join(self.data_folder, f if f.endswith(".npy") else f +".npy") for f in npy_filenames ]#if f.endswith('.npy')]
             # self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
-            # print("FILELIST",len(self.filelist),config_data["csv_file"])
         else:
-            # print('je suis la 2')
-            # print('je suis la 1')
-            df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
+            # df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
 
-            # Récupérer la colonne 'nom'
-            npy_filenames = df['Name'].tolist()
+            #     # # Récupérer la colonne 'nom'
+            # npy_filenames = df['Name'].tolist()
+            # # for f in npy_filenames :
+                
+            # self.filelist = [os.path.join(self.data_folder, f +'.npy') for f in npy_filenames ]#if f.endswith('.npy')]
+            self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
 
-            # Construire les chemins complets
-            self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
-            # self.filelist = glob.glob(os.path.join(self.data_folder,'fake_sample_*.npy'))
-            # print("FILELIST",len(self.filelist),config_data["csv_file"])
+            # self.filelist = glob.glob(os.path.join(self.data_folder,'sample_*.npy'))
+
+            # self.filelist = glob.glob(
+            #         os.path.join(self.data_folder, self.filename_format.format(**kwargs))
+            #     )
+        # Charger le CSV RAJOUTER LA CONDITION POUR DIRE SI ON EST DANS RANDOM DATASET ALORS .... ET SI ON EST DANS REAL OU FAKE 
+        # if list(config_data.keys())[0]== "data_folder":
+        #     # df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
+
+        #     # # Récupérer la colonne 'nom'
+        #     # npy_filenames = df['Name'].tolist()
+
+        #     # # Construire les chemins complets
+        #     # self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
+        #     self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
+        # else:
+        #     df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
+
+        #     # Récupérer la colonne 'nom'
+        #     npy_filenames = df['Name'].tolist()
+
+        #     # Construire les chemins complets
+        #     self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
+        #     # self.filelist = glob.glob(os.path.join(self.data_folder,'fake_sample_*.npy'))
 
             
             
@@ -563,7 +578,6 @@ class RandomDataset(Dataset):
         self.filelist = self.filelist[
             : int(config_data["maxNsamples"]) // config_data["file_size"]
         ]
-        # print("FILELIST",self.filelist)
 
 
 
@@ -575,25 +589,12 @@ class RandomDataset(Dataset):
 
     def _load_file(self, file_path): # RAJOUTER LA CONDITION SI ON EST DANS REAL OU FAKE DATASET 
         y_min, y_max, x_min, x_max = self.crop_indices
-        # print('crop_indices',self.crop_indices)
-        img = np.load(file_path).astype(np.float16)
-        # if list(self.config_data.keys())[0]== "data_folder":
-        #     print('JE PASSE PAR LA ', img.shape)
-        #     return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
-        # else:
-        #     img
+        img = np.load(file_path)
+
 
         if img.shape[1]!=256:
-            img1 =  np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
-
-            # print('je suis img.shape',np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1)).shape,img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0],img1[7,0,0])
-            # np.save('origin.npy',img)
-            # np.save('im.npy',np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1)))
             return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
         else:
-            img1=img
-            # print('je suis img.shape',img.shape,img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0])
-
             return img 
         
     def __len__(self):
@@ -601,7 +602,6 @@ class RandomDataset(Dataset):
 
     def get_all_data(self):
         all_data = []
-        # print('JE SUIS LEN', len(self))
         if not self.is_dataset_cached():
             for idx in tqdm(
                 range(len(self)), desc=f"{self.name} : Collecting uncached data"
@@ -609,7 +609,6 @@ class RandomDataset(Dataset):
                 try:
                     file_path = self._get_filename(idx)
                     
-                    # print('JE SUIS FILE PATH DANS GET 1',file_path)
                     
                     data = (
                         self._load(file_path)[np.newaxis, :, :, :]
@@ -626,7 +625,6 @@ class RandomDataset(Dataset):
                 try:
                     file_path = self._get_filename(idx)
                     
-                    # print('JE SUIS FILE PATH DANS GET 1',file_path)
 
                     data = (
                         self.cache.get_from_cache(file_path)[np.newaxis, :, :, :]
@@ -634,9 +632,9 @@ class RandomDataset(Dataset):
                         else self.cache.get_from_cache(file_path)
                     )
                     all_data.append(data)
-                    # print("je suis dans dataset", data.shape)
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
+
         return np.concatenate(all_data, axis=0)
 
 

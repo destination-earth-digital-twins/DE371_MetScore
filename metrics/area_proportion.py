@@ -16,12 +16,20 @@ def area_greater_than(
     Returns:
         np.array[float]: store every value greater than the threshold
     """
-    print("je passe par la ")
     mean_proportion = np.zeros((len(threshs),))
     for idx_threshold, threshold in enumerate(threshs):
         # mask = np.exp((data[:, variable]+1)*5.78319931/2)-1 > threshold
         # extracted = (np.exp((data[:, variable]+1)*5.78319931/2)-1)[mask]
-        print('je suis la shape des data',data.shape,variable)
+        # for i in range(data.shape[0]):
+        #     print('je suis DATA',data.shape,data[i, variable].max(),variable)
+
+            
+        l = []
+        for i in range(data.shape[0]):
+            l.append(data[i,variable].max())
+        with open('ma_liste.txt', 'w') as f:
+            for item in l:
+                f.write(f"{item}\n")
         mask = data[:, variable] > threshold
         extracted = data[:, variable][mask]
         mean_proportion[idx_threshold] += len(extracted)

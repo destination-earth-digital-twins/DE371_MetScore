@@ -129,6 +129,8 @@ gaussian_filter = (
 
 def pyr_down(minibatch):  # matches cv2.pyrDown()
     assert minibatch.ndim == 4
+        
+    minibatch = minibatch.astype(np.float32)
     return scipy.ndimage.convolve(
         minibatch, gaussian_filter[np.newaxis, np.newaxis, :, :], mode="mirror"
     )[:, :, ::2, ::2]
@@ -137,6 +139,7 @@ def pyr_down(minibatch):  # matches cv2.pyrDown()
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
+    
     if log2(S[2]) - round(log2(S[2])) != 0:
         res = np.zeros((S[0], S[1], S[2] * 2 - 1, S[3] * 2 - 1), minibatch.dtype)
     else:
