@@ -514,7 +514,7 @@ class DiffDateDataloader(DataLoader):
         logging.debug(f"Dataset length is {self._data_length}")
 
     def __next__(self):
-        # print('current_index:{} _data_length|:{} '.format(self.current_index, self._data_length))
+        print('current_index:{} _data_length|:{} '.format(self.current_index, self._data_length))
         if self.current_index < self._data_length:
             try:
                 fake_samples = np.array(
