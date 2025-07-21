@@ -520,60 +520,15 @@ class RandomDataset(Dataset):
         }
         kwargs["index"] = "*"
         
-        # We add this condition to use random dataset in all configurations of dataset, csv ...
         if "datasets" in config_data["data_folder"]: # to confirm that we are in REAL dataset 
-            
-            # self.filelist = glob.glob(
-            #     os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-            # )
-        # self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
+             #select only data from csv file
             df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
-
-            #     # # Récupérer la colonne 'nom'
             npy_filenames = df['Name'].tolist()
-            # # for f in npy_filenames :
-                
             self.filelist = [os.path.join(self.data_folder, f if f.endswith(".npy") else f +".npy") for f in npy_filenames ]#if f.endswith('.npy')]
-            # self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
         else:
-            # df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
 
-            #     # # Récupérer la colonne 'nom'
-            # npy_filenames = df['Name'].tolist()
-            # # for f in npy_filenames :
-                
-            # self.filelist = [os.path.join(self.data_folder, f +'.npy') for f in npy_filenames ]#if f.endswith('.npy')]
             self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
-
-            # self.filelist = glob.glob(os.path.join(self.data_folder,'sample_*.npy'))
-
-            # self.filelist = glob.glob(
-            #         os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-            #     )
-        # Charger le CSV RAJOUTER LA CONDITION POUR DIRE SI ON EST DANS RANDOM DATASET ALORS .... ET SI ON EST DANS REAL OU FAKE 
-        # if list(config_data.keys())[0]== "data_folder":
-        #     # df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
-
-        #     # # Récupérer la colonne 'nom'
-        #     # npy_filenames = df['Name'].tolist()
-
-        #     # # Construire les chemins complets
-        #     # self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
-        #     self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
-        # else:
-        #     df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
-
-        #     # Récupérer la colonne 'nom'
-        #     npy_filenames = df['Name'].tolist()
-
-        #     # Construire les chemins complets
-        #     self.filelist = [os.path.join(self.data_folder, f) for f in npy_filenames if f.endswith('.npy')]
-        #     # self.filelist = glob.glob(os.path.join(self.data_folder,'fake_sample_*.npy'))
-
-            
-            
-
-
+          
         random.shuffle(self.filelist)
         self.filelist = self.filelist[
             : int(config_data["maxNsamples"]) // config_data["file_size"]
@@ -592,7 +547,7 @@ class RandomDataset(Dataset):
         img = np.load(file_path)
 
 
-        if img.shape[1]!=256:
+        if img.shape[1]!=256: # change it with sizeH in the config file to be more general 
             return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
         else:
             return img 
