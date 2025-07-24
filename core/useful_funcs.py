@@ -98,12 +98,18 @@ def obs_clean(obs, crop_indices):
 
     Ens_observation = np.empty((4, size, size))
     Ens_observation[:] = np.nan
+    
     Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]
     Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]
     Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]
     mat=Ens_observation[1]
     Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
 
+    # # Nouvelle organisation : 0 → ff, 1 → dd, 2 → t2m, 3 → rr
+    # Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]  # ff (u)
+    # Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]  # dd (v)
+    # Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]  # t2m
+    # Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]  # rr
 
     Ens_observation[Ens_observation > 1000.0] = np.nan
     Ens_observation[2][Ens_observation[1] < 2.0] = np.nan

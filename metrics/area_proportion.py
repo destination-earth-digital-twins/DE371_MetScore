@@ -20,16 +20,9 @@ def area_greater_than(
     for idx_threshold, threshold in enumerate(threshs):
         # mask = np.exp((data[:, variable]+1)*5.78319931/2)-1 > threshold
         # extracted = (np.exp((data[:, variable]+1)*5.78319931/2)-1)[mask]
-        # for i in range(data.shape[0]):
-        #     print('je suis DATA',data.shape,data[i, variable].max(),variable)
+        # img1=data[0]
+        # print('je suis dans metrics preprocessed_date',data.shape, img1[3,:,:].max(),img1[4,:,:].max()) #img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0])#,img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape)
 
-            
-        l = []
-        for i in range(data.shape[0]):
-            l.append(data[i,variable].max())
-        with open('ma_liste.txt', 'w') as f:
-            for item in l:
-                f.write(f"{item}\n")
         mask = data[:, variable] > threshold
         extracted = data[:, variable][mask]
         mean_proportion[idx_threshold] += len(extracted)

@@ -215,7 +215,7 @@ class DateDataloader(DataLoader):
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
         logging.debug(f"Dataset length is {self._data_length}")
-
+        print('JE PASSE PAR DATEDATALOADER')
     # def __next__(self):
     #     if self.current_index < self._data_length:
     #         try:

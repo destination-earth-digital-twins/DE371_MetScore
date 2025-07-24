@@ -44,14 +44,8 @@ class Metric(ABC, Configurable):
         Returns:
             The calculated metric result.
         """
-        # np.save('real_data.npy',real_data[0])
-        # np.save('fake_data.npy',fake_data[0])
+
         processed_data = self._preprocess(real_data, fake_data, obs_data)
-        # ici on passe de dim 8 à dim 7 pour les données de base du dataset 
-        img1 = fake_data[0]
-        # print('apres prepro', processed_data.shape)
-        print('JE SUIS DANS METRIC;PU',real_data.shape,fake_data.shape,processed_data.shape,processed_data[0,0,0,0])
-        print('je suis dans metrics preprocessed_date',img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0],img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape)
         result = self._calculateCore(processed_data)
         if isinstance(result, dict):
             for k in result.keys():
@@ -122,7 +116,6 @@ class PreprocessCondObs(Metric):
         """
         assert real_data is not None
         assert obs_data is not None
-        
         logging.debug(fake_data.shape)
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
             fake_data_p = fake_data.take(
@@ -148,7 +141,6 @@ class PreprocessCondObs(Metric):
         fake_data_pp = copy.deepcopy(fake_data_p)
         obs_data_pp = np.around(copy.deepcopy(obs_data_p[0]), 2)
         real_data_pp = copy.deepcopy(real_data_p)
-
         fake_data_pp[:, 1], fake_data_pp[:, 2] = wc.computeWindDir(fake_data_pp[:, 1], fake_data_pp[:, 2])
         real_data_pp[:, 1], real_data_pp[:, 2] = wc.computeWindDir(real_data_pp[:, 1], real_data_pp[:, 2])
 
@@ -216,7 +208,6 @@ class PreprocessDist(Metric):
         # for that we use np.take, which copies data.
         # While this is surely costly, at first hand we want to do so
         # because not all metrics might use the same variables
-        # print('shape des datas a',real_data.shape,fake_data.shape,self.var_indices,self.var_channel)
 
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
             fake_data_p = fake_data.take(
@@ -237,7 +228,6 @@ class PreprocessDist(Metric):
             # print('je suis preprocess3 d')
             real_data_p = real_data
             
-        # print('shape des datas b',real_data_p.shape,fake_data_p.shape)
         return {"real_data": real_data_p, "fake_data": fake_data_p}
 
 
