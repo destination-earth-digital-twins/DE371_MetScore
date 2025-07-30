@@ -57,16 +57,16 @@ if __name__=="__main__" :
     parser.add_argument('--output_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
-    parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
-    parser.add_argument("--date_start", type=str, default = "2020-10-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-10-02")
-    parser.add_argument("--leadtimes", type=str2intlist, default=[3])
+    parser.add_argument("--dates_file", type=str, default='Large_lt_test_labels_ens.csv')
+    parser.add_argument("--date_start", type=str, default = "2021-10-01")
+    parser.add_argument("--date_stop", type=str, default = "2021-10-02")
+    parser.add_argument("--leadtimes", type=str2intlist, default=[36])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
     parser.add_argument("--orography_path",type=str, default='/project/home/p200177/DE_371/resources/AROME_orography/PEARO_EURW1S40_Orography.npy')
 
     params = parser.parse_args()
-    directory = params.output_dir + 'comparison_subjective_scores/test/'
+    directory = params.output_dir + 'scores_subjective_comparison_conditionning_method/test/'
     # create output directories
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -93,24 +93,30 @@ if __name__=="__main__" :
                 Ens_AROME[i] = sn
 
             # Loading Generated ensemble
+            crop = [0,256,0,256]
+            orog = orog[crop[0]:crop[1],crop[2]:crop[3]]
             print(f'Importing 4var_fake_ensemble_{datename}_{lt}.npy')
             title_info=f'{datename}_{lt}'
             figname_info=directory+f'{datename}_{lt}'
-            coord = [60,240]
+            coord = [229,44]
             fig, ax = plt.subplots(figsize=(5*(len(var_names)+1),5), nrows=1, ncols=len(var_names)+1)
             x = y = np.arange(0, 256)
             X, Y = np.meshgrid(x, y)
             CS = ax[3].contourf(X, Y, np.where(orog<10,orog,0), 5, cmap=plt.cm.bone)
-
+            scatter = np.zeros_like(Ens_AROME)
             for id, var in enumerate(var_names):
                 var_id = dict_var[var]
                 vmin = np.min(Ens_AROME[0,var_id])
                 vmax = np.max(Ens_AROME[0,var_id])
                 clim = (vmin, vmax)
                 ax[id].set_title(f"{var} real")
-                im = ax[id].imshow(Ens_AROME[0,var_id], origin="lower", cmap=colormap_var[id], clim=clim)
+                im = ax[id].imshow(Ens_AROME[0,var_id][crop[0]:crop[1],crop[2]:crop[3]], origin="lower", cmap=colormap_var[id], clim=clim)
                 fig.colorbar(im, ax=ax[id], shrink=0.5)
-                ax[id].scatter(coord[1], coord[0], color='red', linewidth=2)
+                # rect1 = matplotlib.patches.Rectangle((50,200), 50, 50, color='blue', fc = 'none',lw = 2)
+                # ax[id].add_patch(rect1)
+                scatter[0,var_id][coord[0],coord[1]] = 1
+                ax[id].imshow(scatter[0,var_id][crop[0]:crop[1],crop[2]:crop[3]], origin="lower", cmap='Greys', alpha=0.5)
+                # ax[id].scatter(coord[1], coord[0], color='red', linewidth=1)
                 ax[id].contour(CS, levels=CS.levels[::2], colors='black')
 
 

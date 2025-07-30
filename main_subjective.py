@@ -187,6 +187,40 @@ def plot_samples(
         plt.close()
         return
 
+def plot_obs_data_on_samples(
+          packsample, 
+          obs_data, 
+          crop=[0,-1,0,-1], 
+          mem_idx=0, 
+          mem_pert_idx=0,
+          title_info=" ", 
+          figname_info=".png",  
+          var_names=['u','v','t2m'], 
+          dict_var={'u': 0, 'v': 1, 't2m': 2},
+          colormap_var=['viridis','viridis','coolwarm'],
+          clim_global=[(-1,1), (-5,5),(-5,5),(270,300)],
+          axis_title_global=''
+          ):
+        
+        obs_data_mask = np.where(obs_data>0, 1, 0)
+        coords_obs = np.where(obs_data[2]>0)
+        fig, ax = plt.subplots(figsize=(20,20), nrows=1, ncols=1)
+        
+        ax.set_title(f"{axis_title_global}t2m real")
+        im = ax.imshow(packsample[mem_idx,2,crop[0]:crop[1],crop[2]:crop[3]], origin="lower", cmap='coolwarm')
+        fig.colorbar(im, ax=ax, shrink=0.5)
+        ax.imshow(obs_data_mask[2,crop[0]:crop[1],crop[2]:crop[3]], origin="lower", alpha=0.5)
+        for x,y in zip(coords_obs[0], coords_obs[1]):
+            ax.text(y,x,f'{[x,y]}', alpha=0.5, size=7, c='white')
+                
+        fig.suptitle(title_info)
+        fig.tight_layout()
+        try:
+            fig.savefig(figname_info, dpi=100)
+        except Exception as e : 
+            print(f"unable to save figure: {figname_info}")
+        plt.close()
+        return
 
 def plot_quantiles(
           packsample, 
@@ -443,11 +477,14 @@ def plot_panache_density_dynamic(
           var_names=['rr', 'u (m/s)','v (m/s)','t2m (K)'], 
           dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
           axis_title_global='',
-          coord = [63,38] # Toulouse
+          coord = [63,38], # Toulouse
+          obs_data=None
           ):
         
         arome = packsample[ :, :, :, coord[0], coord[1]]
         gen = pert_sample[ :, :, :, coord[0], coord[1]]
+        if obs_data is not None:
+            observation = obs_data[:, :, coord[0], coord[1]]
         lt_arome, num_member_arome, v = arome.shape
         arome_enveloppe = np.zeros((lt_arome, v, 3))
         minimum_arome = np.min(arome.reshape((lt_arome*num_member_arome,v)), axis=0)
@@ -556,6 +593,10 @@ def plot_panache_density_dynamic(
                 axes[id_var-1][0].plot(list(range(0, lt_arome*3, 3)), arome[:,:,id_var], color='blue', alpha=0.05)
                 axes[id_var-1][2].plot(list(range(0, lt_arome*3, 3)), gen[:,:,id_var], color='blue', alpha=0.05)
 
+                if obs_data is not None:
+                    axes[id_var-1][0].plot(list(range(0, lt_arome*3, 3)), observation[:,id_var-1], color='blue', linewidth=3,linestyle='--')
+                    axes[id_var-1][2].plot(list(range(0, lt_arome*3, 3)), observation[:,id_var-1], color='blue', linewidth=3,linestyle='--')
+
         cax,kw = mpl.colorbar.make_axes([ax for ax in axes.flat])
         fig.colorbar(
             mpl.cm.ScalarMappable(cmap=cmap, norm=norm),
@@ -564,8 +605,8 @@ def plot_panache_density_dynamic(
             label='Density of members',
         )
 
-        fig.suptitle(f'Plumes comparison for '+title_info)
-        fig.savefig(figname_info+'.png', dpi=100)
+        fig.suptitle(f'Plumes comparison at coord {coord} for '+title_info)
+        fig.savefig(figname_info+f'_{coord}.png', dpi=100)
         plt.close()
         
 
@@ -578,13 +619,13 @@ if __name__=="__main__" :
 
     # Real Data Directory - PATH to samples of the dataset
     parser.add_argument('--real_data_dir', type = str,default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/IS_1_1.0_0_0_0_0_0_256_large_lt_done/')
-    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_ED/sampling_4steps_128/')
+    parser.add_argument('--gen_data_dir', type = str,default='/project/home/p200177/DE_371/experiments_WP1/DIFFUSION_experiments_AROME/sdedit_samplings_test_set/sdedit_ED/sampling_3steps/')
     parser.add_argument('--obs_dir', type=str, default='/project/home/p200177/DE_371/datasets/dataset_Meteo_France/obs_databases/')
     # Output Directory - PATH where the output of the inversion will be saved
     ########################## CONTROL of Data to invert ######################
-    parser.add_argument("--dates_file", type=str, default='Large_lt_val_labels_ens.csv')
-    parser.add_argument("--date_start", type=str, default = "2020-10-01")
-    parser.add_argument("--date_stop", type=str, default = "2020-10-02")
+    parser.add_argument("--dates_file", type=str, default='Large_lt_test_labels_ens.csv')
+    parser.add_argument("--date_start", type=str, default = "2021-08-07")
+    parser.add_argument("--date_stop", type=str, default = "2021-08-12")
     parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,18,21,24,27,30,33,36,39,42])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
@@ -603,14 +644,15 @@ if __name__=="__main__" :
     df_extract = df_date[(df_date['Date']>=params.date_start) & (df_date['Date']<=params.date_stop)]
 
     list_dates = df_extract['Date'].unique()
-
+    coord_list=[[229,44], [114,134]]
 
     #################### main loop ##################
     for date_ in list_dates:
         datename = date_.strftime('%Y-%m-%d')
         Ens_AROME_date = []
         Ens_Gen_date = []
-        for lt in params.leadtimes:
+        observation_date = []
+        for id_lt, lt in enumerate(params.leadtimes):
             # Loading AROME ensemble   
             df0 = df_extract[(df_extract['Date']==date_) & (df_extract['LeadTime']==lt-1)]
             Nb = len(df0)
@@ -626,16 +668,16 @@ if __name__=="__main__" :
             directory = output_dir+'/samples_aromes/'
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            # plot_samples(
-            #     Ens_AROME, 
-            #     Ens_Gen, 
-            #     title_info=f'{datename}_{lt}',
-            #     figname_info=directory+f'samples_{datename}_{lt}.png',
-            #     var_names=['rr', 'u','v','t2m'], 
-            #     dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-            #     colormap_var=['viridis','viridis','viridis','coolwarm'],
-            #     clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
-            # )
+            plot_samples(
+                Ens_AROME, 
+                Ens_Gen, 
+                title_info=f'{datename}_{lt}',
+                figname_info=directory+f'samples_{datename}_{lt}.png',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+                colormap_var=['viridis','viridis','viridis','coolwarm'],
+                clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+            )
 
 
             directory = output_dir+'/statistics/'
@@ -672,9 +714,20 @@ if __name__=="__main__" :
             if lt>=24:
                 obs_date_name = obs_date_name[:-1] + str(int(obs_date_name[-1:])+1)
                 print(obs_date_name)
-            obs_date_filename = f'obs{obs_date_name}_{lt%24}.npy'
+            obs_date_filename = f'obs{obs_date_name}_{(lt)%24}.npy'
             print(obs_date_filename)
             obs_data = obs_clean(np.load(params.obs_dir+obs_date_filename).astype(np.float32), [180, 436, 500, 756])
+            
+            plot_obs_data_on_samples(
+                Ens_AROME, 
+                obs_data, 
+                title_info=f'{datename}_{lt}',
+                figname_info=output_dir+'/samples_aromes/'+f'obs_mask_samples_{datename}_{lt}.png',
+                var_names=['rr', 'u','v','t2m'], 
+                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+                colormap_var=['viridis','viridis','viridis','coolwarm'],
+                clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+            )
 
             plot_probability_exceeding_threshold_temperature(
                 Ens_AROME, 
@@ -739,17 +792,27 @@ if __name__=="__main__" :
 
             Ens_AROME_date.append(Ens_AROME)
             Ens_Gen_date.append(Ens_Gen)
+            # Transforme data
+            obs_data_u_v_t2m = obs_data.copy()
+            obs_data_u_v_t2m[0] = obs_data[0]*np.sin(np.deg2rad(obs_data[1]))
+            obs_data_u_v_t2m[1] = obs_data[0]*np.cos(np.deg2rad(obs_data[1]))
+            # if id_lt == 0 :
+                # observation_date.append(np.full_like(obs_data_u_v_t2m, fill_value=np.nan))
+            observation_date.append(obs_data_u_v_t2m)
+        # observation_date.pop()
 
-        directory = output_dir+'/panaches/'
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        plot_panache_density_dynamic(
-            np.array(Ens_AROME_date),
-            np.array(Ens_Gen_date),
-            title_info=f'{datename}',
-            figname_info=directory+f'panache_{datename}',
-            coord=[60,240]
-        )
+        # directory = output_dir+'/panaches/'
+        # if not os.path.exists(directory):
+        #     os.makedirs(directory)
+        # for coord in coord_list :
+        #     plot_panache_density_dynamic(
+        #         np.array(Ens_AROME_date),
+        #         np.array(Ens_Gen_date),
+        #         title_info=f'{datename}',
+        #         figname_info=directory+f'panache_{datename}',
+        #         coord=coord,
+        #         obs_data=np.array(observation_date)
+        #     )
             
             
 
