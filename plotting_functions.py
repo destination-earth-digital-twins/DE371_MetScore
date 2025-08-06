@@ -1253,14 +1253,15 @@ def plot_ROCfast(experiments, metric, config):
 
 
 def plot_spectralCompute(experiments, metric, config):
-    spectral = np.zeros((len(experiments), 3, 90))
+    spectral = np.zeros((len(experiments), 3, 351))
+    print(spectral.shape)
     for exp_idx, exp in enumerate(experiments):
         spectral[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
         )
 
     scale = np.linspace(
-        2 * np.pi / 2.6, 45 * 256 // 128 * 2 * np.pi / 2.6, 45 * 256 // 128
+        2 * np.pi / 2.6, 351 * 2 * np.pi / 2.6, 351
     )
     for var_idx in range(config["var_number"]):
         fig, axs = plt.subplots(figsize=(9, 7))
@@ -1335,27 +1336,13 @@ def plot_MultivarCorr(experiments, metric, config):
     Ys = ["v", "t2m", "t2m"]
     Xsindices = [0, 0, 1]
     Ysindices = [1, 2, 2]
-    ncouples = 3
+    ncouples = 3  
     for exp_idx, exp in enumerate(experiments):
 
         if "AROME" in exp["name"]:
             exp_arome = exp_idx
             print("exp_arome", exp_arome)
-        else:
-            # data = restricted_loads(
-            #     open(
-            #         config["expe_folder"]
-            #         + "/"
-            #         + exp["name"]
-            #         + "/"
-            #         + metric["name"]
-            #         + ".p",
-            #         "rb",
-            #     )
-            # )
-            # print("multivar shape", data.keys(), data["hist"].shape)
-            # multivar[exp_idx] = data["hist"][1]
-
+        
             data = pickle.load(
                 open(
                     config["expe_folder"]
@@ -1367,15 +1354,29 @@ def plot_MultivarCorr(experiments, metric, config):
                     "rb",
                 )
             )
+
             # print("multivar shape", data.keys(), data['hist'].shape)
-            multivar[exp_idx] = data["hist"][1]
-
-            if exp_idx == len(experiments) - 1:
-                multivar[exp_arome] = data["hist"][0]
-                bins = data["bins"]
-                levels = multiv.define_levels(multivar[exp_arome], 5)
-                # print(levels)
-
+            multivar[exp_idx] = data["hist"][0]
+            bins = data["bins"]   
+            levels = multiv.define_levels_robust(multivar[exp_arome], 5)         
+            break
+    
+    for exp_idx, exp in enumerate(experiments):
+        print("icii, nuos exp_idx", exp_idx)
+        if exp_idx==exp_arome:
+            continue
+        print("iciiiiiiiiiiiiiiiiiii")
+        data_fake = pickle.load(open( config["expe_folder"]
+                    + "/"
+                    + exp["name"]
+                    + "/"
+                    + metric["name"]
+                    + ".p",
+                    "rb",)
+                   
+                    )
+        print("data_fake", data_fake)
+        multivar[exp_idx] = data_fake["hist"][1]
     for exp_idx, exp in enumerate(experiments):
         if "AROME" not in exp["name"]:
             fig, axs = plt.subplots(1, ncouples, figsize=(4 * ncouples, 2 * ncouples))

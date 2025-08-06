@@ -37,6 +37,25 @@ class Configurable:
 
         return instance
 
+    def fromConfigDataset(cls, config_data, **kwargs):
+        """
+        Create an instance of the class from configuration data.
+
+        Args:
+            config_data (str or dict): Configuration data in the form of a dictionary or a path to a YAML file.
+            **kwargs: Additional keyword arguments to pass to the class constructor.
+
+        Returns:
+            instance: An instance of the class with attributes set according to the configuration data.
+        """
+        config_data = cls._safe_open(cls, config_data)
+        _check_config(cls, config_data)
+        instance = cls(config_data, **kwargs)
+        # for key, value in config_data.items():
+        #     setattr(instance, key, value)
+
+        return instance
+    
     @classmethod
     def from_typed_config(cls, config_data, **kwargs):
         """

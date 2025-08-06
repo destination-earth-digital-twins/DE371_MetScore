@@ -475,7 +475,7 @@ class RealDataset(DateDataset):
 class RandomDataset(Dataset):
     required_keys = [
         "data_folder",
-        "config",
+        "preprocessor_config",
         "crop_indices",
         "filename_format",
         "maxNsamples",
@@ -492,18 +492,22 @@ class RandomDataset(Dataset):
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
         ]
         kwargs = {}
-        kwargs = kwargs | {
-            var: getattr(self, var, "") for var in format_variables if var != "index"
-        }
-        kwargs["index"] = "*"
-        self.filelist = glob.glob(
-            os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        )
+        kwargs = {var: "*" for var in format_variables}
+        print("kwargs :", kwargs)
+        print("format_variables : ", format_variables)
+        
+        pattern = os.path.join(self.data_folder, self.filename_format.format(**kwargs))
+        print("pattern ici :", pattern)     
+        self.filelist = glob.glob(pattern)
+            
         random.shuffle(self.filelist)
         self.filelist = self.filelist[
             : int(config_data["maxNsamples"]) // config_data["file_size"]
         ]
-
+    
+    def __len__(self):
+        return len(self.filelist)
+    
     def _get_full_path(self, filename, extension=".npy"):
         return os.path.join(self.data_folder, f"{filename}{extension}")
 
@@ -513,11 +517,12 @@ class RandomDataset(Dataset):
     def _load_file(self, file_path):
         return np.load(file_path).astype(np.float32)
 
-    def __len__(self):
-        return len(self.filelist)
-
+    
+    def list_cached_keys(self):
+        return list(self._cache_dict.keys())
     def get_all_data(self):
         all_data = []
+        cached = self.is_dataset_cached()
         if not self.is_dataset_cached():
             for idx in tqdm(
                 range(len(self)), desc=f"{self.name} : Collecting uncached data"

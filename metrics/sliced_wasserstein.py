@@ -41,7 +41,10 @@ def get_descriptors_for_minibatch(minibatch, nhood_size, nhoods_per_image):
 
 
     """
-    S = minibatch.shape  # (minibatch, channel, height, width)
+    S = minibatch.shape
+    print("S : ", S)
+    minibatch = minibatch.transpose(0,3,1,2)
+        # (minibatch, channel, height, width) = (nb samples,4,704,1120)
     assert len(S) == 4
     N = nhoods_per_image * S[0]
     H = nhood_size // 2
@@ -137,10 +140,7 @@ def pyr_down(minibatch):  # matches cv2.pyrDown()
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
-    if log2(S[2]) - round(log2(S[2])) != 0:
-        res = np.zeros((S[0], S[1], S[2] * 2 - 1, S[3] * 2 - 1), minibatch.dtype)
-    else:
-        res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
+    res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
     res[:, :, ::2, ::2] = minibatch
     return scipy.ndimage.convolve(
         res, gaussian_filter[np.newaxis, np.newaxis, :, :] * 4.0, mode="mirror"
@@ -148,6 +148,7 @@ def pyr_up(minibatch):  # matches cv2.pyrUp()
 
 
 def generate_laplacian_pyramid(minibatch, num_levels):
+    
     if isinstance(minibatch, np.ndarray):
         pyramid = [np.float32(minibatch)]
     else:

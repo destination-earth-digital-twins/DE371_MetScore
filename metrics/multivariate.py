@@ -118,6 +118,40 @@ def var2Var_hist(data, bins, density=True):
             k += 1
     return bivariates, Bins
 
+def define_levels_robust(bivariates, nlevels):
+    """
+    Define a logarithmic scale of levels to be used for 2D-histogram plots,
+    with the given "bivariates" data, even if the data are very sparse.
+    """
+    # bivariates : array of shape (n_couples, nbins_x, nbins_y)
+    C, nx, ny = bivariates.shape
+    inter = bivariates.reshape(C, -1)            # aplati chaque histo
+    levels = np.zeros((C, nlevels))
+
+    for i in range(C):
+        sorted_vals = np.sort(inter[i])
+        nonzero = sorted_vals[sorted_vals > 0]
+        usable = nonzero.size
+        print(f"[define_levels] couple {i}: {usable} bins non-nuls")
+
+        if usable < nlevels:
+            # Trop peu de données : on répartit linéairement entre min et max
+            mn = nonzero.min() if usable else 1e-6
+            mx = nonzero.max() if usable else mn * 10
+            lin = np.linspace(mn, mx, nlevels)
+            levels[i] = np.log10(lin)
+        else:
+            # Découpage régulier dans l’ordre
+            step = max(1, usable // nlevels)
+            picks = nonzero[::step][:nlevels]
+            # Si picks a moins de nlevels (rare), on étend avec la valeur max
+            if picks.size < nlevels:
+                pad = np.full(nlevels - picks.size, picks.max())
+                picks = np.concatenate([picks, pad])
+            levels[i] = np.log10(picks)
+
+    return levels
+
 
 def define_levels(bivariates, nlevels):
     """
@@ -147,7 +181,8 @@ def define_levels(bivariates, nlevels):
         b = np.sort(inter[i])
 
         usable_data = b[b > 0].shape[0]
-
+        print("usable data", usable_data)
+        
         N_values = usable_data // nlevels
         assert N_values > 2
         levels[i] = np.log10(b[b > 0][::N_values][:nlevels])

@@ -65,7 +65,9 @@ class SWDall(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-
+        
+        print("real data shape ", real_data.shape)
+        print("fake data shape ", fake_data.shape)
         return self.sliced_w1.End2End(real_data, fake_data)
 
 

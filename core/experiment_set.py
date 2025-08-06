@@ -177,6 +177,13 @@ class ExperimentSet(Configurable):
 
         if self.not_batched_metrics:
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
+            
+            print("real data shape ici :", real_data.shape)
+            print("fake data shpae ici : ", fake_data.shape)
+            real_data = real_data.transpose(0,3,1,2)
+            real_data = real_data[:,:,7:711,:1120]
+            
+            fake_data = fake_data[:,:,:,:1120]
             for metric in tqdm(
                 self.not_batched_metrics,
                 desc=f"{self.name}: Calculating non-batched metrics",

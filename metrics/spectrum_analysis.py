@@ -202,16 +202,32 @@ def PowerSpectralDensity(x):
 
     out_list = []
     channels = x.shape[1]
-
     for c in range(channels):
         x_c = x[:, c, :, :]
         sig = dct_var(x_c).mean(axis=0)
-
         center = (sig.shape[0] // 2, sig.shape[1] // 2)
         out_list.append(radial_bin_dct(sig, center))
 
     out = np.concatenate([np.expand_dims(o, axis=0) for o in out_list], axis=0)
-
+        
+    # scale = np.linspace(
+    #     2 * np.pi / 2.6, 351 * 2 * np.pi / 2.6, 351
+    # )
+    # plt.figure(figsize=(15,5))
+    # for i in range(3):
+    #     print("out i dans la boucle ", out[i])
+    #     plt.plot(
+    #             scale,
+    #             out[i],
+    #         )
+    # plt.title(f"Power Spectrum of ")
+    # plt.xticks(fontsize="18")
+    # plt.yticks(fontsize="18")
+    # plt.xscale("log")
+    # plt.yscale("log")
+    # plt.legend(fontsize=14, frameon=False, ncol=1)
+    # plt.savefig(f"./PSD_comp") 
+    # plt.close()   
     return out
 
 
@@ -233,6 +249,7 @@ def PSD_compare(real_data, fake_data):
     for c in range(channels):
         psd_real = PowerSpectralDensity(real_data[:, c : c + 1, :, :])
         psd_fake = PowerSpectralDensity(fake_data[:, c : c + 1, :, :])
+        print("dans PSD compare")
         res[c] = np.sqrt(np.mean((np.log10(psd_real) - np.log10(psd_fake)) ** 2))
     return res
 
@@ -268,7 +285,7 @@ def PSD_compare_multidates(obsdata, real_data, fake_data, debiasing=False):
 
 if __name__ == "__main__":
     ranges = [2.0, 3.0, 5.0, 10.0]
-
+    print("ok on est la dedans")
     for r in ranges[-2:]:
         t, p = np.ogrid[-r:r:0.01, -r:r:0.01]
         x = np.cos((2 * np.pi / 0.1) * np.sqrt(t**2 + p**2)) + np.cos(
@@ -277,8 +294,11 @@ if __name__ == "__main__":
         x = x.reshape(1, x.shape[0], x.shape[1])
         psd = PowerSpectralDensity(x)
         N = psd.shape[0]
+        plt.figure()
         plt.plot(np.arange(N) / N, np.log(psd))
+        plt.savefig("./PSD")
         plt.show()
+        plt.close()
 
 ######################## OLD ##################################################
 
@@ -344,5 +364,5 @@ def plot_spectrum(rad, binned_spectrum, name, delta, unit):
     plt.xlabel("Wavenumber (km^{-1})")
     plt.ylabel(name + " ({})".format(unit))
     plt.title("Power Spectral Density, " + name)
-    # plt.savefig('./PSD_'+name+'.png')
+    plt.savefig('./PSD_'+name+'.png')
     plt.show()

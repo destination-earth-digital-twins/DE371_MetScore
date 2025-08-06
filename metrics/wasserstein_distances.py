@@ -256,6 +256,8 @@ def pointwise_W1(real_data, fake_data):
 
     """
     assert real_data.shape == fake_data.shape
+    print("real_data shape dans swd ", real_data.shape)
+    print("fake_data shape dans swd ", fake_data.shape)
     if len(real_data.shape) == 4:
         Height_Size = fake_data.shape[2]
         Width_Size = fake_data.shape[3]
@@ -311,6 +313,7 @@ def W1_center_numpy(real_data, fake_data, Crop_Size=64):
     Side_Size = fake_data.shape[2]
     HALF = Side_Size // 2 - 1
     half = Crop_Size // 2
+    print("cropsize :", Crop_Size)
     real_data = real_data[:, :, HALF - half : HALF + half, HALF - half : HALF + half]
     fake_data = fake_data[:, :, HALF - half : HALF + half, HALF - half : HALF + half]
     Channel_size = real_data.shape[1]
