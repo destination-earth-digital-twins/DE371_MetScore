@@ -1264,7 +1264,7 @@ def plot_spectralCompute(experiments, metric, config):
         2 * np.pi / 2.6, 351 * 2 * np.pi / 2.6, 351
     )
     for var_idx in range(config["var_number"]):
-        fig, axs = plt.subplots(figsize=(9, 7))
+        fig, axs = plt.subplots(figsize=(15, 7))
         for exp_idx, exp in enumerate(experiments):
             plt.plot(
                 scale,
@@ -1358,14 +1358,13 @@ def plot_MultivarCorr(experiments, metric, config):
             # print("multivar shape", data.keys(), data['hist'].shape)
             multivar[exp_idx] = data["hist"][0]
             bins = data["bins"]   
-            levels = multiv.define_levels_robust(multivar[exp_arome], 5)         
+            levels = multiv.define_levels(multivar[exp_arome], 5)         
             break
     
     for exp_idx, exp in enumerate(experiments):
         print("icii, nuos exp_idx", exp_idx)
         if exp_idx==exp_arome:
             continue
-        print("iciiiiiiiiiiiiiiiiiii")
         data_fake = pickle.load(open( config["expe_folder"]
                     + "/"
                     + exp["name"]
@@ -1375,14 +1374,16 @@ def plot_MultivarCorr(experiments, metric, config):
                     "rb",)
                    
                     )
-        print("data_fake", data_fake)
         multivar[exp_idx] = data_fake["hist"][1]
     for exp_idx, exp in enumerate(experiments):
+        print("on est bien dans cette boucle")
         if "AROME" not in exp["name"]:
             fig, axs = plt.subplots(1, ncouples, figsize=(4 * ncouples, 2 * ncouples))
-
+            print('nom de l exp name qui n est pas AROME :', exp["name"])
             for i in range(ncouples):
                 print(multivar[exp_arome][i].min(), multivar[exp_arome][i].max())
+                print("multivar",multivar.shape)
+                
                 cs = axs[i].contourf(
                     bins[Xsindices[i]][:-1],
                     bins[Ysindices[i]][:-1],
