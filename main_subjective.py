@@ -625,7 +625,7 @@ if __name__=="__main__" :
     ########################## CONTROL of Data to invert ######################
     parser.add_argument("--dates_file", type=str, default='Large_lt_test_labels_ens.csv')
     parser.add_argument("--date_start", type=str, default = "2021-08-07")
-    parser.add_argument("--date_stop", type=str, default = "2021-08-12")
+    parser.add_argument("--date_stop", type=str, default = "2021-08-16")
     parser.add_argument("--leadtimes", type=str2intlist, default=[3,6,9,12,18,21,24,27,30,33,36,39,42])
     parser.add_argument("--var_indices", type=str2intlist, default=[0,1,2,3])
     parser.add_argument("--var_data", type=str2intlist, default=['rr','u','v','t2m'])
@@ -644,7 +644,7 @@ if __name__=="__main__" :
     df_extract = df_date[(df_date['Date']>=params.date_start) & (df_date['Date']<=params.date_stop)]
 
     list_dates = df_extract['Date'].unique()
-    coord_list=[[229,44], [114,134]]
+    coord_list=[[238,61]]
 
     #################### main loop ##################
     for date_ in list_dates:
@@ -668,47 +668,47 @@ if __name__=="__main__" :
             directory = output_dir+'/samples_aromes/'
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            plot_samples(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'samples_{datename}_{lt}.png',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                colormap_var=['viridis','viridis','viridis','coolwarm'],
-                clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
-            )
-
-
-            directory = output_dir+'/statistics/'
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-        #     plot_mean(
+        #     plot_samples(
         #         Ens_AROME, 
         #         Ens_Gen, 
-        #         figtitle=f'{datename}_{lt}',
-        #         figname=directory+f'mean_2D_{datename}_{lt}.png',
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'samples_{datename}_{lt}.png',
         #         var_names=['rr', 'u','v','t2m'], 
         #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
         #         colormap_var=['viridis','viridis','viridis','coolwarm'],
         #         clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
         #     )
 
-            plot_var(
-                Ens_AROME, 
-                Ens_Gen, 
-                figtitle=f'{datename}_{lt}',
-                figname=directory+f'var_2D_{datename}_{lt}.png',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                colormap_var=['viridis','viridis','viridis','coolwarm']
-            )
+
+        #     directory = output_dir+'/statistics/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        # #     plot_mean(
+        # #         Ens_AROME, 
+        # #         Ens_Gen, 
+        # #         figtitle=f'{datename}_{lt}',
+        # #         figname=directory+f'mean_2D_{datename}_{lt}.png',
+        # #         var_names=['rr', 'u','v','t2m'], 
+        # #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        # #         colormap_var=['viridis','viridis','viridis','coolwarm'],
+        # #         clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+        # #     )
+
+        #     plot_var(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         figtitle=f'{datename}_{lt}',
+        #         figname=directory+f'var_2D_{datename}_{lt}.png',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         colormap_var=['viridis','viridis','viridis','coolwarm']
+        #     )
 
 
-            directory = output_dir+'/probability_threshold_map/'
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            obs_data=None
+        #     directory = output_dir+'/probability_threshold_map/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        #     obs_data=None
 
             obs_date_name = date_.strftime('%Y%m%d') 
             if lt>=24:
@@ -718,50 +718,50 @@ if __name__=="__main__" :
             print(obs_date_filename)
             obs_data = obs_clean(np.load(params.obs_dir+obs_date_filename).astype(np.float32), [180, 436, 500, 756])
             
-            plot_obs_data_on_samples(
-                Ens_AROME, 
-                obs_data, 
-                title_info=f'{datename}_{lt}',
-                figname_info=output_dir+'/samples_aromes/'+f'obs_mask_samples_{datename}_{lt}.png',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                colormap_var=['viridis','viridis','viridis','coolwarm'],
-                clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
-            )
+        #     plot_obs_data_on_samples(
+        #         Ens_AROME, 
+        #         obs_data, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=output_dir+'/samples_aromes/'+f'obs_mask_samples_{datename}_{lt}.png',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         colormap_var=['viridis','viridis','viridis','coolwarm'],
+        #         clim_global=[(0,0),(-5,5),(-5,5),(270,300)]
+        #     )
 
-            plot_probability_exceeding_threshold_temperature(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
-                threshold_t2m=[10,15,20,30],
-                obs_data=obs_data[2] if obs_data is not None else None
-            )
-            plot_probability_exceeding_threshold_wind(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'probability_wind_threshold_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                threshold_wind=[10/3.6,20/3.6,30/3.6,40/3.6,50/3.6],
-                wind_obs_data=obs_data[0] if obs_data is not None else None
-            )
+        #     plot_probability_exceeding_threshold_temperature(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'probability_temperature_threshold_{datename}_{lt}',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3} ,   
+        #         threshold_t2m=[10,15,20,30],
+        #         obs_data=obs_data[2] if obs_data is not None else None
+        #     )
+        #     plot_probability_exceeding_threshold_wind(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'probability_wind_threshold_{datename}_{lt}',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         threshold_wind=[10/3.6,20/3.6,30/3.6,40/3.6,50/3.6],
+        #         wind_obs_data=obs_data[0] if obs_data is not None else None
+        #     )
 
-            directory = output_dir+'/quantiles/'
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            plot_quantiles_comparison(
-                Ens_AROME, 
-                Ens_Gen, 
-                title_info=f'{datename}_{lt}',
-                figname_info=directory+f'diff_quantiles_{datename}_{lt}',
-                var_names=['rr', 'u','v','t2m'], 
-                dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
-                quantiles_list=[0,0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99,1]     
-            )
+        #     directory = output_dir+'/quantiles/'
+        #     if not os.path.exists(directory):
+        #         os.makedirs(directory)
+        #     plot_quantiles_comparison(
+        #         Ens_AROME, 
+        #         Ens_Gen, 
+        #         title_info=f'{datename}_{lt}',
+        #         figname_info=directory+f'diff_quantiles_{datename}_{lt}',
+        #         var_names=['rr', 'u','v','t2m'], 
+        #         dict_var={'rr': 0, 'u': 1, 'v': 2, 't2m': 3},
+        #         quantiles_list=[0,0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99,1]     
+        #     )
 
             # plot_quantiles(
             #     Ens_AROME, 
@@ -799,20 +799,20 @@ if __name__=="__main__" :
             # if id_lt == 0 :
                 # observation_date.append(np.full_like(obs_data_u_v_t2m, fill_value=np.nan))
             observation_date.append(obs_data_u_v_t2m)
-        # observation_date.pop()
+        observation_date.pop()
 
-        # directory = output_dir+'/panaches/'
-        # if not os.path.exists(directory):
-        #     os.makedirs(directory)
-        # for coord in coord_list :
-        #     plot_panache_density_dynamic(
-        #         np.array(Ens_AROME_date),
-        #         np.array(Ens_Gen_date),
-        #         title_info=f'{datename}',
-        #         figname_info=directory+f'panache_{datename}',
-        #         coord=coord,
-        #         obs_data=np.array(observation_date)
-        #     )
+        directory = output_dir+'/panaches/'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        for coord in coord_list :
+            plot_panache_density_dynamic(
+                np.array(Ens_AROME_date),
+                np.array(Ens_Gen_date),
+                title_info=f'{datename}',
+                figname_info=directory+f'panache_{datename}',
+                coord=coord,
+                obs_data=None # np.array(observation_date)
+            )
             
             
 
