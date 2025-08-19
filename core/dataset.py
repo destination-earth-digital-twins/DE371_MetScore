@@ -331,6 +331,9 @@ class DateDataset(Dataset):
         self.df0 = pd.read_csv(
             os.path.join(config_data["path_to_csv"], config_data["csv_file"])
         )
+        print("path csv",config_data["path_to_csv"])
+        print("csv_file",config_data["csv_file"])
+        df = pd.read_csv("/project/home/p200177/DE_371/datasets/big_domain_stats_and_csv/big_domain_optim_u_v_t2m/big_domain_optim_val_u_v_t2m.csv")
         df_extract = self.df0[
             (self.df0["Date"] >= config_data["date_start"])
             & (self.df0["Date"] < config_data["date_end"])
@@ -483,6 +486,7 @@ class RandomDataset(Dataset):
     ]
 
     def __init__(self, config_data, use_cache=True, **kwargs):
+        print("est ce qu'on passe bien ici")
         super().__init__(config_data, use_cache)
         self.filename_format = config_data.get(
             "filename_format", "_Fsemble_{step}_{index}"

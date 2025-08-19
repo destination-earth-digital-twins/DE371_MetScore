@@ -206,27 +206,22 @@ class ExperimentSet(Configurable):
             
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
             
-            #denormalizing samples if necessary
-            if self.config_data["dataloaders"]["fake_dataset_config"]["normalized_samples"]:
-                scale_file = os.path.join(self.config_data["dataloaders"]["fake_dataset_config"]["stat_folder"],self.config_data["dataloaders"]["fake_dataset_config"]["scale_file"])
-                offset_file = os.path.join(self.config_data["dataloaders"]["fake_dataset_config"]["stat_folder"],self.config_data["dataloaders"]["fake_dataset_config"]["offset_file"])
-                scale = np.load(scale_file)
-                offset = np.load(offset_file)                
-                for i in range(fake_data.shape[0]):#denormalize for each img
-                    for j in range(fake_data.shape[1]):#denormalize for each var in each img
-                        fake_data[i,j,:,:] = fake_data[i,j,:,:]*scale[j] + offset[j]
-            
             real_data = real_data.transpose(0,3,1,2)
-            
+
             
             crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
             
             real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
             print("real data shape ici :", real_data.shape)
+
+
             for i in range(real_data.shape[0]):
                 real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
                 real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
-    
+
+            
+            print("fake data", fake_data)
+            print("real data", real_data)
             # fake_data = real_data#usedto score with AROME only
             print("fake data == real_data : ", np.array_equal(fake_data, real_data))
             for metric in tqdm(

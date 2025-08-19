@@ -36,7 +36,7 @@ class Configurable:
             setattr(instance, key, value)
 
         return instance
-
+    @classmethod
     def fromConfigDataset(cls, config_data, **kwargs):
         """
         Create an instance of the class from configuration data.
@@ -53,7 +53,7 @@ class Configurable:
         instance = cls(config_data, **kwargs)
         # for key, value in config_data.items():
         #     setattr(instance, key, value)
-
+        print("instanceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee :", instance)
         return instance
     
     @classmethod
@@ -111,6 +111,7 @@ class Configurable:
         """
         return f"{self.__class__.__name__}({self.__dict__})"
 
+    # @classmethod
     def _safe_open(self, config_data):
         """
         Open and load configuration data from a YAML file or return the provided dictionary.

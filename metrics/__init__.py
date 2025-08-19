@@ -237,6 +237,7 @@ class MultivarCorr(PreprocessDist):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
 
+        print("on passe bien ici pas de soucis")
         return multiv.multi_variate_correlations(real_data, fake_data)
 
 

@@ -203,14 +203,16 @@ class DateDataloader(DataLoader):
         config_data["obs_dataset_config"].update(config_data)
 
         self.real_dataset = RealDataset.fromConfigDataset(
-            config_data["real_dataset_config"], use_cache=use_cache
+            config_data=config_data["real_dataset_config"], use_cache=use_cache
         )
         self.fake_dataset = Dataset.fromConfigDataset(
-            config_data["fake_dataset_config"], use_cache=use_cache
+            config_data=config_data["fake_dataset_config"], use_cache=use_cache
         )
         self.obs_dataset = ObsDataset.fromConfig(
             config_data["obs_dataset_config"], use_cache=use_cache
         )
+        # print("longueur de false dataset", len(self.fake_dataset))
+
         self._data_length = min(
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
