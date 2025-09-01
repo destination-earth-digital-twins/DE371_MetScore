@@ -28,7 +28,6 @@ def get_metric_tensor(eps, sca):
         g : array of shape 2 x 2 x C  x (H-1) x (W-1)
 
     """
-    print(eps.shape)
     C, H, W = eps.shape[1], eps.shape[2], eps.shape[3]
 
     d_eps_x = np.diff(eps, axis=2)[:, :, :, 1:] / sca

@@ -5,6 +5,11 @@ import os
 # making randomness replicable
 import random
 import re
+import glob
+
+# making randomness replicable
+import random
+import re
 import threading
 from abc import abstractmethod
 from datetime import datetime, timedelta
@@ -27,8 +32,21 @@ def convert_key(func):
                 fusion_key += k
             key = fusion_key
         return func(self, key, *args, **kwargs)
-
     return wrapper
+        
+def wrapper(func):
+    def wrapped_function(*args, **kwargs):
+        try:
+            key = self._generate_key(*args, **kwargs)
+            if not key:
+                logging.warning("Generated key is empty. Skipping this dataset.")
+                return None  # Ignore les cas vides
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Error in wrapper: {str(e)}")
+            raise
+    return wrapped_function
+
 
 
 class MemoryCache:
@@ -394,6 +412,7 @@ class ObsDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
+
         return obs_clean(np.load(file_path).astype(np.float32), self.crop_indices)
 
     def get_all_data(self):
@@ -451,6 +470,7 @@ class FakeDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
+        
         return np.load(file_path).astype(np.float32)
 
 
@@ -462,6 +482,7 @@ class RealDataset(DateDataset):
             & (self.df0["LeadTime"] == (index % self.Lead_Times + 1) * self.dh - 1)
         ]["Name"].to_list()
         file_names = [self._get_full_path(name) for name in names]
+
         return file_names
 
     def _load_file(self, file_path):
@@ -475,7 +496,7 @@ class RealDataset(DateDataset):
 class RandomDataset(Dataset):
     required_keys = [
         "data_folder",
-        "config",
+        #"config",
         "crop_indices",
         "filename_format",
         "maxNsamples",
@@ -488,6 +509,8 @@ class RandomDataset(Dataset):
             "filename_format", "_Fsemble_{step}_{index}"
         )
         self.data_folder = config_data["data_folder"]
+        self.crop_indices = config_data["crop_indices"]
+        self.config_data = config_data
         format_variables = [
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
         ]
@@ -496,13 +519,30 @@ class RandomDataset(Dataset):
             var: getattr(self, var, "") for var in format_variables if var != "index"
         }
         kwargs["index"] = "*"
-        self.filelist = glob.glob(
-            os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        )
+        
+        # We add this condition to use random dataset in all configurations of dataset, csv ...
+        if "datasets" in config_data["data_folder"]: # to confirm that we are in REAL dataset 
+            
+
+            df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
+
+            npy_filenames = df['Name'].tolist()
+                
+            self.filelist = [os.path.join(self.data_folder, f if f.endswith(".npy") else f +".npy") for f in npy_filenames ]#if f.endswith('.npy')]
+        else:
+
+                
+            self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
+
+
+
+
         random.shuffle(self.filelist)
         self.filelist = self.filelist[
             : int(config_data["maxNsamples"]) // config_data["file_size"]
         ]
+
+
 
     def _get_full_path(self, filename, extension=".npy"):
         return os.path.join(self.data_folder, f"{filename}{extension}")
@@ -510,9 +550,17 @@ class RandomDataset(Dataset):
     def _get_filename(self, index):
         return self.filelist[index]
 
-    def _load_file(self, file_path):
-        return np.load(file_path).astype(np.float32)
+    def _load_file(self, file_path): # RAJOUTER LA CONDITION SI ON EST DANS REAL OU FAKE DATASET 
+        y_min, y_max, x_min, x_max = self.crop_indices
+        img = np.load(file_path)
 
+        # print('JE SUIS IMG SHAPE DANS LOADFILE ',img.shape, file_path)
+        if img.shape[1]!=256:
+            return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
+        else:
+            return img 
+
+        
     def __len__(self):
         return len(self.filelist)
 
@@ -524,6 +572,8 @@ class RandomDataset(Dataset):
             ):
                 try:
                     file_path = self._get_filename(idx)
+                    
+                    
                     data = (
                         self._load(file_path)[np.newaxis, :, :, :]
                         if self.file_size == 1
@@ -538,6 +588,8 @@ class RandomDataset(Dataset):
             ):
                 try:
                     file_path = self._get_filename(idx)
+                    
+
                     data = (
                         self.cache.get_from_cache(file_path)[np.newaxis, :, :, :]
                         if self.file_size == 1
@@ -546,6 +598,7 @@ class RandomDataset(Dataset):
                     all_data.append(data)
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
+
         return np.concatenate(all_data, axis=0)
 
 
