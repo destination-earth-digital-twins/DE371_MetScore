@@ -142,4 +142,5 @@ def run_experiment(experiment_config, output_folder, index):
 
 
 if __name__ == "__main__":
-    main()
+
+   main()

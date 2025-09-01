@@ -31,35 +31,49 @@ def ensemble_crps(obs_data, fake_data, fair=True):
 
         crps_res : 1 x C array containing average CRPS results
     """
-
     # CRPS with another method
     logging.debug(obs_data.shape)
-    obs_data_ff = obs_data[0, ~np.isnan(obs_data[0])]
-    obs_data_dd = obs_data[1, ~np.isnan(obs_data[1])]
-    obs_data_t2m = obs_data[2, ~np.isnan(obs_data[2])]
+    obs_data_rr = obs_data[0, ~np.isnan(obs_data[0])]
+    obs_data_ff = obs_data[1, ~np.isnan(obs_data[1])]
+    obs_data_dd = obs_data[2, ~np.isnan(obs_data[2])]
+    obs_data_t2m = obs_data[3, ~np.isnan(obs_data[3])]
+    
+    fake_data_ff = fake_data[:, 0, ~np.isnan(obs_data[3])]
+    fake_data_dd = fake_data[:, 1, ~np.isnan(obs_data[0])]
+    fake_data_t2m = fake_data[:, 2, ~np.isnan(obs_data[1])]
+    fake_data_rr = fake_data[:, 3, ~np.isnan(obs_data[2])]
+    
+    # fake_data_rr = fake_data[:, 0, ~np.isnan(obs_data[0])]
+    # fake_data_ff = fake_data[:, 1, ~np.isnan(obs_data[1])]
+    # fake_data_dd = fake_data[:, 2, ~np.isnan(obs_data[2])]
+    # fake_data_t2m = fake_data[:, 3, ~np.isnan(obs_data[3])]
 
-    fake_data_ff = fake_data[:, 0, ~np.isnan(obs_data[0])]
-    fake_data_dd = fake_data[:, 1, ~np.isnan(obs_data[1])]
-    fake_data_t2m = fake_data[:, 2, ~np.isnan(obs_data[2])]
+    # logging.debug(fake_data_ff.max(), fake_data_dd.max(), fake_data_t2m.max())
 
-    crps_res = np.zeros((3, 1))
+    crps_res = np.zeros((4, 1))
     sm = 0.0
+    for i in range(len(obs_data_rr)):
+        crps, fcrps, acrps = psc(fake_data_rr[:, i], obs_data_rr[i]).compute()
+        sm = sm + fcrps if fair else sm + crps
+    crps_res[0] = sm / len(obs_data_rr)
+    sm = 0.0
+    
     for i in range(len(obs_data_ff)):
         crps, fcrps, _ = psc(fake_data_ff[:, i], obs_data_ff[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[0] = sm / len(obs_data_ff)
+    crps_res[1] = sm / len(obs_data_ff)
     sm = 0.0
 
     for i in range(len(obs_data_dd)):
         crps, fcrps, _ = psc(fake_data_dd[:, i], obs_data_dd[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[1] = sm / len(obs_data_dd)
+    crps_res[2] = sm / len(obs_data_dd)
     sm = 0.0
 
     for i in range(len(obs_data_t2m)):
         crps, fcrps, _ = psc(fake_data_t2m[:, i], obs_data_t2m[i]).compute()
         sm = sm + fcrps if fair else sm + crps
-    crps_res[2] = sm / len(obs_data_t2m)
+    crps_res[3] = sm / len(obs_data_t2m)
 
     logging.debug(f"CRPS results : {crps_res}")
 
@@ -105,10 +119,11 @@ def crps_multi_dates(cond, X, real_ens, debiasing=False):
     cond_p[:, 1, :] = 0.0
 
     ################################################## CRPS with another method ##################################
-
+    cond_p_rr = []
     cond_p_ff = []
     cond_p_t2m = []
 
+    X_p_rr = []
     X_p_ff = []
     X_p_t2m = []
 
@@ -166,3 +181,5 @@ def crps_vs_aro_multi_dates(cond, X, real_ens, debiasing=False):
     crps_fake = crps_multi_dates(cond, X, real_ens, debiasing=debiasing)
 
     return -crps_aro + crps_fake
+
+

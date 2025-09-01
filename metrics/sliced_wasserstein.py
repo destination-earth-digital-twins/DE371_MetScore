@@ -134,6 +134,8 @@ gaussian_filter = (
 
 def pyr_down(minibatch):  # matches cv2.pyrDown()
     assert minibatch.ndim == 4
+        
+    minibatch = minibatch.astype(np.float32)
     return scipy.ndimage.convolve(
         minibatch, gaussian_filter[np.newaxis, np.newaxis, :, :], mode="mirror"
     )[:, :, ::2, ::2]
@@ -142,7 +144,15 @@ def pyr_down(minibatch):  # matches cv2.pyrDown()
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
+<<<<<<< HEAD
     res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
+=======
+    
+    if log2(S[2]) - round(log2(S[2])) != 0:
+        res = np.zeros((S[0], S[1], S[2] * 2 - 1, S[3] * 2 - 1), minibatch.dtype)
+    else:
+        res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
+>>>>>>> origin/dev_wp1_ensemble_generation_angelique
     res[:, :, ::2, ::2] = minibatch
     return scipy.ndimage.convolve(
         res, gaussian_filter[np.newaxis, np.newaxis, :, :] * 4.0, mode="mirror"
@@ -152,9 +162,9 @@ def pyr_up(minibatch):  # matches cv2.pyrUp()
 def generate_laplacian_pyramid(minibatch, num_levels):
     
     if isinstance(minibatch, np.ndarray):
-        pyramid = [np.float32(minibatch)]
+        pyramid = [np.float16(minibatch)]
     else:
-        pyramid = [np.float32(minibatch.cpu())]
+        pyramid = [np.float16(minibatch.cpu())]
     for i in range(1, num_levels):
         pyramid.append(pyr_down(pyramid[-1]))
         pyramid[-2] -= pyr_up(pyramid[-1])

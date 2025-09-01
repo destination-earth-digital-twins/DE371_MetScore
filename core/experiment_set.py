@@ -179,6 +179,10 @@ class ExperimentSet(Configurable):
         for batch_fake, batch_real, batch_obs in tqdm(
             self.dataloader, desc=f"{self.name}: Processing batches"
         ):
+            # print('JE SUIS DANS EXPE', batch_fake[3].max(),batch_fake[4].max())
+
+            # print("je suis batch fake", type(batch_fake))
+            # print(batch_fake.shape)
             # the if statement is here in case a file is missing in the dataset
             # in which case the dataloader returns a None
             if not (
@@ -186,6 +190,7 @@ class ExperimentSet(Configurable):
             ):
                 for metric in self.batched_metrics:
                     logging.debug(f"Running Metric {type(metric)}")
+
                     res = metric.calculate(batch_real, batch_fake, batch_obs)
                     batched_metric_results[metric.name].append(res)
 

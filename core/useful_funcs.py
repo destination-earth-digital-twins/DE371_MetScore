@@ -13,17 +13,19 @@ def obs_clean(obs, crop_indices):
     longitude boundaries, averages duplicate observations, and creates an observation matrix with the same shape as
     the fake/real ensemble.
 
+       the fake/real ensemble.
+
     Parameters:
-        obs (np.ndarray): Observation data of shape (N_obs, 3), where the first column represents longitude, the second
+        obs (np.ndarray): Observation data of shape (N_obs, 4), where the first column represents longitude, the second
                           column represents latitude, and the third column represents the measurement.
         crop_indices (np.ndarray): An array of shape (4,) specifying the indices of the top-left and bottom-right
                                    corners of the cropped area in the AROME grid.
 
     Returns:
-        np.ndarray: A cleaned and processed observation matrix of shape (3, size, size), where the first channel
+        np.ndarray: A cleaned and processed observation matrix of shape (4, size, size), where the first channel
                     corresponds to the third column of the input observations, the second channel corresponds to the
                     second column, and the third channel corresponds to the first column.
-    """
+    """        
     ind = np.argsort(obs[:, 0])
     obs = obs[ind]
 
@@ -65,7 +67,6 @@ def obs_clean(obs, crop_indices):
             indice_lat = np.floor((obs[i, 1] - Lat_min) / dlat)
             indices_obs.append([indice_lat, indice_lon])
             obs_reduced.append(obs[i])
-
     indices_obs = np.array(indices_obs, dtype="int")
     obs_reduced = np.array(obs_reduced, dtype="float32")
 
@@ -74,7 +75,7 @@ def obs_clean(obs, crop_indices):
     obs_r_clean = []
     indices_o_clean = []
     j = 0
-    sum_measurements = np.zeros((3))
+    sum_measurements = np.zeros((4))
     for i in range(len_obs_reduced):
         if i == j:
             sum_measurements = sum_measurements + obs_reduced[i, 2::]
@@ -88,24 +89,33 @@ def obs_clean(obs, crop_indices):
                     j = j + 1
 
                 observation = sum_measurements / (j - i)
-                sum_measurements = np.zeros((3))
+                sum_measurements = np.zeros((4))
                 obs_r_clean.append(observation)
                 indices_o_clean.append(indices_obs[i])
 
     indices_o_clean = np.array(indices_o_clean, dtype="int")
     obs_r_clean = np.array(obs_r_clean, dtype="float32")
 
-    Ens_observation = np.empty((3, size, size))
+    Ens_observation = np.empty((4, size, size))
     Ens_observation[:] = np.nan
+    
+    Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]
+    Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]
+    Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]
+    mat=Ens_observation[1]
+    Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
 
-    Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]
-    Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]
-    Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
+    # # Nouvelle organisation : 0 → ff, 1 → dd, 2 → t2m, 3 → rr
+    # Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]  # ff (u)
+    # Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]  # dd (v)
+    # Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]  # t2m
+    # Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]  # rr
 
     Ens_observation[Ens_observation > 1000.0] = np.nan
-    Ens_observation[1][Ens_observation[0] < 2.0] = np.nan
+    Ens_observation[2][Ens_observation[1] < 2.0] = np.nan
 
     return Ens_observation
+
 
 
 def denorm(mat, Maxs, Means):
