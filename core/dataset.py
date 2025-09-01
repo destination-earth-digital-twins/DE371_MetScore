@@ -331,9 +331,6 @@ class DateDataset(Dataset):
         self.df0 = pd.read_csv(
             os.path.join(config_data["path_to_csv"], config_data["csv_file"])
         )
-        print("path csv",config_data["path_to_csv"])
-        print("csv_file",config_data["csv_file"])
-        df = pd.read_csv("/project/home/p200177/DE_371/datasets/big_domain_stats_and_csv/big_domain_optim_u_v_t2m/big_domain_optim_val_u_v_t2m.csv")
         df_extract = self.df0[
             (self.df0["Date"] >= config_data["date_start"])
             & (self.df0["Date"] < config_data["date_end"])
@@ -478,7 +475,7 @@ class RealDataset(DateDataset):
 class RandomDataset(Dataset):
     required_keys = [
         "data_folder",
-        "preprocessor_config",
+        "config",
         "crop_indices",
         "filename_format",
         "maxNsamples",
@@ -486,7 +483,6 @@ class RandomDataset(Dataset):
     ]
 
     def __init__(self, config_data, use_cache=True, **kwargs):
-        print("est ce qu'on passe bien ici")
         super().__init__(config_data, use_cache)
         self.filename_format = config_data.get(
             "filename_format", "_Fsemble_{step}_{index}"
@@ -496,12 +492,9 @@ class RandomDataset(Dataset):
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
         ]
         kwargs = {}
-        kwargs = {var: "*" for var in format_variables}
-        print("kwargs :", kwargs)
-        print("format_variables : ", format_variables)
-        
+        kwargs = {var: "*" for var in format_variables}        
         pattern = os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        print("pattern ici :", pattern)     
+        print("pattern :", pattern)     
         self.filelist = glob.glob(pattern)
             
         random.shuffle(self.filelist)
@@ -521,9 +514,6 @@ class RandomDataset(Dataset):
     def _load_file(self, file_path):
         return np.load(file_path).astype(np.float32)
 
-    
-    def list_cached_keys(self):
-        return list(self._cache_dict.keys())
     def get_all_data(self):
         all_data = []
         cached = self.is_dataset_cached()

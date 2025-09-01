@@ -202,17 +202,15 @@ class DateDataloader(DataLoader):
         config_data["fake_dataset_config"].update(config_data)
         config_data["obs_dataset_config"].update(config_data)
 
-        self.real_dataset = RealDataset.fromConfigDataset(
+        self.real_dataset = RealDataset.fromConfig(
             config_data=config_data["real_dataset_config"], use_cache=use_cache
         )
-        self.fake_dataset = Dataset.fromConfigDataset(
+        self.fake_dataset = Dataset.from_typed_config(
             config_data=config_data["fake_dataset_config"], use_cache=use_cache
         )
         self.obs_dataset = ObsDataset.fromConfig(
             config_data["obs_dataset_config"], use_cache=use_cache
         )
-        # print("longueur de false dataset", len(self.fake_dataset))
-
         self._data_length = min(
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
@@ -296,11 +294,9 @@ class RandomDataloader(DataLoader):
         self.real_dataset = RandomDataset.fromConfig(
             config_data["real_dataset_config"], use_cache=use_cache
         )
-        print("self.real_dataset ", type(self.real_dataset))
         self.fake_dataset = RandomDataset.fromConfig(
             config_data["fake_dataset_config"], use_cache=use_cache
         )
-        print("self.fake_dataset = ", type(self.fake_dataset))
         self._data_length = min(len(self.real_dataset), len(self.fake_dataset))
         logging.debug(f"Dataset length is {self._data_length}")
 

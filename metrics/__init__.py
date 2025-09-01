@@ -1,5 +1,6 @@
 import numpy as np
-
+import random
+import os
 import metrics.bias_ensemble as BE
 import metrics.brier_score as BS
 import metrics.general_metrics as GM
@@ -27,6 +28,7 @@ class W1CenterNUMPY(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
+        print('on passe dans _calculateCore')
         return WD.W1_center_numpy(real_data, fake_data)
 
 
@@ -37,7 +39,6 @@ class W1RandomNUMPY(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-
         return WD.W1_random_NUMPY(real_data, fake_data)
 
 
@@ -48,7 +49,6 @@ class pwW1(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-
         return WD.pointwise_W1(real_data, fake_data)
 
 
@@ -58,16 +58,14 @@ class pwW1(PreprocessDist):
 
 
 class SWDall(PreprocessDist):
-    def __init__(self, *args, image_shape=(256, 256), **kwargs):
+    def __init__(self, *args, image_shape=(512,512), **kwargs):
         super().__init__(isBatched=False, **kwargs)
         self.sliced_w1 = SWD.SWD_API(image_shape=image_shape, numpy=True)
 
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-        
-        print("real data shape ", real_data.shape)
-        print("fake data shape ", fake_data.shape)
+
         return self.sliced_w1.End2End(real_data, fake_data)
 
 
@@ -79,6 +77,7 @@ class SWDallTorch(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
+        
 
         return self.sliced_w1_torch.End2End(real_data, fake_data)
 
@@ -111,7 +110,6 @@ class spectralDist(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-
         return spec.PSD_compare(real_data, fake_data)
 
 
@@ -122,7 +120,6 @@ class spectralDistMultidates(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-
         return spec.PSD_compare_multidates(real_data, fake_data)
 
 
@@ -237,7 +234,6 @@ class MultivarCorr(PreprocessDist):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
 
-        print("on passe bien ici pas de soucis")
         return multiv.multi_variate_correlations(real_data, fake_data)
 
 
@@ -529,8 +525,3 @@ class relStdDiff(PreprocessDist):
         fake_data = processed_data["fake_data"]
 
         return GM.relative_std_diff(real_data, fake_data)
-
-
-#####################################################################
-######################################################
-#####################################################################

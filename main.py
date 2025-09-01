@@ -15,7 +15,6 @@ import yaml
 
 from core.experiment_set import ExperimentSet
 
-
 def load_yaml(yaml_path):
     """
     Load YAML data from a file.

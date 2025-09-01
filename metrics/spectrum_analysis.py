@@ -40,6 +40,7 @@ def dct2D(x):
         )
     else:
         res = dct(dct(x.T, norm="ortho").T, norm="ortho")
+
     return res
 
 
@@ -199,7 +200,6 @@ def PowerSpectralDensity(x):
         out : numpy array, shape is (C, Rmax), with R_max defined in radial_bin_dct function
 
     """
-
     out_list = []
     channels = x.shape[1]
     for c in range(channels):
@@ -209,25 +209,6 @@ def PowerSpectralDensity(x):
         out_list.append(radial_bin_dct(sig, center))
 
     out = np.concatenate([np.expand_dims(o, axis=0) for o in out_list], axis=0)
-        
-    # scale = np.linspace(
-    #     2 * np.pi / 2.6, 351 * 2 * np.pi / 2.6, 351
-    # )
-    # plt.figure(figsize=(15,5))
-    # for i in range(3):
-    #     print("out i dans la boucle ", out[i])
-    #     plt.plot(
-    #             scale,
-    #             out[i],
-    #         )
-    # plt.title(f"Power Spectrum of ")
-    # plt.xticks(fontsize="18")
-    # plt.yticks(fontsize="18")
-    # plt.xscale("log")
-    # plt.yscale("log")
-    # plt.legend(fontsize=14, frameon=False, ncol=1)
-    # plt.savefig(f"./PSD_comp") 
-    # plt.close()   
     return out
 
 
@@ -249,7 +230,6 @@ def PSD_compare(real_data, fake_data):
     for c in range(channels):
         psd_real = PowerSpectralDensity(real_data[:, c : c + 1, :, :])
         psd_fake = PowerSpectralDensity(fake_data[:, c : c + 1, :, :])
-        print("dans PSD compare")
         res[c] = np.sqrt(np.mean((np.log10(psd_real) - np.log10(psd_fake)) ** 2))
     return res
 

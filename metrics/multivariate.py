@@ -7,10 +7,9 @@ Created on Thu May 12 11:08:13 2022
 
 Multivariate correlations
 """
-
+import matplotlib.pyplot as plt
 import logging
 from itertools import combinations_with_replacement
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FormatStrFormatter
@@ -118,39 +117,6 @@ def var2Var_hist(data, bins, density=True):
             k += 1
     return bivariates, Bins
 
-# def define_levels(bivariates, nlevels):
-#     """
-
-#     Define a logairthmic scales of levels to be used for histogram-2d plots,
-#     with the given "bivariates" data.
-
-#     Inputs :
-
-#         bivariates : np.array, shape is C*(C-1)/2 x nbins : bivariate density/count histograms
-
-#         nlevels :  number of desired levels
-
-#     Returns :
-
-#         levels : np.array, shape is C*(C-1)//2 x nlevels : sets of levels, with nlevels for eahc variable couple.
-
-#     """
-
-#     Shape = bivariates.shape
-#     assert len(Shape) == 3
-#     inter = bivariates.reshape(Shape[0], Shape[1] * Shape[2])
-#     print("inter :", inter, inter.shape)
-#     levels = np.zeros((Shape[0], nlevels))
-
-#     for i in range(Shape[0]):
-#         b = np.sort(inter[i])
-
-#         usable_data = b[b > 0].shape[0]
-
-#         N_values = usable_data // nlevels
-#         assert N_values > 2
-#         levels[i] = np.log10(b[b > 0][::N_values][:nlevels])
-#     return levels
 
 def define_levels(bivariates, nlevels):
     """
@@ -228,7 +194,10 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
 
     channels = data_fake.shape[1]
     ncouples2 = channels * (channels - 1)
-
+    
+    
+    print("data shape ici dans multi variate corr", data_fake.shape)
+    
     data_f = space2batch(data_fake, offset)
     data_r = space2batch(data_real, offset)
 
@@ -245,4 +214,5 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
     out_rf[0] = bivariates_r
     out_rf[1] = bivariates_f
     logging.debug(f"out shape {out_rf.shape}")
+   
     return {"hist": out_rf, "bins": bins_r}

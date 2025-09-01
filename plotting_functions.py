@@ -1296,15 +1296,14 @@ def plot_spectralCompute(experiments, metric, config):
 
 
 def plot_SWD(experiments, metric, config):
-    swd = np.zeros((len(experiments), 4))
+    swd = np.zeros((len(experiments), 5))
     for exp_idx, exp in enumerate(experiments):
         data = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
-        )[:4]
-        print("swd shape", data.shape)
+        )[:5]
         swd[exp_idx] = data
 
-    Range = ["256", "128", "64", "32"]  # ,"x5", "avg"]
+    Range = ["512", "256", "128", "64", "32"]  # ,"x5", "avg"]
 
     fig, axs = plt.subplots(figsize=(9, 7))
     for exp_idx, exp in enumerate(experiments):
@@ -1362,7 +1361,6 @@ def plot_MultivarCorr(experiments, metric, config):
             break
     
     for exp_idx, exp in enumerate(experiments):
-        print("icii, nuos exp_idx", exp_idx)
         if exp_idx==exp_arome:
             continue
         data_fake = pickle.load(open( config["expe_folder"]
@@ -1376,14 +1374,10 @@ def plot_MultivarCorr(experiments, metric, config):
                     )
         multivar[exp_idx] = data_fake["hist"][1]
     for exp_idx, exp in enumerate(experiments):
-        print("on est bien dans cette boucle")
         if "AROME" not in exp["name"]:
             fig, axs = plt.subplots(1, ncouples, figsize=(4 * ncouples, 2 * ncouples))
-            print('nom de l exp name qui n est pas AROME :', exp["name"])
             for i in range(ncouples):
                 print(multivar[exp_arome][i].min(), multivar[exp_arome][i].max())
-                print("multivar",multivar.shape)
-                
                 cs = axs[i].contourf(
                     bins[Xsindices[i]][:-1],
                     bins[Ysindices[i]][:-1],

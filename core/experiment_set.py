@@ -85,7 +85,6 @@ class ExperimentSet(Configurable):
         That function defines variables that allow to fill the invalid datas of an image by valid datas, like a mirror
         """
         data_path = self.config_data["dataloaders"]["real_dataset_config"]["data_folder"]
-        print('data path :', data_path)
         #choose a random file in data folder
         files = [f for f in os.listdir(data_path)]
         file_name = random.choice(files)
@@ -97,9 +96,7 @@ class ExperimentSet(Configurable):
         img = img.unsqueeze(0)
         img = img.permute((0,3,1,2))
         crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
-        print("crop :", crop)
         img = img[:,:,crop[0]:crop[1],crop[2]:crop[3]]
-        print('img shape', img.shape)
         mask = (torch.abs(img) < 1000)
 
 
@@ -207,23 +204,25 @@ class ExperimentSet(Configurable):
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
             
             real_data = real_data.transpose(0,3,1,2)
-
             
             crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
             
             real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
-            print("real data shape ici :", real_data.shape)
 
 
             for i in range(real_data.shape[0]):
                 real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
                 real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
-
             
-            print("fake data", fake_data)
-            print("real data", real_data)
+            # fake_data = fake_data.transpose(0,3,1,2)
+            # fake_data = fake_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            
+            # for i in range(real_data.shape[0]):
+            #     fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+            #     fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+
             # fake_data = real_data#usedto score with AROME only
-            print("fake data == real_data : ", np.array_equal(fake_data, real_data))
+
             for metric in tqdm(
                 self.not_batched_metrics,
                 desc=f"{self.name}: Calculating non-batched metrics",

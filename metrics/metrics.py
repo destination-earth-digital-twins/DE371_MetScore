@@ -21,7 +21,7 @@ class Metric(ABC, Configurable):
 
     required_keys = ["name"]
 
-    def __init__(self, isBatched=False, **kwargs):
+    def __init__(self, isBatched=False, config_data = None, **kwargs):
         """
         Initialize the Metric instance.
 
@@ -30,6 +30,7 @@ class Metric(ABC, Configurable):
             **kwargs: Additional keyword arguments.
         """
         self.isBatched = isBatched
+        self.config_data = config_data
         super().__init__()
 
     def calculate(self, real_data, fake_data, obs_data):

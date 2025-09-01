@@ -56,6 +56,8 @@ def get_descriptors_for_minibatch(minibatch, nhood_size, nhoods_per_image):
     return minibatch.flat[idx]
 
 
+
+
 # ----------------------------------------------------------------------------
 
 
@@ -223,7 +225,7 @@ class SWD_API:
         del self.desc_real, self.desc_fake
 
         dist = [d * 1e3 for d in dist]  # multiply by 10^3
-
+        print("dist ici", dist)
         return dist + [np.mean(dist)]
 
     def End2End(self, real, fakes):
