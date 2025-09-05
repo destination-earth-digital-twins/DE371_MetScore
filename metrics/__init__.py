@@ -28,7 +28,6 @@ class W1CenterNUMPY(PreprocessDist):
     def _calculateCore(self, processed_data):
         real_data = processed_data["real_data"]
         fake_data = processed_data["fake_data"]
-        print('on passe dans _calculateCore')
         return WD.W1_center_numpy(real_data, fake_data)
 
 

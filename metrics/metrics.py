@@ -57,7 +57,7 @@ class Metric(ABC, Configurable):
 
     @abstractmethod
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
-        # print('je passe la preprco 1')
+        print('je passe la preprco 1')
         """
         Preprocess the data before calculating the metric.
 
@@ -136,11 +136,12 @@ class PreprocessCondObs(Metric):
             )
         else:
             obs_data_p = obs_data
+            
         fake_data_pp = copy.deepcopy(fake_data_p)
         obs_data_pp = np.around(copy.deepcopy(obs_data_p[0]), 2)
         real_data_pp = copy.deepcopy(real_data_p)
-        fake_data_pp[:, 1], fake_data_pp[:, 2] = wc.computeWindDir(fake_data_pp[:, 1], fake_data_pp[:, 2])
-        real_data_pp[:, 1], real_data_pp[:, 2] = wc.computeWindDir(real_data_pp[:, 1], real_data_pp[:, 2])
+        fake_data_pp[:, 0], fake_data_pp[:, 1] = wc.computeWindDir(fake_data_pp[:, 0], fake_data_pp[:, 1])
+        real_data_pp[:, 0], real_data_pp[:, 1] = wc.computeWindDir(real_data_pp[:, 0], real_data_pp[:, 1])
 
         if self.debiasing:
             fake_data_pp = wc.debiasing(
@@ -150,8 +151,9 @@ class PreprocessCondObs(Metric):
                 mode=self.debiasing_mode,
             )
         angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2])
-        fake_data_pp[:, 2] = angle_dif
-        obs_data_pp[2, ~np.isnan(obs_data_pp[2])] = 0.
+        fake_data_pp[:, 1] = angle_dif
+      
+        # obs_data_pp[2, np.isnan(obs_data_pp[2])] = 0.
 
         return {
             "real_data": real_data_pp,

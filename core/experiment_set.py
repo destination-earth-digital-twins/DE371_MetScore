@@ -168,7 +168,6 @@ class ExperimentSet(Configurable):
             index (int): The index of the experiment set.
         """
         logging.info(f"Running ExperimentSet {self.name}")
-
         self._prep_folder()
 
         self._init_experiment()
@@ -179,10 +178,7 @@ class ExperimentSet(Configurable):
         for batch_fake, batch_real, batch_obs in tqdm(
             self.dataloader, desc=f"{self.name}: Processing batches"
         ):
-            # print('JE SUIS DANS EXPE', batch_fake[3].max(),batch_fake[4].max())
 
-            # print("je suis batch fake", type(batch_fake))
-            # print(batch_fake.shape)
             # the if statement is here in case a file is missing in the dataset
             # in which case the dataloader returns a None
             if not (
@@ -203,26 +199,16 @@ class ExperimentSet(Configurable):
             logging.debug(
                 f"{self.name} : Metric {metric_name} shape result: {results_np.shape}"
             )
-
         if self.not_batched_metrics:
-            
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
             
-            # real_data = real_data.transpose(0,3,1,2)
-            
-            crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
-            # real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
-            # fake_data = fake_data.transpose(0,3,1,2)
-            # fake_data = fake_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
-            print("real data shape : ", real_data.shape)
-            print("fake data_shape", fake_data.shape)
-            for i in range(real_data.shape[0]):
-                fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
-                fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+            # for i in range(real_data.shape[0]):
+            #     fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+            #     fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
 
-            for i in range(real_data.shape[0]):
-                real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
-                real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+            # for i in range(real_data.shape[0]):
+            #     real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+            #     real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
             
            
             

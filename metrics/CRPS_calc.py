@@ -17,7 +17,7 @@ import CRPS.CRPS as psc
 import numpy as np
 
 import metrics.wind_comp as wc
-
+import matplotlib.pyplot as plt
 
 def ensemble_crps(obs_data, fake_data, fair=True):
     """
@@ -34,6 +34,9 @@ def ensemble_crps(obs_data, fake_data, fair=True):
     # CRPS with another method
     logging.debug(obs_data.shape)
     # obs_data_rr = obs_data[0, ~np.isnan(obs_data[0])]
+    # obs_data: (C, H, W)
+    # fake_data: (N, C, H, W)
+    # print("fake data[2] ", fake_data[1,2,:,:], fake_data.shape)
     
     obs_data_ff = obs_data[0, ~np.isnan(obs_data[0])]
     obs_data_dd = obs_data[1, ~np.isnan(obs_data[1])]
@@ -42,7 +45,8 @@ def ensemble_crps(obs_data, fake_data, fair=True):
     fake_data_ff = fake_data[:, 0, ~np.isnan(obs_data[0])]
     fake_data_dd = fake_data[:, 1, ~np.isnan(obs_data[1])]
     fake_data_t2m = fake_data[:, 2, ~np.isnan(obs_data[2])]
-
+    
+    # print("fake_data_t2m",fake_data_t2m, fake_data_t2m.shape)
     # fake_data_rr = fake_data[:, 3, ~np.isnan(obs_data[2])]
     
     # fake_data_rr = fake_data[:, 0, ~np.isnan(obs_data[0])]

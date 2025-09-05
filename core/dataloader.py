@@ -12,6 +12,7 @@ from core.dataset import (
     ObsDataset,
     RandomDataset,
     RealDataset,
+    FakeDataset,
 )
 
 # region Base DataLoader
@@ -205,7 +206,7 @@ class DateDataloader(DataLoader):
         self.real_dataset = RealDataset.fromConfig(
             config_data=config_data["real_dataset_config"], use_cache=use_cache
         )
-        self.fake_dataset = Dataset.from_typed_config(
+        self.fake_dataset = FakeDataset.from_typed_config(
             config_data=config_data["fake_dataset_config"], use_cache=use_cache
         )
         self.obs_dataset = ObsDataset.fromConfig(
@@ -244,6 +245,7 @@ class DateDataloader(DataLoader):
                         for i in range(self.batch_size)
                     ]
                 )
+                # print("obs samples :", obs_samples[:,2,:,:], (~np.isnan(obs_samples[:,2,:,:])).sum(), " min : ", np.nanmin(obs_samples[:,2,:,:]), 'max : ',np.nanmax(obs_samples[:,2,:,:]))
                 real_samples = np.array(
                     [
                         self.real_dataset[self.current_index + i]
@@ -453,6 +455,7 @@ class ModDataloader(DateDataloader):
         TODO  find a way to modify on the fly to compute scores on mod'ed data
         otherwise this feature is useless (either FakeDataset is ok or one cannot use non-batched on mod'ed data)
         """
+        print("on PASSE DANS MOD DATA LOADER ???? ")
         real = self._real_dataset.get_all_data()
         logging.debug("Not mod'ing on data gathering")
         fake, _ = self._fake_dataset.get_all_data()
