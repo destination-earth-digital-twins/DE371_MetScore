@@ -944,7 +944,9 @@ class DiffDateDataset(DateDataset):
             formatted_index = index % (self.Lead_Times - self.dh) + 2
             kwargs_t = {"formatted_index": formatted_index}
             kwargs_t_next = {"formatted_index": formatted_index + self.dh}
-            print(f'Comparing time steps {formatted_index} and {formatted_index+self.dh}')
+            print(
+                f"Comparing time steps {formatted_index} and {formatted_index+self.dh}"
+            )
 
         if "date" in format_variables:
             format_variables.remove("date")

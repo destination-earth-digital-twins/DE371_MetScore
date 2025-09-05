@@ -10,7 +10,6 @@ from matplotlib.ticker import FormatStrFormatter
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
 import stats.wilcoxon_test as wct
-from core.useful_funcs import restricted_loads
 
 mpl.rcParams["axes.linewidth"] = 2
 
