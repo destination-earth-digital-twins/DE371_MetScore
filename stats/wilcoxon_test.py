@@ -58,12 +58,14 @@ def decision_leadtimes(scores):
 
 def load_and_format_scores(experiments, metric, config):
     exp = experiments[0]
-    print(config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy")
+    print(config["expe_folder"]  + exp["name"] + "/" + metric["name"] + ".npy")
     data_model = np.load(
-        config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
+        config["expe_folder"] + exp["name"] + "/" + metric["name"] + ".npy"
     )[: config["number_dates"] * config["lead_times"]]
     Shape = data_model.shape
     print(f"Scores {metric['name']} loaded, model {Shape}")
+    if data_model[:,0,:].all() == 0: #if rr channel is empty, remove it
+        data_model = data_model[:,1:,:]
     if len(Shape) == 4:
         print("no split")
         scores = np.zeros(

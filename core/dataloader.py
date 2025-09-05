@@ -215,7 +215,6 @@ class DateDataloader(DataLoader):
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
         logging.debug(f"Dataset length is {self._data_length}")
-        print('JE PASSE PAR DATEDATALOADER')
     # def __next__(self):
     #     if self.current_index < self._data_length:
     #         try:
@@ -256,6 +255,7 @@ class DateDataloader(DataLoader):
                 )
                 return fake_samples[0], real_samples[0], obs_samples
             except FileNotFoundError as e:
+                print("cette exceptionaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                 logging.warning(f"{self.name} :  File not found, {e}")
                 self.current_index += min(
                     self.batch_size, self._data_length - self.current_index

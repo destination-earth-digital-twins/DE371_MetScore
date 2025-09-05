@@ -100,7 +100,6 @@ class PreprocessCondObs(Metric):
     """
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
-        # print('je passe par la preprcoe 2')
         """
         Preprocess data for conditioning on observations.
 
@@ -131,14 +130,12 @@ class PreprocessCondObs(Metric):
             )
         else:
             real_data_p = real_data
-
         if len(self.obs_var_indices) != obs_data.shape[self.obs_var_channel]:
             obs_data_p = obs_data.take(
                 indices=self.obs_var_indices, axis=self.obs_var_channel
             )
         else:
             obs_data_p = obs_data
-
         fake_data_pp = copy.deepcopy(fake_data_p)
         obs_data_pp = np.around(copy.deepcopy(obs_data_p[0]), 2)
         real_data_pp = copy.deepcopy(real_data_p)
@@ -152,7 +149,6 @@ class PreprocessCondObs(Metric):
                 self.conditioning_members,
                 mode=self.debiasing_mode,
             )
-
         angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2])
         fake_data_pp[:, 2] = angle_dif
         obs_data_pp[2, ~np.isnan(obs_data_pp[2])] = 0.

@@ -144,15 +144,7 @@ def pyr_down(minibatch):  # matches cv2.pyrDown()
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
-<<<<<<< HEAD
     res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
-=======
-    
-    if log2(S[2]) - round(log2(S[2])) != 0:
-        res = np.zeros((S[0], S[1], S[2] * 2 - 1, S[3] * 2 - 1), minibatch.dtype)
-    else:
-        res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
->>>>>>> origin/dev_wp1_ensemble_generation_angelique
     res[:, :, ::2, ::2] = minibatch
     return scipy.ndimage.convolve(
         res, gaussian_filter[np.newaxis, np.newaxis, :, :] * 4.0, mode="mirror"

@@ -208,24 +208,24 @@ class ExperimentSet(Configurable):
             
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
             
-            real_data = real_data.transpose(0,3,1,2)
+            # real_data = real_data.transpose(0,3,1,2)
             
             crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
-            
-            real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
-
+            # real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            # fake_data = fake_data.transpose(0,3,1,2)
+            # fake_data = fake_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            print("real data shape : ", real_data.shape)
+            print("fake data_shape", fake_data.shape)
+            for i in range(real_data.shape[0]):
+                fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+                fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
 
             for i in range(real_data.shape[0]):
                 real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
                 real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
             
-            # fake_data = fake_data.transpose(0,3,1,2)
-            # fake_data = fake_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+           
             
-            # for i in range(real_data.shape[0]):
-            #     fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
-            #     fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
-
             # fake_data = real_data#usedto score with AROME only
 
             for metric in tqdm(

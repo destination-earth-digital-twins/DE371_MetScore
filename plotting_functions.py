@@ -23,7 +23,7 @@ font = {
     "weight": "normal",
     "size": 25,
 }
-base_vars  = ["u", "v", "t2m" ,"rr"] #,"t850","tpw850","z500"]
+base_vars  = ["u", "v", "t2m" ]#"rr","t850","tpw850","z500"]
 
 ##### ESTHETICS AND TITLE NAMES
 # base_vars = ['rr','u','v','t2m']
@@ -54,8 +54,8 @@ case_name = [
 name_thresholds = [['5', '10', '15', '20', '30', '40'],
             ['', '', '', '', '', ''], 
             ['5', '10', '15', '20', '25', '30']]
-case_name_thresholds = ['rr','ff' ,'dd', 't2m']
-var_names_m = ['rr','ff (m/s)', 'dd (°)', 't2m (K)'  ]
+case_name_thresholds = ['ff' ,'dd', 't2m']
+var_names_m = ['ff (m/s)', 'dd (°)', 't2m (K)'  ]
 echeance = ['+3H', '', '+9H', '', '+15H', '', '+21H', '', '+27H', '', '+33H', '', '+39H', '', '+45H']
 # echeance = ['+3H', '+6H', '+9H']
 
@@ -175,6 +175,7 @@ def plot_biasEnsemble(experiments, metric, config):
 
 # ENSEMBLE CRPS
 def plot_ensembleCRPS(experiments, metric, config):
+    print("ce CRPS")
     crps_scores = np.zeros(
         (
             len(experiments),
@@ -437,6 +438,8 @@ def plot_skillSpread(experiments, metric, config):
     )
 
     for exp_idx, exp in enumerate(experiments):
+        print("exp idx :", exp_idx)
+        print("s_p_scores", s_p_scores.shape)
         s_p_scores[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
         )[: config["number_dates"] * config["lead_times"]]
