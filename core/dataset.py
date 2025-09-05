@@ -760,7 +760,6 @@ class DiffDataset(Dataset):
 
     required_keys = [
         "data_folder",
-        "preprocessor_config",
         "crop_indices",
         "temporal_difference_type",
     ]
@@ -856,7 +855,7 @@ class DiffDataset(Dataset):
             (self.df0["Date"] == f"{date}T21:00:00Z")
             & (
                 self.df0["LeadTime"]
-                == (index % (self.Lead_Times - self.dh) + +1 + self.dh)
+                == (index % (self.Lead_Times - self.dh) + 1 + self.dh)
             )
         ]["Name"].to_list()
 
@@ -942,10 +941,12 @@ class DiffDateDataset(DateDataset):
 
         if "formatted_index" in format_variables:
             format_variables.remove("formatted_index")
-            formatted_index = index % (self.Lead_Times - self.dh) + 1
+            formatted_index = index % (self.Lead_Times - self.dh) + 2
             kwargs_t = {"formatted_index": formatted_index}
             kwargs_t_next = {"formatted_index": formatted_index + self.dh}
-            # print(f'Comparing time steps {formatted_index} and {formatted_index+self.dh}')
+            print(
+                f"Comparing time steps {formatted_index} and {formatted_index+self.dh}"
+            )
 
         if "date" in format_variables:
             format_variables.remove("date")

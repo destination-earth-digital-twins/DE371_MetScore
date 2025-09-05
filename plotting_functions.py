@@ -10,7 +10,6 @@ from matplotlib.ticker import FormatStrFormatter
 import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
 import stats.wilcoxon_test as wct
-from core.useful_funcs import restricted_loads
 
 mpl.rcParams["axes.linewidth"] = 2
 
@@ -1428,6 +1427,7 @@ def plot_Quantiles(experiments, metric, config):
     )
 
     for exp_idx, exp in enumerate(experiments):
+        print(exp_idx)
         quantiles[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
         )
@@ -1448,7 +1448,16 @@ def plot_Quantiles(experiments, metric, config):
                         [np.max(quantiles[exp_idx][quantile_idx][var_idx])]
                     )
     if exp_arome is None:
-        raise ValueError("Not Experiment contains AROME in its name")
+        exp_arome = 0
+        exp_idx = 0
+        for quantile_idx in range(len(config["qlist"])):
+            for var_idx in range(config["var_number"]):
+                vmins[quantile_idx][var_idx] = np.min(
+                    [np.min(quantiles[exp_idx][quantile_idx][var_idx])]
+                )
+                vmaxs[quantile_idx][var_idx] = np.min(
+                    [np.max(quantiles[exp_idx][quantile_idx][var_idx])]
+                )
 
     cmap = plt.get_cmap("PiYG", 8)
     for exp_idx, exp in enumerate(experiments):
