@@ -5,7 +5,6 @@ from scipy.stats import wilcoxon
 def group_by_leadtime(scores, scores_LT, config):
     D_i = 0
     LT_i = 0
-    print("scores shape", scores.shape)
     for timestamp in range(config["number_dates"] * config["lead_times"]):
         scores_LT[:, D_i, LT_i] = scores[:, timestamp]
         LT_i = LT_i + 1
@@ -59,12 +58,14 @@ def decision_leadtimes(scores):
 
 def load_and_format_scores(experiments, metric, config):
     exp = experiments[0]
-    print(config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy")
+    print(config["expe_folder"]  + exp["name"] + "/" + metric["name"] + ".npy")
     data_model = np.load(
-        config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
+        config["expe_folder"] + exp["name"] + "/" + metric["name"] + ".npy"
     )[: config["number_dates"] * config["lead_times"]]
     Shape = data_model.shape
     print(f"Scores {metric['name']} loaded, model {Shape}")
+    if data_model[:,0,:].all() == 0: #if rr channel is empty, remove it
+        data_model = data_model[:,1:,:]
     if len(Shape) == 4:
         print("no split")
         scores = np.zeros(
@@ -134,7 +135,6 @@ def load_and_format_scores(experiments, metric, config):
         scores_LT = np.split(
             group_by_leadtime(scores, scores_LT, config), Shape[1], axis=3
         )
-        print(len(scores_LT), scores_LT[0].shape)
         return scores_LT
     elif len(Shape) == 3:
         print("no split, 3")
@@ -171,10 +171,8 @@ def load_and_format_scores(experiments, metric, config):
 def significance(experiments, metric, config):
 
     scores_list = load_and_format_scores(experiments, metric, config)
-    print(len(scores_list))
     for score_idx, scores_LT in enumerate(scores_list):
         decisions, results = computeStats(experiments, scores_LT.squeeze(), config)
-        print(decisions.shape, results.shape)
 
         np.save(
             f"{config['output_plots']}/{metric['folder']}/{metric['name']}_decisions_{score_idx}.npy",

@@ -15,7 +15,6 @@ import yaml
 
 from core.experiment_set import ExperimentSet
 
-
 def load_yaml(yaml_path):
     """
     Load YAML data from a file.
@@ -143,4 +142,5 @@ def run_experiment(experiment_config, output_folder, index):
 
 
 if __name__ == "__main__":
-    main()
+
+   main()

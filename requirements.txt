@@ -13,4 +13,4 @@ astropy==6.0.0
 CRPS
 ipython
 tornado
-optuna
+seaborn

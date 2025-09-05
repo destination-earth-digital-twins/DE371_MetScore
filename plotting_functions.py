@@ -1,7 +1,7 @@
 import copy
 import gc
 import pickle
-
+import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +11,8 @@ import metrics.multivariate as multiv
 import metrics.rank_histogram as rH
 import stats.wilcoxon_test as wct
 from core.useful_funcs import restricted_loads
+import seaborn as sns
+import pandas as pd
 
 mpl.rcParams["axes.linewidth"] = 2
 
@@ -21,62 +23,13 @@ font = {
     "weight": "normal",
     "size": 25,
 }
+base_vars  = ["u", "v", "t2m" ]#"rr","t850","tpw850","z500"]
 
-# ESTHETICS AND TITLE NAMES
-base_vars = ["u", "v", "t2m"]
-color_p = [
-    "black",
-    "darkgreen",
-    "royalblue",
-    "red",
-    "darkorange",
-    "cyan",
-    "gold",
-    "pink",
-    "tan",
-    "slategray",
-    "purple",
-    "palegreen",
-    "orchid",
-    "crimson",
-    "firebrick",
-]
-line = [
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-]
-dot = [
-    "dotted",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-    "solid",
-]
+##### ESTHETICS AND TITLE NAMES
+# base_vars = ['rr','u','v','t2m']
+color_p = ['black', 'darkgreen','royalblue', 'red', 'darkorange', 'cyan', 'gold', 'pink', 'tan', 'slategray', 'purple', 'palegreen', 'orchid', 'crimson', 'firebrick']
+line = ['solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid','solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',]
+dot = ['dotted', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid','solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid', 'solid',]
 
 case_name = [
     [
@@ -98,32 +51,13 @@ case_name = [
     ],
 ]
 
-name_thresholds = [
-    ["5", "10", "15", "20", "30", "40"],
-    ["", "", "", "", "", ""],
-    ["5", "10", "15", "20", "25", "30"],
-]
-case_name_thresholds = ["ff", "dd", "t2m"]
-var_names_m = ["ff (m/s)", "dd (°)", "t2m (K)"]
-echeance = [
-    "+3H",
-    "",
-    "+9H",
-    "",
-    "+15H",
-    "",
-    "+21H",
-    "",
-    "+27H",
-    "",
-    "+33H",
-    "",
-    "+39H",
-    "",
-    "+45H",
-    "",
-]
-
+name_thresholds = [['5', '10', '15', '20', '30', '40'],
+            ['', '', '', '', '', ''], 
+            ['5', '10', '15', '20', '25', '30']]
+case_name_thresholds = ['ff' ,'dd', 't2m']
+var_names_m = ['ff (m/s)', 'dd (°)', 't2m (K)'  ]
+echeance = ['+3H', '', '+9H', '', '+15H', '', '+21H', '', '+27H', '', '+33H', '', '+39H', '', '+45H']
+# echeance = ['+3H', '+6H', '+9H']
 
 def group_by_leadtime(scores, scores_LT, config):
     D_i = 0
@@ -241,6 +175,7 @@ def plot_biasEnsemble(experiments, metric, config):
 
 # ENSEMBLE CRPS
 def plot_ensembleCRPS(experiments, metric, config):
+    print("ce CRPS")
     crps_scores = np.zeros(
         (
             len(experiments),
@@ -503,6 +438,8 @@ def plot_skillSpread(experiments, metric, config):
     )
 
     for exp_idx, exp in enumerate(experiments):
+        print("exp idx :", exp_idx)
+        print("s_p_scores", s_p_scores.shape)
         s_p_scores[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
         )[: config["number_dates"] * config["lead_times"]]
@@ -1253,17 +1190,18 @@ def plot_ROCfast(experiments, metric, config):
 
 
 def plot_spectralCompute(experiments, metric, config):
-    spectral = np.zeros((len(experiments), 3, 90))
+    spectral = np.zeros((len(experiments), 3, 351))
+    print(spectral.shape)
     for exp_idx, exp in enumerate(experiments):
         spectral[exp_idx] = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
         )
 
     scale = np.linspace(
-        2 * np.pi / 2.6, 45 * 256 // 128 * 2 * np.pi / 2.6, 45 * 256 // 128
+        2 * np.pi / 2.6, 351 * 2 * np.pi / 2.6, 351
     )
     for var_idx in range(config["var_number"]):
-        fig, axs = plt.subplots(figsize=(9, 7))
+        fig, axs = plt.subplots(figsize=(15, 7))
         for exp_idx, exp in enumerate(experiments):
             plt.plot(
                 scale,
@@ -1295,15 +1233,14 @@ def plot_spectralCompute(experiments, metric, config):
 
 
 def plot_SWD(experiments, metric, config):
-    swd = np.zeros((len(experiments), 4))
+    swd = np.zeros((len(experiments), 5))
     for exp_idx, exp in enumerate(experiments):
         data = np.load(
             config["expe_folder"] + "/" + exp["name"] + "/" + metric["name"] + ".npy"
-        )[:4]
-        print("swd shape", data.shape)
+        )[:5]
         swd[exp_idx] = data
 
-    Range = ["256", "128", "64", "32"]  # ,"x5", "avg"]
+    Range = ["512", "256", "128", "64", "32"]  # ,"x5", "avg"]
 
     fig, axs = plt.subplots(figsize=(9, 7))
     for exp_idx, exp in enumerate(experiments):
@@ -1328,6 +1265,110 @@ def plot_SWD(experiments, metric, config):
     )
 
 
+def plot_ObjectsAttribution(experiments, metric, config):
+    data_list = []
+    sources_list = []
+    exp_labels = []
+
+    # Parcours de toutes les expériences définies dans config
+    for exp_idx, exp in enumerate(experiments):
+        # Charger les objets dynamiquement en fonction du nom de l'expérience
+        # data_file = os.path.join(config['expe_folder'], exp['name'], f'{metric['folder']}.p')
+        #            data = pickle.load(open(config['expe_folder'] + '/' + exp['name'] + '/' + metric['name'] + '.p','rb'))
+
+        # # Vérifier si le fichier existe
+        # if not os.path.exists(data_file):
+        #     print(f"Fichier {data_file} non trouvé, passage à l'expérience suivante.")
+        #     continue
+
+        # Charger les données de l'expérience
+        Obj = pickle.load(open(config['expe_folder'] + '/' + exp['name'] + '/' + metric['name'] + '.p','rb'))
+
+        # Extraction des données pour la classe 'heavy'
+        arrayObj = np.concatenate([Obj['heavy']['Area'][:, np.newaxis],
+                                   Obj['heavy']['Q90'][:, np.newaxis],
+                                   Obj['heavy']['Q25'][:, np.newaxis]], axis=1)
+        # arrayObj = np.concatenate([
+        #                            Obj['heavy']['Q90'][:, np.newaxis],
+        #                            Obj['heavy']['Q25'][:, np.newaxis]], axis=1)
+
+        # Ajouter les données à la liste des résultats
+        data_list.append(arrayObj)
+
+        # Ajouter la source correspondant à l'expérience (exp_idx)
+        sources = np.array([exp_idx for _ in range(len(Obj['heavy']['num_objet']))])
+        sources_list.append(sources)
+
+        # Ajouter les labels pour la légende
+        exp_labels.append(exp['short_name'])
+
+    # Concatenation de toutes les données et sources
+    dataObj = np.concatenate(data_list)
+    sources = np.concatenate(sources_list)
+
+    # Création du DataFrame
+    df = pd.DataFrame(data=np.c_[dataObj, sources], columns=["Area","Q90", "Q25", "source"])
+
+    # Génération de la palette de couleurs pour les différentes expériences
+    palette = sns.color_palette("husl", len(experiments))  # palette de couleurs distinctes
+
+    # Visualisation avec Seaborn : superposition des résultats
+    g = sns.PairGrid(df, vars = ["Area","Q90", "Q25"],hue='source', palette=palette)
+    # g.map_lower(sns.scatterplot)
+    # g.map_diag(sns.kdeplot)
+# g.map_upper(sns.scatterplot)  # Pour la partie supérieure (scatterplot)
+    g.map_lower(sns.kdeplot, bw_adjust=0.5)  # Pour la partie inférieure (kdeplot)
+#     g.map_diag(sns.histplot, stat='proportion')  # Pour les diagonales (histogrammes)
+    g.add_legend()
+
+    # Mise à jour du titre de la légende
+    new_title = 'Source'
+    g.legend.set_title(new_title)
+
+    # Replacing labels in the legend
+    for t, l in zip(g.legend.texts, exp_labels):
+        t.set_text(l)
+
+    # Sauvegarder la figure dans le dossier de sortie défini par 'config'
+    output_path = os.path.join(config['output_plots'], metric['folder'],metric['name'] + '.png')
+    output_path_pdf = os.path.join(config['output_plots'], metric['folder'],metric['name'] + '.pdf')
+
+    plt.savefig(output_path)
+    plt.savefig(output_path_pdf)
+
+    plt.close()
+    print(f"Graphique sauvegardé sous : {output_path}")
+
+
+def plot_AreaProportion(experiments, metric, config):
+    threshs = [0, 1, 3, 5, 10, 15, 20, 25, 30]#, 40, 50]
+    plt.figure()
+    for exp in experiments:
+        data_files = config['expe_folder'] + '/' + exp['name'] +'/'+  'AreaProportion.npy'
+        
+        datas = np.load(data_files)
+        
+        plt.plot(threshs, datas, label=exp['short_name'])
+    
+    plt.yscale('log')
+
+    plt.title('Scénarios')
+    plt.xlabel('Threshold')
+    plt.ylabel('Pixels')
+
+    plt.legend()
+
+
+    plt.savefig(    
+        config["output_plots"] + "/" + metric["folder"] + "/" + metric["name"] + ".pdf"
+    )
+    plt.savefig(    
+        config["output_plots"] + "/" + metric["folder"] + "/" + metric["name"] + ".png"
+    )
+    
+
+
+
 def plot_MultivarCorr(experiments, metric, config):
     multivar = np.zeros((len(experiments), 3, 100, 100))
     bins = np.zeros((6, 101))
@@ -1335,27 +1376,13 @@ def plot_MultivarCorr(experiments, metric, config):
     Ys = ["v", "t2m", "t2m"]
     Xsindices = [0, 0, 1]
     Ysindices = [1, 2, 2]
-    ncouples = 3
+    ncouples = 3  
     for exp_idx, exp in enumerate(experiments):
 
         if "AROME" in exp["name"]:
             exp_arome = exp_idx
             print("exp_arome", exp_arome)
-        else:
-            # data = restricted_loads(
-            #     open(
-            #         config["expe_folder"]
-            #         + "/"
-            #         + exp["name"]
-            #         + "/"
-            #         + metric["name"]
-            #         + ".p",
-            #         "rb",
-            #     )
-            # )
-            # print("multivar shape", data.keys(), data["hist"].shape)
-            # multivar[exp_idx] = data["hist"][1]
-
+        
             data = pickle.load(
                 open(
                     config["expe_folder"]
@@ -1367,19 +1394,29 @@ def plot_MultivarCorr(experiments, metric, config):
                     "rb",
                 )
             )
+
             # print("multivar shape", data.keys(), data['hist'].shape)
-            multivar[exp_idx] = data["hist"][1]
-
-            if exp_idx == len(experiments) - 1:
-                multivar[exp_arome] = data["hist"][0]
-                bins = data["bins"]
-                levels = multiv.define_levels(multivar[exp_arome], 5)
-                # print(levels)
-
+            multivar[exp_idx] = data["hist"][0]
+            bins = data["bins"]   
+            levels = multiv.define_levels(multivar[exp_arome], 5)         
+            break
+    
+    for exp_idx, exp in enumerate(experiments):
+        if exp_idx==exp_arome:
+            continue
+        data_fake = pickle.load(open( config["expe_folder"]
+                    + "/"
+                    + exp["name"]
+                    + "/"
+                    + metric["name"]
+                    + ".p",
+                    "rb",)
+                   
+                    )
+        multivar[exp_idx] = data_fake["hist"][1]
     for exp_idx, exp in enumerate(experiments):
         if "AROME" not in exp["name"]:
             fig, axs = plt.subplots(1, ncouples, figsize=(4 * ncouples, 2 * ncouples))
-
             for i in range(ncouples):
                 print(multivar[exp_arome][i].min(), multivar[exp_arome][i].max())
                 cs = axs[i].contourf(
@@ -1482,3 +1519,6 @@ def plot_Quantiles(experiments, metric, config):
                 + ".pdf"
             )
             plt.close()
+
+
+

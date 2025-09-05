@@ -41,7 +41,10 @@ def get_descriptors_for_minibatch(minibatch, nhood_size, nhoods_per_image):
 
 
     """
-    S = minibatch.shape  # (minibatch, channel, height, width)
+    S = minibatch.shape
+    print("S : ", S)
+    minibatch = minibatch.transpose(0,3,1,2)
+        # (minibatch, channel, height, width) = (nb samples,4,704,1120)
     assert len(S) == 4
     N = nhoods_per_image * S[0]
     H = nhood_size // 2
@@ -51,6 +54,8 @@ def get_descriptors_for_minibatch(minibatch, nhood_size, nhoods_per_image):
     y = y + np.random.randint(H, S[2] - H, size=(N, 1, 1, 1))
     idx = ((img * S[1] + chan) * S[2] + y) * S[3] + x
     return minibatch.flat[idx]
+
+
 
 
 # ----------------------------------------------------------------------------
@@ -129,6 +134,8 @@ gaussian_filter = (
 
 def pyr_down(minibatch):  # matches cv2.pyrDown()
     assert minibatch.ndim == 4
+        
+    minibatch = minibatch.astype(np.float32)
     return scipy.ndimage.convolve(
         minibatch, gaussian_filter[np.newaxis, np.newaxis, :, :], mode="mirror"
     )[:, :, ::2, ::2]
@@ -137,10 +144,7 @@ def pyr_down(minibatch):  # matches cv2.pyrDown()
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
-    if log2(S[2]) - round(log2(S[2])) != 0:
-        res = np.zeros((S[0], S[1], S[2] * 2 - 1, S[3] * 2 - 1), minibatch.dtype)
-    else:
-        res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
+    res = np.zeros((S[0], S[1], S[2] * 2, S[3] * 2), minibatch.dtype)
     res[:, :, ::2, ::2] = minibatch
     return scipy.ndimage.convolve(
         res, gaussian_filter[np.newaxis, np.newaxis, :, :] * 4.0, mode="mirror"
@@ -148,10 +152,11 @@ def pyr_up(minibatch):  # matches cv2.pyrUp()
 
 
 def generate_laplacian_pyramid(minibatch, num_levels):
+    
     if isinstance(minibatch, np.ndarray):
-        pyramid = [np.float32(minibatch)]
+        pyramid = [np.float16(minibatch)]
     else:
-        pyramid = [np.float32(minibatch.cpu())]
+        pyramid = [np.float16(minibatch.cpu())]
     for i in range(1, num_levels):
         pyramid.append(pyr_down(pyramid[-1]))
         pyramid[-2] -= pyr_up(pyramid[-1])
@@ -222,7 +227,7 @@ class SWD_API:
         del self.desc_real, self.desc_fake
 
         dist = [d * 1e3 for d in dist]  # multiply by 10^3
-
+        print("dist ici", dist)
         return dist + [np.mean(dist)]
 
     def End2End(self, real, fakes):

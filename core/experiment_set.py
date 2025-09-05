@@ -9,8 +9,10 @@ from tqdm import tqdm
 from core.configurable import Configurable
 from core.dataloader import DataLoader
 from metrics.metrics import Metric
-
-
+import matplotlib.pyplot as plt
+import torch
+import random
+from core.useful_funcs import mirror_fill
 class ExperimentSet(Configurable):
     """
     A class to manage and run experiments using specified dataloaders and metrics.
@@ -36,7 +38,7 @@ class ExperimentSet(Configurable):
         """
         self.config_data = config_data
         self.current_path = os.path.join(output_folder, config_data["name"])
-
+        self.init_mirror_filling()
     def _init_experiment(self):
         """
         Initialize the metrics and dataloader for the experiment set.
@@ -77,6 +79,28 @@ class ExperimentSet(Configurable):
         self.dataloader = DataLoader.from_typed_config(
             self.config_data["dataloaders"], use_cache=use_cache
         )
+        
+    def init_mirror_filling(self):
+        """ 
+        That function defines variables that allow to fill the invalid datas of an image by valid datas, like a mirror
+        """
+        data_path = self.config_data["dataloaders"]["real_dataset_config"]["data_folder"]
+        #choose a random file in data folder
+        files = [f for f in os.listdir(data_path)]
+        file_name = random.choice(files)
+        file = os.path.join(data_path,file_name)
+
+        img = np.load(file)
+        img=torch.from_numpy(img).to("cuda")
+
+        img = img.unsqueeze(0)
+        img = img.permute((0,3,1,2))
+        crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
+        img = img[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+        mask = (torch.abs(img) < 1000)
+
+
+        self.valid_x_vert,self.invalid_x_vert,self.valid_y_vert,self.invalid_y_vert,self.valid_x_horiz,self.invalid_x_horiz,self.valid_y_horiz,self.invalid_y_horiz = mirror_fill(img,mask)
 
     def _prep_folder(self):
         """
@@ -155,6 +179,10 @@ class ExperimentSet(Configurable):
         for batch_fake, batch_real, batch_obs in tqdm(
             self.dataloader, desc=f"{self.name}: Processing batches"
         ):
+            # print('JE SUIS DANS EXPE', batch_fake[3].max(),batch_fake[4].max())
+
+            # print("je suis batch fake", type(batch_fake))
+            # print(batch_fake.shape)
             # the if statement is here in case a file is missing in the dataset
             # in which case the dataloader returns a None
             if not (
@@ -162,6 +190,7 @@ class ExperimentSet(Configurable):
             ):
                 for metric in self.batched_metrics:
                     logging.debug(f"Running Metric {type(metric)}")
+
                     res = metric.calculate(batch_real, batch_fake, batch_obs)
                     batched_metric_results[metric.name].append(res)
 
@@ -176,7 +205,29 @@ class ExperimentSet(Configurable):
             )
 
         if self.not_batched_metrics:
+            
             real_data, fake_data, obs_data = self.dataloader.get_all_data()
+            
+            # real_data = real_data.transpose(0,3,1,2)
+            
+            crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
+            # real_data = real_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            # fake_data = fake_data.transpose(0,3,1,2)
+            # fake_data = fake_data[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            print("real data shape : ", real_data.shape)
+            print("fake data_shape", fake_data.shape)
+            for i in range(real_data.shape[0]):
+                fake_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = fake_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+                fake_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = fake_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+
+            for i in range(real_data.shape[0]):
+                real_data[i,:,self.invalid_y_vert,self.invalid_x_vert] = real_data[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+                real_data[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = real_data[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+            
+           
+            
+            # fake_data = real_data#usedto score with AROME only
+
             for metric in tqdm(
                 self.not_batched_metrics,
                 desc=f"{self.name}: Calculating non-batched metrics",
@@ -205,3 +256,5 @@ class ExperimentSet(Configurable):
                         logging.info(f"Metric {metric.name} : too long result to log")
 
         logging.info(f"ExperimentSet {index} completed")
+        
+    

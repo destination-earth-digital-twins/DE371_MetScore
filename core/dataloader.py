@@ -203,10 +203,10 @@ class DateDataloader(DataLoader):
         config_data["obs_dataset_config"].update(config_data)
 
         self.real_dataset = RealDataset.fromConfig(
-            config_data["real_dataset_config"], use_cache=use_cache
+            config_data=config_data["real_dataset_config"], use_cache=use_cache
         )
         self.fake_dataset = Dataset.from_typed_config(
-            config_data["fake_dataset_config"], use_cache=use_cache
+            config_data=config_data["fake_dataset_config"], use_cache=use_cache
         )
         self.obs_dataset = ObsDataset.fromConfig(
             config_data["obs_dataset_config"], use_cache=use_cache
@@ -215,9 +215,22 @@ class DateDataloader(DataLoader):
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
         logging.debug(f"Dataset length is {self._data_length}")
-
+    # def __next__(self):
+    #     if self.current_index < self._data_length:
+    #         try:
+    #             fake_samples = np.array([self.fake_dataset[ self.current_index + i] for i in range(self.batch_size)])
+    #             obs_samples = np.array([self.obs_dataset[self.current_index + i] for i in range(self.batch_size)])
+    #             real_samples = np.array([self.real_dataset[self.current_index + i] for i in range(self.batch_size)])
+    #             self.current_index += min(self.batch_size, self._data_length - self.current_index)
+    #             return fake_samples[0], real_samples[0], obs_samples
+    #         except FileNotFoundError as e:
+    #             logging.warning(f"{self.name} :  File not found, {e}")
+    #             self.current_index += min(self.batch_size, self._data_length - self.current_index)
+    #             return None,None,None
+    #     else:
+    #         raise StopIteration
     def __next__(self):
-        if self.current_index < self._data_length:
+        while self.current_index < self._data_length:
             try:
                 fake_samples = np.array(
                     [
@@ -242,6 +255,7 @@ class DateDataloader(DataLoader):
                 )
                 return fake_samples[0], real_samples[0], obs_samples
             except FileNotFoundError as e:
+                print("cette exceptionaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
                 logging.warning(f"{self.name} :  File not found, {e}")
                 self.current_index += min(
                     self.batch_size, self._data_length - self.current_index
@@ -249,6 +263,7 @@ class DateDataloader(DataLoader):
                 return None, None, None
         else:
             raise StopIteration
+
 
     def get_all_data(self):
         real = self._real_dataset.get_all_data()
@@ -335,6 +350,7 @@ class RandomDataloader(DataLoader):
             logging.warning(
                 f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
             )
+        # print('je suis dans dataloader',data1shuf[:cut].shape, data2shuf[:cut].shape,data1.shape,data2.shape)
         return data1shuf[:cut], data2shuf[:cut]
 
 
@@ -498,7 +514,7 @@ class DiffDateDataloader(DataLoader):
         logging.debug(f"Dataset length is {self._data_length}")
 
     def __next__(self):
-        # print('current_index:{} _data_length|:{} '.format(self.current_index, self._data_length))
+        print('current_index:{} _data_length|:{} '.format(self.current_index, self._data_length))
         if self.current_index < self._data_length:
             try:
                 fake_samples = np.array(

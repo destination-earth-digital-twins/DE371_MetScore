@@ -64,7 +64,9 @@ class Configurable:
             Recursively search for the correct subclass based on the 'type' key.
             """
             for subclass in parent_cls.__subclasses__() + [parent_cls]:
+
                 if type_name in subclass.aliases + [subclass.__name__]:
+                    
                     _check_config(subclass, config_data, typed=True)
                     instance = subclass(config_data, **config_data | kwargs)
                     for key, value in config_data.items():
@@ -77,7 +79,6 @@ class Configurable:
             return None
 
         result = find_subclass_recursive(cls)
-
         if result is not None:
             return result
         else:

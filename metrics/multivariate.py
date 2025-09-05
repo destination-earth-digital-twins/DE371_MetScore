@@ -7,10 +7,9 @@ Created on Thu May 12 11:08:13 2022
 
 Multivariate correlations
 """
-
+import matplotlib.pyplot as plt
 import logging
 from itertools import combinations_with_replacement
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FormatStrFormatter
@@ -147,7 +146,7 @@ def define_levels(bivariates, nlevels):
         b = np.sort(inter[i])
 
         usable_data = b[b > 0].shape[0]
-
+        
         N_values = usable_data // nlevels
         assert N_values > 2
         levels[i] = np.log10(b[b > 0][::N_values][:nlevels])
@@ -195,7 +194,10 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
 
     channels = data_fake.shape[1]
     ncouples2 = channels * (channels - 1)
-
+    
+    
+    print("data shape ici dans multi variate corr", data_fake.shape)
+    
     data_f = space2batch(data_fake, offset)
     data_r = space2batch(data_real, offset)
 
@@ -212,4 +214,5 @@ def multi_variate_correlations(data_real, data_fake, density=True, offset=0):
     out_rf[0] = bivariates_r
     out_rf[1] = bivariates_f
     logging.debug(f"out shape {out_rf.shape}")
+   
     return {"hist": out_rf, "bins": bins_r}

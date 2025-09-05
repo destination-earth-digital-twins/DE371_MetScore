@@ -5,6 +5,11 @@ import os
 # making randomness replicable
 import random
 import re
+import glob
+
+# making randomness replicable
+import random
+import re
 import threading
 from abc import abstractmethod
 from datetime import datetime, timedelta
@@ -16,7 +21,13 @@ from tqdm import tqdm
 from core.configurable import Configurable
 from core.useful_funcs import obs_clean
 
+import matplotlib.pyplot as plt
+from core.useful_funcs import mirror_fill
+import torch 
 
+from core.plotter_3var import plotter3D_3var
+
+    
 # region helpers
 def convert_key(func):
     def wrapper(self, key, *args, **kwargs):
@@ -27,8 +38,21 @@ def convert_key(func):
                 fusion_key += k
             key = fusion_key
         return func(self, key, *args, **kwargs)
-
     return wrapper
+        
+def wrapper(func):
+    def wrapped_function(*args, **kwargs):
+        try:
+            key = self._generate_key(*args, **kwargs)
+            if not key:
+                logging.warning("Generated key is empty. Skipping this dataset.")
+                return None  # Ignore les cas vides
+            return func(*args, **kwargs)
+        except Exception as e:
+            logging.error(f"Error in wrapper: {str(e)}")
+            raise
+    return wrapped_function
+
 
 
 class MemoryCache:
@@ -335,8 +359,10 @@ class DateDataset(Dataset):
             (self.df0["Date"] >= config_data["date_start"])
             & (self.df0["Date"] < config_data["date_end"])
         ]
+        self.config_data = config_data
         self.df0 = self.df0
         self.liste_dates = df_extract["Date"].unique().tolist()
+    
         self.liste_dates = self.liste_dates[0 : config_data["number_of_dates"]]
         self.liste_dates_repl = [
             date_string.replace("T21:00:00Z", "") for date_string in self.liste_dates
@@ -346,7 +372,11 @@ class DateDataset(Dataset):
             for item in self.liste_dates_repl
             for _ in range(config_data["Lead_Times"])
         ]
-
+        self.liste_members = df_extract["Member"].unique().tolist()
+        self.liste_leadtimes = df_extract["LeadTime"].unique().tolist()
+        
+        self.init_mirror_filling()
+        
     def _get_filename(self, index):
         raise NotImplementedError("Subclasses must implement this method.")
 
@@ -355,8 +385,44 @@ class DateDataset(Dataset):
 
     def __len__(self):
         return len(self.liste_dates_rep)
+    
+    def init_mirror_filling(self):
+        """ 
+        That function defines variables that allow to fill the invalid datas of an image by valid datas, like a mirror
+        """
+        data_path = self.config_data["dataloaders"]["real_dataset_config"]["data_folder"]
+        #choose a random file in data folder
+        files = [f for f in os.listdir(data_path)]
+        file_name = random.choice(files)
+        file = os.path.join(data_path,file_name)
+
+        img = np.load(file)
+        img=torch.from_numpy(img).to("cuda")
+
+        img = img.unsqueeze(0)
+        img = img.permute((0,3,1,2))
+        crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
+        img = img[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+        mask = (torch.abs(img) < 1000)
 
 
+        self.valid_x_vert,self.invalid_x_vert,self.valid_y_vert,self.invalid_y_vert,self.valid_x_horiz,self.invalid_x_horiz,self.valid_y_horiz,self.invalid_y_horiz = mirror_fill(img,mask)
+
+    def fill_img_mirror(self, img):
+        """
+        function to fill and img of shape (N, V, H, W) in a mirrored way, with indexes pre-computed with the function
+        "init_mirror_filling"
+        Args :
+            img (numpy.ndarray)
+        """
+        
+        img = torch.from_numpy(img)
+        for i in range(img.shape[0]):
+            img[i,:,self.invalid_y_vert,self.invalid_x_vert] = img[i,:,self.valid_y_vert,self.valid_x_vert] #vertical filling
+            img[i,:,self.invalid_y_horiz,self.invalid_x_horiz] = img[i,:,self.valid_y_horiz,self.valid_x_horiz] #horizontal filling
+
+        img = img.cpu().numpy()
+        return img
 class ObsDataset(DateDataset):
     def __init__(self, config_data, use_cache=True, **kwargs):
         super().__init__(config_data, use_cache)
@@ -394,6 +460,7 @@ class ObsDataset(DateDataset):
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
+
         return obs_clean(np.load(file_path).astype(np.float32), self.crop_indices)
 
     def get_all_data(self):
@@ -435,23 +502,35 @@ class FakeDataset(DateDataset):
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
         ]
         kwargs = {}
-
+        kwargs = kwargs | {
+            var: getattr(self, var, "") for var in format_variables if var != "index"
+        }
+        kwargs["index"] = "*"
+        kwargs = {var : "*" for var in format_variables}
         if "formatted_index" in format_variables:
             format_variables.remove("formatted_index")
-            formatted_index = (index % self.Lead_Times + 1) * self.dh
+            formatted_index = ((index * self.dh) % self.Lead_Times + 2) 
             kwargs = {"formatted_index": formatted_index}
 
         if "date" in format_variables:
             format_variables.remove("date")
             date = self.liste_dates_rep[index]
             kwargs = kwargs | {"date": date}
-
-        kwargs = kwargs | {var: getattr(self, var, "") for var in format_variables}
-
+        
+            
+        # kwargs = kwargs | {var: getattr(self, var, "") for var in format_variables}
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
-        return np.load(file_path).astype(np.float32)
+        nb_vars = len(self.config_data["dataloaders"]["fake_dataset_config"]["var_indices"])
+        print("nb vars ", nb_vars)
+        file = np.load(file_path).astype(np.float32)
+        print("file shape 1", file.shape[1])
+        if nb_vars == (file.shape[1] - 1) : #rr channel is in the samples generated by the model but not wanted to do scores
+            file = np.load(file_path).astype(np.float32)[:,1:,:,:] #load only u, v, t2m 
+        file = np.load(file_path).astype(np.float32)
+        
+        return file
 
 
 class RealDataset(DateDataset):
@@ -461,21 +540,32 @@ class RealDataset(DateDataset):
             (self.df0["Date"] == f"{date}T21:00:00Z")
             & (self.df0["LeadTime"] == (index % self.Lead_Times + 1) * self.dh - 1)
         ]["Name"].to_list()
-        file_names = [self._get_full_path(name) for name in names]
+        file_names = [os.path.join(self.data_folder,name) for name in names]
+
         return file_names
 
     def _load_file(self, file_path):
-        arrays = [
-            np.expand_dims(np.load(file_name).astype(np.float32), axis=0)
-            for file_name in file_path
-        ]
+        crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
+        arrays = []
+        for idx, file_name in enumerate(file_path) : #filling real datas with mirror
+            img = np.expand_dims(np.load(file_name).astype(np.float32), axis=0).transpose(0,3,1,2)[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+            img_filled = self.fill_img_mirror(img)
+            arrays.append(img_filled)
+        # arrays = [
+        #     np.expand_dims(np.load(file_name).astype(np.float32), axis=0).transpose(0,3,1,2)[:,:,crop[0]:crop[1],crop[2]:crop[3]]
+        #     for file_name in file_path
+        # ]
+        for idx, file_name in enumerate(file_path):
+            if idx == 0:
+                print(file_name)
+        print("dans Real dataset, shape du fichier chargé : ",np.concatenate(arrays, axis=0).shape )
         return np.concatenate(arrays, axis=0)
 
 
 class RandomDataset(Dataset):
     required_keys = [
         "data_folder",
-        "config",
+        #"config",
         "crop_indices",
         "filename_format",
         "maxNsamples",
@@ -488,6 +578,8 @@ class RandomDataset(Dataset):
             "filename_format", "_Fsemble_{step}_{index}"
         )
         self.data_folder = config_data["data_folder"]
+        self.crop_indices = config_data["crop_indices"]
+        self.config_data = config_data
         format_variables = [
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
         ]
@@ -496,34 +588,56 @@ class RandomDataset(Dataset):
             var: getattr(self, var, "") for var in format_variables if var != "index"
         }
         kwargs["index"] = "*"
-        self.filelist = glob.glob(
-            os.path.join(self.data_folder, self.filename_format.format(**kwargs))
-        )
+        
+        # We add this condition to use random dataset in all configurations of dataset, csv ...
+        if "datasets" in config_data["data_folder"]: # to confirm that we are in REAL dataset 
+            df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
+
+            npy_filenames = df['Name'].tolist()
+                
+            self.filelist = [os.path.join(self.data_folder, f if f.endswith(".npy") else f +".npy") for f in npy_filenames ]#if f.endswith('.npy')]
+        else:
+
+            self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
+
         random.shuffle(self.filelist)
         self.filelist = self.filelist[
             : int(config_data["maxNsamples"]) // config_data["file_size"]
         ]
-
+    
+    def __len__(self):
+        return len(self.filelist)
+    
     def _get_full_path(self, filename, extension=".npy"):
         return os.path.join(self.data_folder, f"{filename}{extension}")
 
     def _get_filename(self, index):
         return self.filelist[index]
 
-    def _load_file(self, file_path):
-        return np.load(file_path).astype(np.float32)
+    def _load_file(self, file_path): # RAJOUTER LA CONDITION SI ON EST DANS REAL OU FAKE DATASET 
+        y_min, y_max, x_min, x_max = self.crop_indices
+        img = np.load(file_path)
 
+        if img.shape[1]!=256:
+            return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
+        else:
+            return img 
+
+        
     def __len__(self):
         return len(self.filelist)
 
     def get_all_data(self):
         all_data = []
+        cached = self.is_dataset_cached()
         if not self.is_dataset_cached():
             for idx in tqdm(
                 range(len(self)), desc=f"{self.name} : Collecting uncached data"
             ):
                 try:
                     file_path = self._get_filename(idx)
+                    
+                    
                     data = (
                         self._load(file_path)[np.newaxis, :, :, :]
                         if self.file_size == 1
@@ -538,6 +652,8 @@ class RandomDataset(Dataset):
             ):
                 try:
                     file_path = self._get_filename(idx)
+                    
+
                     data = (
                         self.cache.get_from_cache(file_path)[np.newaxis, :, :, :]
                         if self.file_size == 1
@@ -546,6 +662,7 @@ class RandomDataset(Dataset):
                     all_data.append(data)
                 except FileNotFoundError as e:
                     logging.warning(f"FileNotFound {e}, continuing")
+
         return np.concatenate(all_data, axis=0)
 
 

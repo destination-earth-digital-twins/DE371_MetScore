@@ -40,6 +40,7 @@ def dct2D(x):
         )
     else:
         res = dct(dct(x.T, norm="ortho").T, norm="ortho")
+
     return res
 
 
@@ -199,19 +200,15 @@ def PowerSpectralDensity(x):
         out : numpy array, shape is (C, Rmax), with R_max defined in radial_bin_dct function
 
     """
-
     out_list = []
     channels = x.shape[1]
-
     for c in range(channels):
         x_c = x[:, c, :, :]
         sig = dct_var(x_c).mean(axis=0)
-
         center = (sig.shape[0] // 2, sig.shape[1] // 2)
         out_list.append(radial_bin_dct(sig, center))
 
     out = np.concatenate([np.expand_dims(o, axis=0) for o in out_list], axis=0)
-
     return out
 
 
@@ -268,7 +265,7 @@ def PSD_compare_multidates(obsdata, real_data, fake_data, debiasing=False):
 
 if __name__ == "__main__":
     ranges = [2.0, 3.0, 5.0, 10.0]
-
+    print("ok on est la dedans")
     for r in ranges[-2:]:
         t, p = np.ogrid[-r:r:0.01, -r:r:0.01]
         x = np.cos((2 * np.pi / 0.1) * np.sqrt(t**2 + p**2)) + np.cos(
@@ -277,8 +274,11 @@ if __name__ == "__main__":
         x = x.reshape(1, x.shape[0], x.shape[1])
         psd = PowerSpectralDensity(x)
         N = psd.shape[0]
+        plt.figure()
         plt.plot(np.arange(N) / N, np.log(psd))
+        plt.savefig("./PSD")
         plt.show()
+        plt.close()
 
 ######################## OLD ##################################################
 
@@ -344,5 +344,5 @@ def plot_spectrum(rad, binned_spectrum, name, delta, unit):
     plt.xlabel("Wavenumber (km^{-1})")
     plt.ylabel(name + " ({})".format(unit))
     plt.title("Power Spectral Density, " + name)
-    # plt.savefig('./PSD_'+name+'.png')
+    plt.savefig('./PSD_'+name+'.png')
     plt.show()

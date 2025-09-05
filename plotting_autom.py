@@ -36,6 +36,7 @@ def setup_logger(debug=False):
     return logger
 
 
+# def main(scenario):
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Plot experiments.")
@@ -95,4 +96,9 @@ def main():
 
 
 if __name__ == "__main__":
+#Si par scénarios : 
+    # scenarios = ['Alpes-Mar_Golfe-G','Cevennes_Gard_Hérault-N','Corse O','Rien signif','Espagne','Espagne_Roussillon','Centre Médit','Jura_Alpes_Drôme-N'] #"",'Massif-C Sud','Massif-C Centre','Pyrénées','Var_PACA Ouest_Drôme-S'
+    # for _,scenario in enumerate(scenarios):
+    #     main(scenario)
+#sinon: 
     main()
