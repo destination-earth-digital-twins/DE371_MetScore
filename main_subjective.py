@@ -8,26 +8,17 @@ import argparse
 import os
 
 import matplotlib
-
-# import artistic as art
-# import numpy as np
-# import random
-# import matplotlib as mpl
-# import matplotlib.font_manager as fm# Collect all the font names available to matplotlib
-# import argparse
-# font_names = [f.name for f in fm.fontManager.ttflist]
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
 
-matplotlib.use("Agg")
-import matplotlib as mpl
-
 from core.useful_funcs import obs_clean
 
+matplotlib.use("Agg")
 torch.manual_seed(42)  # reproducibility of runs
-# mpl.rcParams['font.family'] = 'Helvetica'
+
 plt.rcParams["font.size"] = 20
 plt.rcParams["axes.linewidth"] = 2
 plt.rcParams["figure.autolayout"] = True
@@ -573,7 +564,7 @@ def plot_probability_exceeding_threshold_wind(
             np.mean(max_arome, axis=0), origin="lower", cmap=cmap, clim=(0, 1)
         )
         ax[0][threshold_id].set_title(
-            f"AROME {len(packsample)} members - P(Wind>{round(threshold*3.6,1)}km/h)"
+            f"AROME {len(packsample)} members - P(Wind>{round(threshold * 3.6, 1)}km/h)"
         )
         fig.colorbar(im, ax=ax[0][threshold_id], shrink=0.5)
 
@@ -583,7 +574,7 @@ def plot_probability_exceeding_threshold_wind(
             np.mean(max_gen, axis=0), origin="lower", cmap=cmap, clim=(0, 1)
         )
         ax[1][threshold_id].set_title(
-            f"Generated {len(pert_sample)} members - P(Wind>{round(threshold*3.6,1)}km/h)"
+            f"Generated {len(pert_sample)} members - P(Wind>{round(threshold * 3.6, 1)}km/h)"
         )
         fig.colorbar(im, ax=ax[1][threshold_id], shrink=0.5)
         if wind_obs_data is not None:
