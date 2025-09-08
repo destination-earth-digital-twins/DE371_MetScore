@@ -73,6 +73,7 @@ def group_by_leadtime(scores, scores_LT, config):
 
 ##################################### PLOTTING MEAN BIAS RESULTS ################################
 def plot_biasEnsemble(experiments, metric, config):
+    print("PLOTTING METRIC : BIAS ENSEMBLE")
     mean_bias = np.zeros(
         (
             len(experiments),
@@ -122,15 +123,12 @@ def plot_biasEnsemble(experiments, metric, config):
             + metric["name"]
             + "_decisions_0.npy"
         ).squeeze()
-    print(significance.shape)
     ################################################ MEAN BIAS
     for var_idx in range(config["var_number"]):
         fig, axs = plt.subplots(figsize=(9, 7))
         for exp_idx, exp in enumerate(experiments):
             if exp_idx > 0:
                 markers_on = significance[var_idx, min(0, exp_idx - 1)].nonzero()[0]
-                print("markers_on", markers_on)
-                print("significance", significance[var_idx, exp_idx - 1])
                 plt.plot(
                     np.nanmean(mean_bias_LT[exp_idx, :, :, var_idx], axis=(0, 2, 3)),
                     label=exp["short_name"],
@@ -202,7 +200,7 @@ def plot_ensembleCRPS(experiments, metric, config):
             + "/"
             + metric["name"]
             + "_decisions_0.npy"
-        ).squeeze()
+        )#.squeeze()
     except FileNotFoundError:
         print("computing significance")
         wct.significance(experiments, metric, config)
@@ -213,8 +211,8 @@ def plot_ensembleCRPS(experiments, metric, config):
             + "/"
             + metric["name"]
             + "_decisions_0.npy"
-        ).squeeze()
-    print(significance.shape)
+        )#.squeeze()
+    print("significance shape avant les boucles for : ",significance.shape)
 
     for exp_idx, exp in enumerate(experiments):
         crps = np.load(
@@ -224,11 +222,13 @@ def plot_ensembleCRPS(experiments, metric, config):
     crps_scores_LT = group_by_leadtime(crps_scores, crps_scores_LT, config)
 
     for var_idx in range(config["var_number"]):
+
         dist_0 = crps_scores_LT[0, :, 0:5, var_idx]
         dist_0 = dist_0.reshape(config["number_dates"] * 5)
         fig, axs = plt.subplots(figsize=(9, 7))
         for exp_idx, exp in enumerate(experiments[1:]):
             dist = crps_scores_LT[exp_idx + 1, :, 0:5, var_idx]
+            print("dist dans CRPS : ", dist, dist.shape)
             dist = dist.reshape(config["number_dates"] * 5)
             axs.hist(dist - dist_0, bins=50)
         plt.savefig(
@@ -250,8 +250,6 @@ def plot_ensembleCRPS(experiments, metric, config):
         for exp_idx, exp in enumerate(experiments):
             if exp_idx > 0:
                 markers_on = significance[var_idx, min(0, exp_idx - 1)].nonzero()[0]
-                print("markers_on", markers_on)
-                print("significance", significance[var_idx, exp_idx - 1])
                 plt.plot(
                     np.nanmean(crps_scores_LT[exp_idx, :, :, var_idx], axis=(0)),
                     label=exp["short_name"],

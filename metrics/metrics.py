@@ -114,16 +114,16 @@ class PreprocessCondObs(Metric):
         Returns:
             dict: A dictionary containing preprocessed real, fake, and observation data.
         """
+        print("ON PASSE DANS COND OBS")
         assert real_data is not None
         assert obs_data is not None
-        logging.debug(fake_data.shape)
+        logging.debug(fake_data.shape)        
         if len(self.var_indices) != fake_data.shape[self.var_channel]:
             fake_data_p = fake_data.take(
                 indices=self.var_indices, axis=self.var_channel
             )
         else:
             fake_data_p = fake_data
-
         if len(self.real_var_indices) != real_data.shape[self.var_channel]:
             real_data_p = real_data.take(
                 indices=self.real_var_indices, axis=self.var_channel
@@ -136,13 +136,16 @@ class PreprocessCondObs(Metric):
             )
         else:
             obs_data_p = obs_data
-            
+        
+        
         fake_data_pp = copy.deepcopy(fake_data_p)
         obs_data_pp = np.around(copy.deepcopy(obs_data_p[0]), 2)
-        real_data_pp = copy.deepcopy(real_data_p)
-        fake_data_pp[:, 0], fake_data_pp[:, 1] = wc.computeWindDir(fake_data_pp[:, 0], fake_data_pp[:, 1])
-        real_data_pp[:, 0], real_data_pp[:, 1] = wc.computeWindDir(real_data_pp[:, 0], real_data_pp[:, 1])
 
+        real_data_pp = copy.deepcopy(real_data_p)
+        
+        fake_data_pp[:, 0], fake_data_pp[:, 1] = wc.computeWindDir(fake_data_pp[:, 0], fake_data_pp[:, 1])
+
+        real_data_pp[:, 0], real_data_pp[:, 1] = wc.computeWindDir(real_data_pp[:, 0], real_data_pp[:, 1])
         if self.debiasing:
             fake_data_pp = wc.debiasing(
                 fake_data_pp,
@@ -150,11 +153,11 @@ class PreprocessCondObs(Metric):
                 self.conditioning_members,
                 mode=self.debiasing_mode,
             )
-        angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2])
-        fake_data_pp[:, 1] = angle_dif
-      
-        # obs_data_pp[2, np.isnan(obs_data_pp[2])] = 0.
-
+        # angle_dif = wc.angle_diff(fake_data_pp[:, 2], obs_data_pp[2]) 
+        # print('angle_dif :', angle_dif)
+        # fake_data_pp[:, 1] = angle_dif
+        
+        # obs_data_pp[1, ~np.isnan(obs_data_pp[1])] = 0.0
         return {
             "real_data": real_data_pp,
             "fake_data": fake_data_pp,
@@ -188,6 +191,7 @@ class PreprocessDist(Metric):
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
         # print('je passe preproce3')
+        print("on passe dans preproceess DIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIISST")
         """
         Preprocess data for distance metrics.
 
@@ -240,7 +244,8 @@ class PreprocessStandalone(Metric):
     required_keys = ["isOnReal"]
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
-        # print('je passe la preprocess4')
+
+        print("ON PSSE DANS STANDDDDDDAAAAAAAAAAAAAAAAAAAAAAAAALOOOOOOOOOOOOOOOOOOOONE")
         """
         Preprocess data for standalone metrics.
 

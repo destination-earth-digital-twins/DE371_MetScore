@@ -258,9 +258,11 @@ class ensembleCRPS(PreprocessCondObs):
     def _calculateCore(self, processed_data):
         if not self.isOnReal:
             exp_data = processed_data["fake_data"]
+            print("on passe ici ")
         else:
             exp_data = processed_data["real_data"]
         obs_data = processed_data["obs_data"]
+        # print("exp data = fake si on est apssé ici ", exp_data[0])
         return CRPS_calc.ensemble_crps(obs_data, exp_data, self.fair)
 
 

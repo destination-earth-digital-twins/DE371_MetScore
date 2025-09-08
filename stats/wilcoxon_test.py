@@ -11,12 +11,10 @@ def group_by_leadtime(scores, scores_LT, config):
         if LT_i == config["lead_times"]:
             D_i = D_i + 1
             LT_i = 0
-    print("scores LT shape", scores_LT.shape)
     return scores_LT
 
 
 def computeStats(experiments, scores_LT, config):
-
     decisions = [[] for var_idx in range(config["var_number"])]
     results = [[] for var_idx in range(config["var_number"])]
     for var_idx in range(config["var_number"]):
@@ -24,34 +22,30 @@ def computeStats(experiments, scores_LT, config):
         results_var = []
         ### reference experiment is experiment 0
         for exp_idx, exp in enumerate(experiments[1:]):
-            print(exp["short_name"], var_idx)
+            print("Expérience traitée : ", exp["short_name"], "pour la var :", var_idx)
+            if scores_LT.shape[3] == 1:
+                scores_LT = scores_LT.squeeze(axis = 3) #TODO : corriger le scores_LT pour le skill spread qui a shape = (2,1,14,1,3)
             diff = scores_LT[exp_idx + 1, :, :, var_idx] - scores_LT[0, :, :, var_idx]
             res_diff = wilcoxon(diff, axis=0, zero_method="zsplit")
-            print("res_diff shape", res_diff.statistic)
             results_var.append(res_diff.statistic[np.newaxis, :])
             # rejecting the null hypothesis <=> distributions are different
             decision_different = np.where((res_diff.pvalue <= 0.05), True, False)
-            print("decision different", decision_different)
             res_greater = wilcoxon(
                 diff, axis=0, alternative="greater", zero_method="zsplit"
             )
             decision_greater = np.where((res_greater.pvalue <= 0.05), True, False)
-            print("decision greater", decision_greater)
             res_less = wilcoxon(diff, axis=0, alternative="less", zero_method="zsplit")
             decision_less = np.where((res_less.pvalue <= 0.05), True, False)
-            print("decision less", decision_less)
             stats_decision.append((decision_different))
             # (decision_different + 2 * decision_greater + 3 * decision_less)
 
         decisions[var_idx].append(np.array(stats_decision))
-        print("decision aggreg exp", decisions[var_idx][-1].shape)
         results[var_idx].append(np.array(results_var))
 
     return np.array(decisions), np.array(results)
 
 
 def decision_leadtimes(scores):
-    print(scores.shape)
     res = wilcoxon(scores, zero_method="zsplit")
     return res.pvalue <= 0.05
 
@@ -83,7 +77,6 @@ def load_and_format_scores(experiments, metric, config):
                 config["var_number"],
             )
         )
-
         scores[0] = np.nanmean(data_model, axis=(-2, -1))
         for exp_idx, exp in enumerate(experiments[1:]):
             scores[exp_idx + 1] = np.nanmean(
@@ -153,8 +146,8 @@ def load_and_format_scores(experiments, metric, config):
                 config["var_number"],
             )
         )
-
         scores[0] = (data_model).squeeze()
+
         for exp_idx, exp in enumerate(experiments[1:]):
             scores[exp_idx + 1] = np.load(
                 config["expe_folder"]
@@ -169,10 +162,9 @@ def load_and_format_scores(experiments, metric, config):
 
 
 def significance(experiments, metric, config):
-
     scores_list = load_and_format_scores(experiments, metric, config)
     for score_idx, scores_LT in enumerate(scores_list):
-        decisions, results = computeStats(experiments, scores_LT.squeeze(), config)
+        decisions, results = computeStats(experiments, scores_LT, config)
 
         np.save(
             f"{config['output_plots']}/{metric['folder']}/{metric['name']}_decisions_{score_idx}.npy",
