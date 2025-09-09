@@ -21,7 +21,6 @@ def area_greater_than(
         # mask = np.exp((data[:, variable]+1)*5.78319931/2)-1 > threshold
         # extracted = (np.exp((data[:, variable]+1)*5.78319931/2)-1)[mask]
         # img1=data[0]
-        # print('je suis dans metrics preprocessed_date',data.shape, img1[3,:,:].max(),img1[4,:,:].max()) #img1[0,0,0],img1[1,0,0],img1[2,0,0],img1[3,0,0])#,img1[4,0,0],img1[5,0,0],img1[6,0,0],processed_data.shape)
 
         mask = data[:, variable] > threshold
         extracted = data[:, variable][mask]

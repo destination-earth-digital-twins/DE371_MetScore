@@ -215,7 +215,6 @@ class DateDataloader(DataLoader):
             len(self.real_dataset), len(self.fake_dataset), len(self.obs_dataset)
         )
         logging.debug(f"Dataset length is {self._data_length}")
-        print('JE PASSE PAR DATEDATALOADER')
     # def __next__(self):
     #     if self.current_index < self._data_length:
     #         try:
@@ -350,7 +349,6 @@ class RandomDataloader(DataLoader):
             logging.warning(
                 f"maxNsamples set to {self.maxNsamples} but not enough samples ({cut}). Continuing with {cut} samples."
             )
-        # print('je suis dans dataloader',data1shuf[:cut].shape, data2shuf[:cut].shape,data1.shape,data2.shape)
         return data1shuf[:cut], data2shuf[:cut]
 
 

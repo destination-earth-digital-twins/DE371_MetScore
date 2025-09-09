@@ -23,7 +23,7 @@ font = {
     "weight": "normal",
     "size": 25,
 }
-base_vars  = ["u", "v", "t2m" ,"rr"] #,"t850","tpw850","z500"]
+base_vars  = ["rr","u", "v", "t2m" ]#,"t850","tpw850","z500"]
 
 ##### ESTHETICS AND TITLE NAMES
 # base_vars = ['rr','u','v','t2m']

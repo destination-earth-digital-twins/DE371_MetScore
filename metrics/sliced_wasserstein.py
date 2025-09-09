@@ -130,12 +130,12 @@ gaussian_filter = (
 def pyr_down(minibatch):  # matches cv2.pyrDown()
     assert minibatch.ndim == 4
         
-    minibatch = minibatch.astype(np.float32)
+    # minibatch = minibatch.astype(np.float32)
     return scipy.ndimage.convolve(
         minibatch, gaussian_filter[np.newaxis, np.newaxis, :, :], mode="mirror"
     )[:, :, ::2, ::2]
 
-
+&-
 def pyr_up(minibatch):  # matches cv2.pyrUp()
     assert minibatch.ndim == 4
     S = minibatch.shape
@@ -152,9 +152,9 @@ def pyr_up(minibatch):  # matches cv2.pyrUp()
 
 def generate_laplacian_pyramid(minibatch, num_levels):
     if isinstance(minibatch, np.ndarray):
-        pyramid = [np.float16(minibatch)]
+        pyramid = [np.float32(minibatch)]
     else:
-        pyramid = [np.float16(minibatch.cpu())]
+        pyramid = [np.float32(minibatch.cpu())]
     for i in range(1, num_levels):
         pyramid.append(pyr_down(pyramid[-1]))
         pyramid[-2] -= pyr_up(pyramid[-1])

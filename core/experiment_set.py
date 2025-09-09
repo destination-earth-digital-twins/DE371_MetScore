@@ -77,7 +77,6 @@ class ExperimentSet(Configurable):
         self.dataloader = DataLoader.from_typed_config(
             self.config_data["dataloaders"], use_cache=use_cache
         )
-        # print('je suis dataloader', self.dataloader)
 
     def _prep_folder(self):
         """
@@ -156,10 +155,9 @@ class ExperimentSet(Configurable):
         for batch_fake, batch_real, batch_obs in tqdm(
             self.dataloader, desc=f"{self.name}: Processing batches"
         ):
-            # print('JE SUIS DANS EXPE', batch_fake[3].max(),batch_fake[4].max())
 
-            # print("je suis batch fake", type(batch_fake))
-            # print(batch_fake.shape)
+
+
             # the if statement is here in case a file is missing in the dataset
             # in which case the dataloader returns a None
             if not (

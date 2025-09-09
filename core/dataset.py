@@ -2,10 +2,7 @@ import glob
 import logging
 import os
 
-# making randomness replicable
-import random
-import re
-import glob
+
 
 # making randomness replicable
 import random
@@ -333,7 +330,9 @@ class Dataset(Configurable):
         Returns:
             str: The full path of the file.
         """
-        return os.path.join(self.data_folder, f"{filename}{extension}")
+        if not filename.endswith(extension):
+            filename += extension
+        return os.path.join(self.data_folder, filename)
 
 
 # endregion
@@ -359,6 +358,7 @@ class DateDataset(Dataset):
         self.liste_dates_repl = [
             date_string.replace("T21:00:00Z", "") for date_string in self.liste_dates
         ]
+
         self.liste_dates_rep = [
             item
             for item in self.liste_dates_repl
@@ -448,7 +448,7 @@ class FakeDataset(DateDataset):
             "filename_format",
             "genFsemble_{date}_{formatted_index}_{inv_step}_{cond_members}_{N_ens}",
         )
-
+        self.config_data= config_data
     def _get_filename(self, index):
         format_variables = [
             var.strip("}{") for var in re.findall(r"{(.*?)}", self.filename_format)
@@ -464,14 +464,33 @@ class FakeDataset(DateDataset):
             format_variables.remove("date")
             date = self.liste_dates_rep[index]
             kwargs = kwargs | {"date": date}
+            
+        if "member" in format_variables:
+            format_variables.remove("member")
+            member = self.df0['Member'][index]
+            kwargs = kwargs | {"member": member}
+
+        
 
         kwargs = kwargs | {var: getattr(self, var, "") for var in format_variables}
 
         return self._get_full_path(self.filename_format.format(**kwargs))
 
     def _load_file(self, file_path):
-        
-        return np.load(file_path).astype(np.float32)
+        y_min, y_max, x_min, x_max = self.crop_indices
+        img = np.load(file_path).astype(np.float32)
+
+        if img.ndim>3 :
+            if img.shape[2]!=self.config_data['sizeH']: # change it with sizeH in the config file to be more general 
+                return np.transpose(img[y_min:y_max, x_min:x_max,:],(3,1,2))
+            else:
+                return img 
+        else:
+            if img.shape[2]!=self.config_data['sizeH']: # change it with sizeH in the config file to be more general 
+                return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
+            else:
+                return img 
+         
 
 
 class RealDataset(DateDataset):
@@ -482,14 +501,16 @@ class RealDataset(DateDataset):
             & (self.df0["LeadTime"] == (index % self.Lead_Times + 1) * self.dh - 1)
         ]["Name"].to_list()
         file_names = [self._get_full_path(name) for name in names]
-
         return file_names
 
     def _load_file(self, file_path):
+
+        y_min, y_max, x_min, x_max = self.crop_indices
         arrays = [
-            np.expand_dims(np.load(file_name).astype(np.float32), axis=0)
+            np.expand_dims(np.transpose(np.load(file_name).astype(np.float32)[y_min:y_max, x_min:x_max,:],(2,0,1)), axis=0)
             for file_name in file_path
         ]
+        
         return np.concatenate(arrays, axis=0)
 
 
@@ -520,22 +541,14 @@ class RandomDataset(Dataset):
         }
         kwargs["index"] = "*"
         
-        # We add this condition to use random dataset in all configurations of dataset, csv ...
         if "datasets" in config_data["data_folder"]: # to confirm that we are in REAL dataset 
-            
-
+             #select only data from csv file
             df = pd.read_csv(os.path.join(config_data["path_to_csv"],config_data["csv_file"]))
-
             npy_filenames = df['Name'].tolist()
-                
             self.filelist = [os.path.join(self.data_folder, f if f.endswith(".npy") else f +".npy") for f in npy_filenames ]#if f.endswith('.npy')]
+
         else:
-
-                
             self.filelist = glob.glob(os.path.join(self.data_folder,'*.npy'))
-
-
-
 
         random.shuffle(self.filelist)
         self.filelist = self.filelist[
@@ -554,13 +567,11 @@ class RandomDataset(Dataset):
         y_min, y_max, x_min, x_max = self.crop_indices
         img = np.load(file_path)
 
-        # print('JE SUIS IMG SHAPE DANS LOADFILE ',img.shape, file_path)
-        if img.shape[1]!=256:
+        if img.shape[2]!=self.config_data['sizeH']: # change it with sizeH in the config file to be more general 
             return np.transpose(img[y_min:y_max, x_min:x_max,:],(2,0,1))
         else:
             return img 
 
-        
     def __len__(self):
         return len(self.filelist)
 
