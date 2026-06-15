@@ -114,7 +114,6 @@ class PreprocessCondObs(Metric):
         Returns:
             dict: A dictionary containing preprocessed real, fake, and observation data.
         """
-        print("ON PASSE DANS COND OBS")
         assert real_data is not None
         assert obs_data is not None
         logging.debug(fake_data.shape)        
@@ -191,7 +190,6 @@ class PreprocessDist(Metric):
 
     def _preprocess(self, real_data=None, fake_data=None, obs_data=None):
         # print('je passe preproce3')
-        print("on passe dans preproceess DIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIISST")
         """
         Preprocess data for distance metrics.
 

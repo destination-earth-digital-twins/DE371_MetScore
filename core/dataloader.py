@@ -194,7 +194,7 @@ class DateDataloader(DataLoader):
     """
 
     def __init__(self, config_data, use_cache=False, **kwargs):
-        # Appel du __init__ de la classe mère
+
         super().__init__()
         del config_data[
             "type"
@@ -245,19 +245,21 @@ class DateDataloader(DataLoader):
                         for i in range(self.batch_size)
                     ]
                 )
-                # print("obs samples :", obs_samples[:,2,:,:], (~np.isnan(obs_samples[:,2,:,:])).sum(), " min : ", np.nanmin(obs_samples[:,2,:,:]), 'max : ',np.nanmax(obs_samples[:,2,:,:]))
-                real_samples = np.array(
+                try :
+                    real_samples = np.array(
                     [
                         self.real_dataset[self.current_index + i]
                         for i in range(self.batch_size)
                     ]
                 )
+                except:
+                    real_samples = fake_samples
                 self.current_index += min(
                     self.batch_size, self._data_length - self.current_index
                 )
                 return fake_samples[0], real_samples[0], obs_samples
             except FileNotFoundError as e:
-                print("cette exceptionaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
                 logging.warning(f"{self.name} :  File not found, {e}")
                 self.current_index += min(
                     self.batch_size, self._data_length - self.current_index
@@ -455,7 +457,7 @@ class ModDataloader(DateDataloader):
         TODO  find a way to modify on the fly to compute scores on mod'ed data
         otherwise this feature is useless (either FakeDataset is ok or one cannot use non-batched on mod'ed data)
         """
-        print("on PASSE DANS MOD DATA LOADER ???? ")
+        
         real = self._real_dataset.get_all_data()
         logging.debug("Not mod'ing on data gathering")
         fake, _ = self._fake_dataset.get_all_data()

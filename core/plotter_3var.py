@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plotter3D_3var(img,save_path,title = None):
+def plotter3D_4var(img,save_path,title = None):
     """
     Plots 3 (for each variable) images, from img of shape(batch_size,variables,latitude,longitude) and saves it 
 
@@ -18,30 +18,34 @@ def plotter3D_3var(img,save_path,title = None):
         img_copy = img.squeeze(0)
     elif len(img.shape) ==3:
         img_copy = img   
-    fig, axes = plt.subplots(1, 3, figsize=(12, 10))
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
     fig.suptitle(title,y=0.7)
-    axes = axes.flatten()
 
-    # Plot des deux premiers canaux en haut
-    for i in range(3):
-        ax = axes[i]
-        if i==0:
-            im = ax.imshow(img_copy[i], cmap='viridis', origin='lower')
-            ax.set_title(f"u : vent zonal", fontsize=12)
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
-            ax.axis("off")
-            
-        elif i==1 : 
-            
-            im = ax.imshow(img_copy[i], cmap='viridis', origin='lower')
-            ax.set_title('v : vent méridional',fontsize=12)
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
-            ax.axis("off")
-        else :
-            im = ax.imshow(img_copy[2], cmap='coolwarm', origin='lower')
-            plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
-            ax.set_title("t2m", fontsize=12)    
-            ax.axis("off")
+    for i in range(2):
+        for j in range(2):
+            ax = axes[i][j]
+            if i==0 and j==0:
+                im = ax.imshow(img_copy[i], cmap='viridis', origin='lower')
+                ax.set_title(f"u : vent zonal", fontsize=12)
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
+                ax.axis("off")
+                
+            elif i==0 and j==1: 
+                
+                im = ax.imshow(img_copy[1], cmap='viridis', origin='lower')
+                ax.set_title('v : vent méridional',fontsize=12)
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
+                ax.axis("off")
+            elif i==1 and j==0:
+                im = ax.imshow(img_copy[2], cmap='coolwarm', origin='lower')
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
+                ax.set_title("t2m", fontsize=12)    
+                ax.axis("off")
+            else:
+                im = ax.imshow(img_copy[3], cmap='turbo', origin='lower')
+                plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04,shrink=0.21)
+                ax.set_title("rr", fontsize=12)    
+                ax.axis("off")
 
 
     plt.tight_layout()
@@ -86,7 +90,6 @@ def plotter2D_3var(img,save_path,lat,title):
         ax.set_ylabel("Valeur")
         ax.grid(True)
 
-    # masquer la 4ᵉ sous-figure
     axes[3].axis("off")
 
     plt.tight_layout()

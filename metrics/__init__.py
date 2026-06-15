@@ -258,7 +258,6 @@ class ensembleCRPS(PreprocessCondObs):
     def _calculateCore(self, processed_data):
         if not self.isOnReal:
             exp_data = processed_data["fake_data"]
-            print("on passe ici ")
         else:
             exp_data = processed_data["real_data"]
         obs_data = processed_data["obs_data"]
@@ -462,7 +461,7 @@ class biasEnsemble(PreprocessCondObs):
             exp_data = processed_data["real_data"]
         obs_data = processed_data["obs_data"]
 
-        return BE.bias_ens(obs_data, exp_data)
+        return BE.bias_ens(obs_data, exp_data, processed_data["real_data"])
 
 
 class meanBias(PreprocessCondObs):

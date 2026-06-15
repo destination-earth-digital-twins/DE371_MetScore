@@ -75,7 +75,7 @@ def obs_clean(obs, crop_indices):
     obs_r_clean = []
     indices_o_clean = []
     j = 0
-    sum_measurements = np.zeros((3))
+    sum_measurements = np.zeros((4))
     for i in range(len_obs_reduced):
         if i == j:
             sum_measurements = sum_measurements + obs_reduced[i, 2:] #mis 2 ici pour faire la somme sur les variables et non pas les variables + longitude
@@ -89,30 +89,33 @@ def obs_clean(obs, crop_indices):
                     j = j + 1
 
                 observation = sum_measurements / (j - i)
-                sum_measurements = np.zeros((3))
+                sum_measurements = np.zeros((4))
                 obs_r_clean.append(observation)
                 indices_o_clean.append(indices_obs[i])
 
     indices_o_clean = np.array(indices_o_clean, dtype="int")
     obs_r_clean = np.array(obs_r_clean, dtype="float32")
-    Ens_observation = np.empty((3, sizes[0], sizes[1]))
+    Ens_observation = np.empty((4, sizes[0], sizes[1]))
     Ens_observation[:] = np.nan
 
-    #channel 0 : ff (col 3 in obs_r_clean) 
-    Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]
-
-    # canal 1 : dd (col 2)
+    # channel 0 : t2m (col 0 in obs_r_clean)
+    Ens_observation[0, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
+    # channel 1 : dd (col 1 in obs_r_clean)
     Ens_observation[1, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 1]
-
-    # canal 2 : t2m (col 1)
-    Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 0]
-
-    # Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]  # rr
+    # channel 2 : ff (col 2 in obs_r_clean)
+    Ens_observation[2, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 2]
+    # channel 3 : rr (col 3 in obs_r_clean)
+    Ens_observation[3, indices_o_clean[:, 0], indices_o_clean[:, 1]] = obs_r_clean[:, 3]
 
     Ens_observation[Ens_observation > 1000.0] = np.nan
-    Ens_observation[2][Ens_observation[1] < 2.0] = np.nan
-  
-    return Ens_observation
+    Ens_observation[0][Ens_observation[0] < 2.0] = np.nan  # t2m < 2 → nan
+    Ens_observation[3][Ens_observation[3] < 0.0] = np.nan  # rr < 0 -> nan
+   
+    Ens_observation_reshaped = Ens_observation.copy()
+    Ens_observation_reshaped[0,...] = Ens_observation[2,...]
+    Ens_observation_reshaped[2,...] = Ens_observation[0,...]
+
+    return Ens_observation_reshaped
 
 
 

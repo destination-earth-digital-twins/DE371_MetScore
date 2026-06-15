@@ -23,7 +23,7 @@ font = {
     "weight": "normal",
     "size": 25,
 }
-base_vars  = ["u", "v", "t2m" ]#"rr","t850","tpw850","z500"]
+base_vars  = ["u", "v", "t2m", "rr" ]
 
 ##### ESTHETICS AND TITLE NAMES
 # base_vars = ['rr','u','v','t2m']
@@ -54,10 +54,9 @@ case_name = [
 name_thresholds = [['5', '10', '15', '20', '30', '40'],
             ['', '', '', '', '', ''], 
             ['5', '10', '15', '20', '25', '30']]
-case_name_thresholds = ['ff' ,'dd', 't2m']
-var_names_m = ['ff (m/s)', 'dd (°)', 't2m (K)'  ]
-echeance = ['+3H', '', '+9H', '', '+15H', '', '+21H', '', '+27H', '', '+33H', '', '+39H', '', '+45H']
-# echeance = ['+3H', '+6H', '+9H']
+case_name_thresholds = ['ff' ,'dd', 't2m', 'rr']
+var_names_m = ['ff (m/s)', 'dd (°)', '2t (K)', 'rr (mm)'  ]
+echeance = ['+6H', '+12H', '+18H', '+24H', '+30H', '+36H', '+42H', '+48H']
 
 def group_by_leadtime(scores, scores_LT, config):
     D_i = 0
@@ -154,7 +153,7 @@ def plot_biasEnsemble(experiments, metric, config):
 
         plt.yticks(fontsize="18")
         plt.ylabel(var_names_m[var_idx], fontsize="18")
-        plt.legend(fontsize=10, ncol=1, frameon=False, loc="lower right")
+        plt.legend(fontsize=15, ncol=1, frameon=False)
         plt.savefig(
             config["output_plots"]
             + "/"
@@ -174,6 +173,15 @@ def plot_biasEnsemble(experiments, metric, config):
 # ENSEMBLE CRPS
 def plot_ensembleCRPS(experiments, metric, config):
     print("ce CRPS")
+
+    # crps = np.load("/project/home/p200177/DE_371/avritj/scores/exps/scores_test_crps/ensembleCRPS.npy")
+    # crps_scores = crps[:,:,0]
+    # print("crps_scores shape:", crps_scores.shape)
+    # print("crps nan count:", np.isnan(crps_scores).sum())
+    # crps_scores_LT = group_by_leadtime(crps_scores, crps_scores_LT, config)
+    # print("crps_scores_LT shape:", crps_scores_LT.shape)
+    # print("crps_LT nan count:", np.isnan(crps_scores_LT).sum())
+
     crps_scores = np.zeros(
         (
             len(experiments),
@@ -228,7 +236,6 @@ def plot_ensembleCRPS(experiments, metric, config):
         fig, axs = plt.subplots(figsize=(9, 7))
         for exp_idx, exp in enumerate(experiments[1:]):
             dist = crps_scores_LT[exp_idx + 1, :, 0:5, var_idx]
-            print("dist dans CRPS : ", dist, dist.shape)
             dist = dist.reshape(config["number_dates"] * 5)
             axs.hist(dist - dist_0, bins=50)
         plt.savefig(
@@ -274,7 +281,7 @@ def plot_ensembleCRPS(experiments, metric, config):
         axs.tick_params(direction="in", length=12, width=1)
         plt.yticks(fontsize="18")
         plt.ylabel(var_names_m[var_idx], fontsize="18", fontdict=font)
-        plt.legend(fontsize=10, ncol=1, frameon=False, loc="lower right")
+        plt.legend(fontsize=15, ncol=1, frameon=False)
         plt.savefig(
             config["output_plots"]
             + "/"
@@ -483,86 +490,84 @@ def plot_skillSpread(experiments, metric, config):
     print(significance_0.shape)
 
     for var_idx in range(config["var_number"]):
-        fig, axs = plt.subplots(figsize=(9, 7))
+
+        skill_data = {}
+        spread_data = {}
+        for exp_idx, exp in enumerate(experiments):
+            skill_data[exp_idx] = np.sqrt(
+                np.nanmean(s_p_scores_LT[exp_idx, :, :, 0, var_idx] ** 2.0, axis=(0, 2, 3))
+            )
+            spread_data[exp_idx] = np.nanmean(
+                np.sqrt(np.nanmean(s_p_scores_LT[exp_idx, :, :, 1, var_idx], axis=(0))),
+                axis=(-2, -1),
+            )
+
+        fig, (ax_top, ax_bot) = plt.subplots(
+            2, 1, figsize=(9, 9),
+            gridspec_kw={"height_ratios": [1.2, 1], "hspace": 0.08}
+        )
+
         for exp_idx, exp in enumerate(experiments):
             if exp_idx > 0:
-                markers_on = significance_0[var_idx, min(0, exp_idx - 1)].nonzero()[0]
-                print("markers_on", markers_on)
-                print("significance", significance_0[var_idx, exp_idx - 1])
-                plt.plot(
-                    np.sqrt(
-                        np.nanmean(
-                            s_p_scores_LT[exp_idx, :, :, 0, var_idx] ** 2.0,
-                            axis=(0, 2, 3),
-                        )
-                    ),
-                    label=exp["short_name"],
-                    markevery=markers_on,
-                    marker="D",
-                    color=color_p[exp_idx],
-                    linestyle="solid",
-                    linewidth=4.5 - exp_idx,
-                )
-
-                markers_on = significance_1[var_idx, min(0, exp_idx - 1)].nonzero()[0]
-                plt.plot(
-                    np.nanmean(
-                        np.sqrt(
-                            np.nanmean(
-                                s_p_scores_LT[exp_idx, :, :, 1, var_idx], axis=(0)
-                            )
-                        ),
-                        axis=(-2, -1),
-                    ),
-                    color=color_p[exp_idx],
-                    markevery=markers_on,
-                    marker="D",
-                    linestyle="dashed",
-                    linewidth=4.5 - 0.5 * exp_idx,
-                )
-
+                markers_on_0 = significance_0[var_idx, min(0, exp_idx - 1)].nonzero()[0]
+                markers_on_1 = significance_1[var_idx, min(0, exp_idx - 1)].nonzero()[0]
+                skill_kwargs  = dict(label=exp["short_name"], color=color_p[exp_idx],
+                                    linestyle="solid", linewidth=4.5 - exp_idx,
+                                    marker="D", markevery=markers_on_0)
+                spread_kwargs = dict(color=color_p[exp_idx], linestyle="dashed",
+                                    linewidth=4.5 - 0.5 * exp_idx,
+                                    marker="D", markevery=markers_on_1)
             else:
-                plt.plot(
-                    np.sqrt(
-                        np.nanmean(
-                            s_p_scores_LT[exp_idx, :, :, 0, var_idx] ** 2.0,
-                            axis=(0, 2, 3),
-                        )
-                    ),
-                    label=exp["short_name"],
-                    color=color_p[exp_idx],
-                    linestyle=line[exp_idx],
-                    linewidth=2.5,
-                )
-                plt.plot(
-                    np.nanmean(
-                        np.sqrt(
-                            np.nanmean(
-                                s_p_scores_LT[exp_idx, :, :, 1, var_idx], axis=(0)
-                            )
-                        ),
-                        axis=(-2, -1),
-                    ),
-                    color=color_p[exp_idx],
-                    linestyle="dashed",
-                    linewidth=3.5,
-                )
+                skill_kwargs  = dict(label=exp["short_name"], color=color_p[exp_idx],
+                                    linestyle=line[exp_idx], linewidth=2.5)
+                spread_kwargs = dict(color=color_p[exp_idx], linestyle="dashed", linewidth=3.5)
 
-        plt.xticks(fontsize="18")
-        axs.set_xticks(range(len(echeance)))
-        axs.set_xticklabels(echeance)
-        axs.tick_params(direction="in", length=12, width=1)
-        plt.yticks(fontsize="18")
-        plt.ylabel(var_names_m[var_idx], fontsize="18", fontdict=font)
-        plt.legend(fontsize=10, ncol=1, frameon=False, loc="lower right")
+            ax_top.plot(skill_data[exp_idx],  **skill_kwargs)
+            ax_top.plot(spread_data[exp_idx], **spread_kwargs)  
+            ax_bot.plot(spread_data[exp_idx], **spread_kwargs)
+            ax_bot.plot(skill_data[exp_idx],  **skill_kwargs)   
+
+        all_skill  = np.concatenate([skill_data[i]  for i in skill_data])
+        all_spread = np.concatenate([spread_data[i] for i in spread_data])
+        pad = 0.15  
+        s_min, s_max = all_skill.min(),  all_skill.max()
+        p_min, p_max = all_spread.min(), all_spread.max()
+        ax_top.set_ylim(s_min  * (1 - pad), s_max  * (1 + pad))
+        ax_bot.set_ylim(p_min  * (1 - pad), p_max  * (1 + pad))
+
+        ax_top.spines["bottom"].set_visible(False)
+        ax_bot.spines["top"].set_visible(False)
+        ax_top.tick_params(bottom=False)
+        ax_bot.tick_params(top=False)
+
+        d = 0.012
+        kwargs_cut = dict(transform=fig.transFigure, color="k", clip_on=False, linewidth=1)
+
+        top_bot_y = ax_top.get_position().y0
+        bot_top_y = ax_bot.get_position().y1
+        for x in [ax_top.get_position().x0, ax_top.get_position().x1]:
+            fig.add_artist(plt.Line2D([x - d, x + d], [top_bot_y - d, top_bot_y + d], **kwargs_cut))
+            fig.add_artist(plt.Line2D([x - d, x + d], [bot_top_y - d, bot_top_y + d], **kwargs_cut))
+
+        for ax in (ax_top, ax_bot):
+            ax.set_xticks(range(len(echeance)))
+            ax.set_xticklabels(echeance, fontsize=18)
+            ax.tick_params(direction="in", length=12, width=1)
+            ax.tick_params(axis="y", labelsize=18)
+
+        ax_top.set_xticklabels([])   
+        ax_top.set_ylabel(var_names_m[var_idx], fontsize=18, fontdict=font)
+
+        ax_top.annotate("skill",  xy=(1.01, 0.5), xycoords="axes fraction",
+                        fontsize=13, va="center", color="gray")
+        ax_bot.annotate("spread", xy=(1.01, 0.5), xycoords="axes fraction",
+                        fontsize=13, va="center", color="gray")
+
+        ax_top.legend(fontsize=15, ncol=1, frameon=False)
+
         plt.savefig(
-            config["output_plots"]
-            + "/"
-            + metric["folder"]
-            + "/"
-            + metric["name"]
-            + case_name_thresholds[var_idx]
-            + ".pdf"
+            config["output_plots"] + "/" + metric["folder"] + "/"
+            + metric["name"] + case_name_thresholds[var_idx] + ".pdf"
         )
         plt.close()
 

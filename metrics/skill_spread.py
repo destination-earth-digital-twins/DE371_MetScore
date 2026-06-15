@@ -31,9 +31,9 @@ def skill_spread(obs_data, fake_data):
     fake_data_p = copy.deepcopy(fake_data)
     obs_data_p = copy.deepcopy(obs_data)
 
-    skill = fake_data_p.mean(axis=0) - obs_data_p
+    skill = np.nanmean(fake_data_p, axis=0) - obs_data_p
 
-    var = fake_data_p.var(axis=0, ddof=1)
+    var = np.nanvar(fake_data_p,axis=0, ddof=1)
 
     sp_out[0] = skill
 

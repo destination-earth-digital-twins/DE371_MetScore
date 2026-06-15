@@ -14,3 +14,4 @@ CRPS
 ipython
 tornado
 seaborn
+xarray

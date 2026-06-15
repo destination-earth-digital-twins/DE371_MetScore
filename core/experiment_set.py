@@ -89,11 +89,9 @@ class ExperimentSet(Configurable):
         files = [f for f in os.listdir(data_path)]
         file_name = random.choice(files)
         file = os.path.join(data_path,file_name)
-
         img = np.load(file)
         img=torch.from_numpy(img).to("cuda")
 
-        img = img.unsqueeze(0)
         img = img.permute((0,3,1,2))
         crop = self.config_data["dataloaders"]["real_dataset_config"]["crop_indices"]
         img = img[:,:,crop[0]:crop[1],crop[2]:crop[3]]

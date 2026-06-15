@@ -26,12 +26,15 @@ pip install -r requirements.txt
 |&ensp;&ensp;&boxvr;&nbsp; config | Where to store config files |
 |&ensp;&ensp;&boxvr;&nbsp; core |Core configurable / dataset / dataloading logic|
 |&ensp;&ensp;&boxvr;&nbsp; metrics | Individual implementation of metrics functions and main catalogue of metrics|
+|&ensp;&ensp;&ensp;&ensp;&boxvr;&nbsp; metrics_anemoi | 3 metrics (quantiles, spread maps and linear spread) used to score anemoi-based unconditional diffusion model |
 |&ensp;&ensp;&boxvr;&nbsp; preprocess | Classes and catalogue of preprocessors|
 |&ensp;&ensp;&boxvr;&nbsp; stats | Functions to make statistical analysis (significance) |
 |&ensp;&ensp;&boxvr;&nbsp; main.py | Executable script reading a config file and launching an experiment |
 |&ensp;&ensp;&boxvr;&nbsp; plotting_autom.py | Executable script plotting score data for several score experiments |
 |&ensp;&ensp;&boxvr;&nbsp; plotting_functions.py | Functions to plot for each metric where a "standard way" of plotting can be defined. |
 |&ensp;&ensp;&boxvr;&nbsp; diagclass.puml | Visualisation scheme for the class diagram of the whole code. |
+
+
 ## Usage
 ### Command line
 ```bash
@@ -113,17 +116,38 @@ The object-oriented structure of the code means you can, and are invited to, __a
 The purpose is to make much of the code extendable, either to add a sampling strategy, preprocess your inputs in different ways, add innovative metrics, add new sources of observations.
 Provided you have predefined the functions you want to implement, getting the whole system working should take no more than half a day work for the most substantial modifications.
 
-### Adding a new metric
+## Use Anemoi metrics 
 
-### Adding a new preprocessor
+The `metrics_anemoi` subfolder gathers 3 standalone scripts dedicated to scoring
+the Anemoi-based unconditional diffusion model against the AROME reference
+ensemble. Unlike the rest of MetScore, these scripts are not launched through
+`main.py` with a config file: each script is self-contained and configured by
+editing the variables in its `# ── Config ──` section directly.
 
-### Adding a new dataloading / dataset process
+- **Quantile comparison** (`quantile_comparison.py`): computes spatial quantile
+  maps (Q10, Q50, Q90) for a set of variables, both for the AROME reference
+  (sampled from a Zarr dataset) and for the generated inference (NetCDF files).
+  Also produces difference maps (inference - AROME) and QQ-plots comparing the
+  two distributions. See the header of the file for configuration and output details.
 
+- **Spread time series** (`linear_spread.py`): computes the spatial spread
+  (ensemble standard deviation) as a time series, for several SDEdit
+  configurations compared to the AROME reference ensemble. Each configuration
+  to compare is listed in `SDEDIT_CONFIGS`. See the header of the file for
+  configuration and output details.
 
-## Detailed view of the different abstract classes and their implementation
+- **Spread maps** (`spread_maps.py`): computes the spatial spread map for a
+  single date/leadtime, comparing the AROME reference ensemble to three SDEdit
+  configurations side by side in a 2x2 grid. See the header of the file for
+  configuration and output details.
 
-### Todo
+To run any of these scripts:
 
+```bash
+python metrics_anemoi/<script_name>.py
+```
+
+Edit the configuration block at the top of the chosen script before running it.
 
 ## Report issues
 
